@@ -1,0 +1,28 @@
+################################
+# Erocci java-dbus integration #
+################################
+
+Prérequis
+=========
+Installation des packages dbus-java dans le repository maven
+.m2/repository/ :
+- Installer dbus-java : apt-get install dbus-java-bin
+- lancer dbus-java-install-script.sh
+
+Format du projet
+================
+src/main/dbus/ contient le XML décrivant l'interface DBus erocci.
+
+pom.xml importe le maven-dbus-plugin (pour générer l'interface java)
+et spécifie les dépendances (pour compiler).
+
+Note: la version du maven-dbus-plugin est celle disponible en ligne sur
+maven central (0.1). Pour version compilée localement depuis les sources,
+mettre 0.2-SNAPSHOT .
+
+Générer le code
+===============
+mvn clean install
+L'interface java est générée dans src/generated/java, et compilée dans
+target/classes .
+
