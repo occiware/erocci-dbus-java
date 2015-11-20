@@ -26,3 +26,7 @@ mvn clean install
 L'interface java est générée dans src/generated/java, et compilée dans
 target/classes .
 
+Lancer le service en standalone (hors Eclipse/IDE)
+==================================================
+mvn exec:java -Dexec.mainClass="org.ow2.erocci.backend.BackendDBusService"
+
