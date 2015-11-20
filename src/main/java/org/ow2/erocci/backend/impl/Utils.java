@@ -16,6 +16,9 @@
 
 package org.ow2.erocci.backend.impl;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -31,5 +34,25 @@ public class Utils {
 			map.put(e.getKey(), e.getValue().getValue().toString());
 		}
 		return map;
+	}
+	
+	public static void copyStream(InputStream in, OutputStream os) throws IOException {
+		byte[] buf = new byte[1024];
+        int len;
+        while((len = in.read(buf)) > 0) {
+                os.write(buf, 0, len);
+        }
+	}
+	
+	public static void closeQuietly(InputStream in) {
+		if(in != null) {
+			try { in.close(); } catch(IOException e) { /*ignore*/ }
+		}
+	}
+	
+	public static void closeQuietly(OutputStream os) {
+		if(os != null) {
+			try { os.close(); } catch(IOException e) { /*ignore*/ }
+		}
 	}
 }

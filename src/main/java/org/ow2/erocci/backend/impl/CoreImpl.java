@@ -16,12 +16,15 @@
 
 package org.ow2.erocci.backend.impl;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 
+import org.freedesktop.DBus;
 import org.freedesktop.dbus.UInt32;
 import org.freedesktop.dbus.Variant;
 import org.ow2.erocci.backend.Pair;
@@ -32,11 +35,43 @@ import org.ow2.erocci.backend.core;
 import org.ow2.erocci.model.Entity;
 import org.ow2.erocci.model.OcciConstants;
 
-public class CoreImpl implements core {
+public class CoreImpl implements core, DBus.Properties {
 
 	public static byte NODE_ENTITY = 0;
 
 	private Map<String, Entity> entities = new HashMap<String, Entity>();
+
+	@Override
+	public String Get(String interfaceName, String property) {
+		if("schema".equalsIgnoreCase(property)) {
+			InputStream in = null;
+			ByteArrayOutputStream os = null;
+			try {
+				in = this.getClass().getResourceAsStream("/schema.xml");
+				os = new ByteArrayOutputStream();
+				Utils.copyStream(in, os);
+				System.out.println(os.toString("UTF-8"));
+				return os.toString("UTF-8");
+			} catch(IOException e) {
+				e.printStackTrace(System.err);
+				return null;
+			} finally {
+				Utils.closeQuietly(in);
+				Utils.closeQuietly(os);
+			}
+		}
+		return null;
+	}
+
+	@Override
+	public Map<String,Variant> GetAll(String interface_name) {
+		return null;
+	}
+	
+	@Override
+	public <A> void Set(String arg0, String arg1, A arg2) {
+		// TODO Auto-generated method stub
+	}
 
 	@Override
 	public boolean isRemote() {
@@ -182,5 +217,4 @@ public class CoreImpl implements core {
 			Delete(e.getId()); // Warning recursive call
 		}
 	}
-
 }
