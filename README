@@ -4,6 +4,8 @@
 
 Prérequis
 =========
+JDK + maven...
+
 Installation des packages dbus-java dans le repository maven
 .m2/repository/ :
 - Installer dbus-java : apt-get install dbus-java-bin
