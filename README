@@ -29,4 +29,13 @@ target/classes .
 Lancer le service en standalone (hors Eclipse/IDE)
 ==================================================
 mvn exec:java -Dexec.mainClass="org.ow2.erocci.backend.BackendDBusService"
+Le service dbus s'appelle "org.ow2.erocci.backend".
+
+Interfacer avec erocci
+======================
+Un fichier erocci-dbus-java.config est fourni (dans le répertoire principal du projet).
+Lancer erocci en lui spécifiant ce fichier comme configuration; par exemple, dans le répertoire de erocci :
+./start.sh -c ../erocci-dbus-java/erocci-dbus-java.config
+
+
 
