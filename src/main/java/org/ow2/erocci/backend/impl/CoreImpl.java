@@ -23,6 +23,7 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Logger;
 
 import org.freedesktop.DBus;
 import org.freedesktop.dbus.UInt32;
@@ -38,11 +39,12 @@ import org.ow2.erocci.model.OcciConstants;
 public class CoreImpl implements core, DBus.Properties {
 
 	public static byte NODE_ENTITY = 0;
+	private Logger logger = Logger.getLogger(this.getClass().getName());
 
 	private Map<String, Entity> entities = new HashMap<String, Entity>();
 
 	@Override
-	public String Get(String interfaceName, String property) {
+	public <A> A Get(String interfaceName, String property) {
 		if("schema".equalsIgnoreCase(property)) {
 			InputStream in = null;
 			ByteArrayOutputStream os = null;
@@ -50,8 +52,7 @@ public class CoreImpl implements core, DBus.Properties {
 				in = this.getClass().getResourceAsStream("/schema.xml");
 				os = new ByteArrayOutputStream();
 				Utils.copyStream(in, os);
-				System.out.println(os.toString("UTF-8"));
-				return os.toString("UTF-8");
+				return (A)os.toString("UTF-8");
 			} catch(IOException e) {
 				e.printStackTrace(System.err);
 				return null;
@@ -65,6 +66,7 @@ public class CoreImpl implements core, DBus.Properties {
 
 	@Override
 	public Map<String,Variant> GetAll(String interface_name) {
+		logger.info("GetAll invoked");
 		return null;
 	}
 	
@@ -82,13 +84,11 @@ public class CoreImpl implements core, DBus.Properties {
 	@Override
 	public void Init(Map<String, Variant> opts) {
 		// TODO Auto-generated method stub
-
 	}
 
 	@Override
 	public void Terminate() {
 		// TODO Auto-generated method stub
-
 	}
 
 	/**
@@ -105,6 +105,8 @@ public class CoreImpl implements core, DBus.Properties {
 	public String SaveResource(String id, String kind,
 			java.util.List<String> mixins, Map<String, Variant> attributes,
 			String owner) {
+
+		logger.info("SaveResource invoked");
 
 		// 1st version of a resource, with serial no = 1
 		entities.put(id, new Entity(id, OcciConstants.TYPE_RESOURCE,
@@ -129,6 +131,8 @@ public class CoreImpl implements core, DBus.Properties {
 			java.util.List<String> mixins, String src, String target,
 			Map<String, Variant> attributes, String owner) {
 		
+		logger.info("SaveLink invoked");
+
 		// 1st version of a link, with serial no = 1
 		Entity link = new Entity(id, OcciConstants.TYPE_LINK,
 				kind, mixins, Utils.convertVariantMap(attributes), owner, 1);
@@ -150,12 +154,14 @@ public class CoreImpl implements core, DBus.Properties {
 	@Override
 	public Map<String, Variant> Update(String id,
 			Map<String, Variant> attributes) {
+		logger.info("Update invoked");
 		// TODO Auto-generated method stub
 		return null;
 	}
 
 	@Override
 	public void SaveMixin(String id, java.util.List<String> entities) {
+		logger.info("SaveMixin invoked");
 		for(String entityId : entities) {
 			Entity entity = this.entities.get(entityId);
 			if(! entity.getMixins().contains(id)) entity.getMixins().add(id);
@@ -165,30 +171,30 @@ public class CoreImpl implements core, DBus.Properties {
 
 	@Override
 	public void UpdateMixin(String id, java.util.List<String> entities) {
+		logger.info("UpdateMixin invoked");
 		// TODO Why should it be different from SaveMixin ??
 		SaveMixin(id, entities);
 	}
 
 	@Override
-	//TODO unclear why this one returns a list of Struct... and what to do if no entity found
+	//TODO unclear why this one returns a list of Struct...
 	public java.util.List<Struct1> Find(String id) {
-		
+		logger.info("Find invoked with id=" + id);
+
+		List<Struct1> ret = new LinkedList<Struct1>();
 		Entity entity = entities.get(id);
 		if(entity != null) {
-			List<Struct1> ret = new LinkedList<Struct1>();
-		
 			ret.add(new Struct1(CoreImpl.NODE_ENTITY,
 					new Variant<String>(id), entity.getOwner(), new UInt32(entity.getSerial())));
-			
-			return ret;
 		}
 
-		return null;
+		return ret;
 	}
 
 	@Override
 	public Quad<String, String, java.util.List<String>, Map<String, Variant>> Load(
 			Variant opaque_id) {
+		logger.info("Load invoked with opaque_id=" + opaque_id);
 		// TODO What is opaque_id ??
 		Entity entity = entities.get(opaque_id);
 		return new Quad(entity.getId(),
@@ -196,22 +202,32 @@ public class CoreImpl implements core, DBus.Properties {
 	}
 
 	@Override
+	/**
+	 * Initiate a list request: List() is called, then Next() - the List call
+	 * provides configuration for subsequent Next() calls.
+	 * @param id
+	 * @param filters
+	 * @return Pair, where Variant is the opaque_id for Next() method
+	 */
 	public Pair<Variant, UInt32> List(String id, Map<String, Variant> filters) {
+		logger.info("List invoked with id=" + id);
 		// TODO Auto-generated method stub
-		return null;
+		return new Pair<Variant, UInt32>(new Variant<String>("Hello"), new UInt32(2));
 	}
 
 	@Override
 	public java.util.List<Struct2> Next(Variant opaque_id, UInt32 start,
 			UInt32 items) {
+		logger.info("Next invoked with opaque_id=" + opaque_id +", start=" + start + ", items=" + items);
 		// TODO Auto-generated method stub
-		return null;
+		return new LinkedList<Struct2>();
 	}
 
 	@Override
 	public void Delete(String id) {
-		Entity removed = entities.remove(id);
-		
+		logger.info("Delete invoked");
+
+		Entity removed = entities.remove(id);		
 		// Remove all links that point to removed entity
 		for (Entity e : removed.getLinkedFrom()) {
 			Delete(e.getId()); // Warning recursive call
