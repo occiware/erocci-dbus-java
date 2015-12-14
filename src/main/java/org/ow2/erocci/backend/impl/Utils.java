@@ -55,4 +55,9 @@ public class Utils {
 			try { os.close(); } catch(IOException e) { /*ignore*/ }
 		}
 	}
+	
+	private static int uniqueInt = 1;
+	public static synchronized int getUniqueInt() {
+		return uniqueInt++;
+	}
 }

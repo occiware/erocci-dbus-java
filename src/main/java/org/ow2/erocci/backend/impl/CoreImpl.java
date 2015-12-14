@@ -203,16 +203,22 @@ public class CoreImpl implements core, DBus.Properties {
 
 	@Override
 	/**
-	 * Initiate a list request: List() is called, then Next() - the List call
-	 * provides configuration for subsequent Next() calls.
+	 * Get an iterator for a collection: then use Next() to iterate (the List call
+	 * initiates an iterator for subsequent Next() calls).
 	 * @param id
 	 * @param filters
-	 * @return Pair, where Variant is the opaque_id for Next() method
+	 * @return Pair, where Variant<String> is the iterator ID for Next() method, and
+	 * UInt32 the iterator's serial num (eg. for caching).
 	 */
 	public Pair<Variant, UInt32> List(String id, Map<String, Variant> filters) {
 		logger.info("List invoked with id=" + id);
 		// TODO Auto-generated method stub
-		return new Pair<Variant, UInt32>(new Variant<String>("Hello"), new UInt32(2));
+		
+		String collectionName = "collection" + Utils.getUniqueInt();
+		
+		return new Pair<Variant, UInt32>(
+				new Variant<String>(collectionName),
+				new UInt32(Utils.getUniqueInt()));
 	}
 
 	@Override
