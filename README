@@ -11,6 +11,10 @@ Installation des packages dbus-java dans le repository maven
 - Installer dbus-java : apt-get install dbus-java-bin
 - lancer dbus-java-install-script.sh
 
+And if using another Java than your Ubuntu/Debian distribution's current default
+(which is by default openjdk), copy it there ex.
+sudo cp /usr/lib/jni/libunix-java.so /usr/lib/jvm/jdk1.8.0_45/jre/lib/amd64/
+
 Format du projet
 ================
 src/main/dbus/ contient le XML décrivant l'interface DBus erocci.
