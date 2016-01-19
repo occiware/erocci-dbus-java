@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2015-2016 Linagora
+ * Copyright (c) 2015-2017 Linagora
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,11 @@ import java.util.Map;
 import org.freedesktop.dbus.Variant;
 import org.ow2.erocci.backend.action;
 
+/**
+ * Implementation of OCCI action
+ * @author Pierre-Yves Gibello - Linagora
+ *
+ */
 public class ActionImpl implements action {
 
 	@Override

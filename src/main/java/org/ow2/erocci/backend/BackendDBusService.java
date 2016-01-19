@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2015-2016 Linagora
+ * Copyright (c) 2015-2017 Linagora
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,20 +16,37 @@
 
 package org.ow2.erocci.backend;
 
+import java.io.InputStream;
+
 import org.freedesktop.dbus.DBusConnection;
 import org.freedesktop.dbus.exceptions.DBusException;
 import org.ow2.erocci.backend.impl.CoreImpl;
 import org.ow2.erocci.model.DefaultEntityFactory;
 import org.ow2.erocci.model.EntityFactory;
 
+/**
+ * Erocci backend DBus service implementation.
+ * Should be overridden for specific needs (see sample main() method below).
+ * @author Pierre-Yves Gibello - Linagora
+ *
+ */
 public class BackendDBusService {
 
 	private DBusConnection dbusConnection;
 	private CoreImpl coreImpl = new CoreImpl();
-	
+
+	/**
+	 * Set OCCI schema
+	 * @param in InputStream to read schema from (will be closed at the end of this call)
+	 */
+	public final BackendDBusService setSchema(InputStream in) {
+		coreImpl.setSchema(in);
+		return this;
+	}
+
 	/**
 	 * Register an OCCI entity factory, by entity category (OCCI kind).
-	 * @param kind The entity category name (OCCI kind)
+	 * @param kind The entity category name (OCCI kind = scheme#term)
 	 * @param entityFactory The entity factory, to create entities of specified category
 	 * @return The current DBus service backend
 	 */
@@ -46,7 +63,7 @@ public class BackendDBusService {
             dbusConnection = DBusConnection.getConnection(DBusConnection.SESSION);
             //Service Name can be changed
             dbusConnection.requestBusName("org.ow2.erocci.backend");
-            //EROCCI consider that the service is available on / (convention)
+            //EROCCI considers that the service is available on / (convention)
             dbusConnection.exportObject("/", coreImpl);
 
             System.out.println(dbusConnection.getUniqueName());
@@ -62,11 +79,12 @@ public class BackendDBusService {
 	 */
 	public static void main(String[] args) {
 		new BackendDBusService()
-			.addEntityFactory("compute", new DefaultEntityFactory())
-			.addEntityFactory("storage", new DefaultEntityFactory())
-			.addEntityFactory("storagelink", new DefaultEntityFactory())
-			.addEntityFactory("network", new DefaultEntityFactory())
-			.addEntityFactory("networkinterface", new DefaultEntityFactory())
+			.setSchema(BackendDBusService.class.getResourceAsStream("/schema.xml"))
+			.addEntityFactory("http://schemas.ogf.org/occi/infrastructure#compute", new DefaultEntityFactory())
+			.addEntityFactory("http://schemas.ogf.org/occi/infrastructure#storage", new DefaultEntityFactory())
+			.addEntityFactory("http://schemas.ogf.org/occi/infrastructure#storagelink", new DefaultEntityFactory())
+			.addEntityFactory("http://schemas.ogf.org/occi/infrastructure#network", new DefaultEntityFactory())
+			.addEntityFactory("http://schemas.ogf.org/occi/infrastructure#networkinterface", new DefaultEntityFactory())
 			.start();
 	}
 

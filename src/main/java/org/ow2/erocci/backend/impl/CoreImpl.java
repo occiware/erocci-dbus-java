@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2015-2016 Linagora
+ * Copyright (c) 2015-2017 Linagora
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,6 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.logging.Logger;
 
 import org.freedesktop.DBus;
@@ -38,39 +37,64 @@ import org.ow2.erocci.model.Entity;
 import org.ow2.erocci.model.EntityFactory;
 import org.ow2.erocci.model.OcciConstants;
 
+/**
+ * Implementation of OCCI core.
+ * @author Pierre-Yves Gibello - Linagora
+ *
+ */
 public class CoreImpl implements core, DBus.Properties {
 
 	public static byte NODE_ENTITY = 0;
 	private Logger logger = Logger.getLogger(this.getClass().getName());
+	
+	private String schema;
 
 	private Map<String, EntityFactory> factories = new HashMap<String, EntityFactory>();
 	private Map<String, Entity> entities = new HashMap<String, Entity>();
 	private Map<String, List<Entity>> categoryIdToEntity = new HashMap<String, List<Entity>>();
 	private Map<String, List<Struct2>> currentListRequests = new HashMap<String, List<Struct2>>();
 
+	/**
+	 * Default constructor
+	 */
+	public CoreImpl() {
+		// Try to pick default schema (ignore error).
+		setSchema(this.getClass().getResourceAsStream("/schema.xml"));
+	}
+
+	/**
+	 * Register an OCCI entity factory, by entity category (OCCI kind).
+	 * @param kind The entity category name (OCCI kind = scheme#term)
+	 * @param factory The entity factory, to create entities of specified category
+	 */
 	public void addEntityFactory(String kind, EntityFactory factory) {
 		factories.put(kind, factory);
+	}
+
+	/**
+	 * Set OCCI schema
+	 * @param in InputStream to read schema from (will be closed at the end of this call)
+	 */
+	public void setSchema(InputStream in) {
+		ByteArrayOutputStream os = null;
+		try {
+			os = new ByteArrayOutputStream();
+			Utils.copyStream(in, os);
+			this.schema = os.toString("UTF-8");
+		} catch(IOException e) {
+			Utils.closeQuietly(in);
+			Utils.closeQuietly(os);
+			schema = null;
+		}
 	}
 	
 	@Override
 	public <A> A Get(String interfaceName, String property) {
 		if("schema".equalsIgnoreCase(property)) {
-			InputStream in = null;
-			ByteArrayOutputStream os = null;
-			try {
-				in = this.getClass().getResourceAsStream("/schema.xml");
-				os = new ByteArrayOutputStream();
-				Utils.copyStream(in, os);
-				return (A)os.toString("UTF-8");
-			} catch(IOException e) {
-				e.printStackTrace(System.err);
-				return null;
-			} finally {
-				Utils.closeQuietly(in);
-				Utils.closeQuietly(os);
-			}
+			return (A)this.schema;
+		} else {
+			return null;
 		}
-		return null;
 	}
 
 	@Override

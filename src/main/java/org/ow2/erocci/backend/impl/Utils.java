@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2015-2016 Linagora
+ * Copyright (c) 2015-2017 Linagora
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,11 @@ import java.util.Map.Entry;
 
 import org.freedesktop.dbus.Variant;
 
+/**
+ * Utilitary class for OCCI backend implem.
+ * @author Pierre-Yves Gibello - Linagora
+ *
+ */
 public class Utils {
 
 	public static Map<String, String> convertVariantMap(Map<String, Variant> vmap) {

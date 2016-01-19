@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2015-2016 Linagora
+ * Copyright (c) 2015-2017 Linagora
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,12 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Default OCCI entity class.
+ * Should be overridden for behaviour related to entities of specific category (OCCI kind).
+ * @author Pierre-Yves Gibello - Linagora
+ *
+ */
 public class Entity {
 
 	private String id;
@@ -151,6 +157,7 @@ public class Entity {
 		return linkedFrom;
 	}
 	
+	// OCCI action methods to override
 	public void occiPostCreate() { }
 	public void occiPreDelete() { }
 	public void occiPostUpdate(Map<String, String> attributes) { }
