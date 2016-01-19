@@ -62,15 +62,15 @@ public class Entity {
 		if(type == OcciConstants.TYPE_RESOURCE) links = new LinkedList<Entity>();
 	}
 	
-	public String getId() {
+	public final String getId() {
 		return id;
 	}
 
-	public String getOwner() {
+	public final String getOwner() {
 		return owner;
 	}
 
-	public void setOwner(String owner) {
+	public final void setOwner(String owner) {
 		this.owner = owner;
 	}
 
@@ -78,27 +78,31 @@ public class Entity {
 		return type;
 	}
 
-	public String getKind() {
+	public final String getKind() {
 		return kind;
 	}
 
-	public List<String> getMixins() {
+	public final List<String> getMixins() {
 		return mixins;
 	}
 	
-	public Map<String, String> getAttributes() {
+	public final Map<String, String> getAttributes() {
 		return attributes;
 	}
+	
+	public final void updateAttributes(Map<String, String> attributes) {
+		this.attributes.putAll(attributes);
+	}
 
-	public int getSerial() {
+	public final int getSerial() {
 		return serial;
 	}
 	
-	public void incrementSerial() {
+	public final void incrementSerial() {
 		serial += 1;
 	}
 
-	public List<Entity> getLinks() {
+	public final List<Entity> getLinks() {
 		return links;
 	}
 
@@ -111,31 +115,31 @@ public class Entity {
 		attributes.put(OcciConstants.ATTRIBUTE_TITLE, title);
 	}
 	
-	public String getSummary() {
+	public final String getSummary() {
 		return summary;
 	}
 
-	public void setSummary(String summary) {
+	public final void setSummary(String summary) {
 		this.summary = summary;
 		attributes.put(OcciConstants.ATTRIBUTE_SUMMARY, summary);
 	}
 
-	public Entity getSource() {
+	public final Entity getSource() {
 		return source;
 	}
 	
-	public void setSource(Entity source) {
+	public final void setSource(Entity source) {
 		if(type == OcciConstants.TYPE_LINK) {
 			this.source = source;
 			attributes.put(OcciConstants.ATTRIBUTE_SOURCE, source.getId());
 		}
 	}
 	
-	public Entity getTarget() {
+	public final Entity getTarget() {
 		return target;
 	}
 
-	public void setTarget(Entity target) {
+	public final void setTarget(Entity target) {
 		if(type == OcciConstants.TYPE_LINK) {
 			this.target = target;
 			target.getLinkedFrom().add(this);
@@ -143,7 +147,12 @@ public class Entity {
 		}
 	}
 
-	public List<Entity> getLinkedFrom() {
+	public final List<Entity> getLinkedFrom() {
 		return linkedFrom;
 	}
+	
+	public void occiPostCreate() { }
+	public void occiPreDelete() { }
+	public void occiPostUpdate(Map<String, String> attributes) { }
+	
 }

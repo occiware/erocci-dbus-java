@@ -23,6 +23,7 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.logging.Logger;
 
 import org.freedesktop.DBus;
@@ -34,6 +35,7 @@ import org.ow2.erocci.backend.Struct1;
 import org.ow2.erocci.backend.Struct2;
 import org.ow2.erocci.backend.core;
 import org.ow2.erocci.model.Entity;
+import org.ow2.erocci.model.EntityFactory;
 import org.ow2.erocci.model.OcciConstants;
 
 public class CoreImpl implements core, DBus.Properties {
@@ -41,10 +43,15 @@ public class CoreImpl implements core, DBus.Properties {
 	public static byte NODE_ENTITY = 0;
 	private Logger logger = Logger.getLogger(this.getClass().getName());
 
+	private Map<String, EntityFactory> factories = new HashMap<String, EntityFactory>();
 	private Map<String, Entity> entities = new HashMap<String, Entity>();
 	private Map<String, List<Entity>> categoryIdToEntity = new HashMap<String, List<Entity>>();
 	private Map<String, List<Struct2>> currentListRequests = new HashMap<String, List<Struct2>>();
 
+	public void addEntityFactory(String kind, EntityFactory factory) {
+		factories.put(kind, factory);
+	}
+	
 	@Override
 	public <A> A Get(String interfaceName, String property) {
 		if("schema".equalsIgnoreCase(property)) {
@@ -110,20 +117,30 @@ public class CoreImpl implements core, DBus.Properties {
 
 		logger.info("SaveResource invoked with id=" + id + ", kind=" + kind + ", mixins=" + mixins + ", attributes=" + attributes);
 
-		Entity entity = new Entity(id, OcciConstants.TYPE_RESOURCE,
-				kind, mixins, Utils.convertVariantMap(attributes), owner, 1);
+		EntityFactory factory = this.factories.get(kind);
 		
-		// 1st version of a resource, with serial no = 1
-		entities.put(id, entity);
+		if(factory != null) {
+		
+			Entity entity = factory.newEntity(id, OcciConstants.TYPE_RESOURCE,
+					kind, mixins, Utils.convertVariantMap(attributes), owner, 1);
 
-		List<Entity> entities = categoryIdToEntity.get(kind);
-		if(entities == null) {
-			entities = new LinkedList<Entity>();
-			categoryIdToEntity.put(kind, entities);
+			// 1st version of a resource, with serial no = 1
+			entities.put(id, entity);
+
+			entity.occiPostCreate();
+
+			List<Entity> entities = categoryIdToEntity.get(kind);
+			if(entities == null) {
+				entities = new LinkedList<Entity>();
+				categoryIdToEntity.put(kind, entities);
+			}
+			entities.add(entity);
+
+			return id;
+		} else {
+			logger.info("SaveResource: unknown kind, no factory found");
+			return null;
 		}
-		entities.add(entity);
-		
-		return id;
 	}
 
 	/**
@@ -167,6 +184,13 @@ public class CoreImpl implements core, DBus.Properties {
 	public Map<String, Variant> Update(String id,
 			Map<String, Variant> attributes) {
 		logger.info("Update invoked");
+		
+		Entity entity = entities.get(id);
+		if(entity != null) {
+			Map<String, String> attrs = Utils.convertVariantMap(attributes);
+			entity.updateAttributes(attrs);
+			entity.occiPostUpdate(attrs);
+		}
 		// TODO Auto-generated method stub
 		return null;
 	}
@@ -260,12 +284,14 @@ public class CoreImpl implements core, DBus.Properties {
 		logger.info("Delete invoked");
 
 		Entity removed = entities.remove(id);
-
+		
 		// Remove all links that point to removed entity
 		for (Entity e : removed.getLinkedFrom()) {
 			Delete(e.getId()); // Warning recursive call
 		}
 		
+		removed.occiPreDelete();
+
 		// Remove reference to entity by category ID, if any
 		List<Entity> entities = categoryIdToEntity.get(removed.getKind());
 		entities.remove(removed);

@@ -19,18 +19,35 @@ package org.ow2.erocci.backend;
 import org.freedesktop.dbus.DBusConnection;
 import org.freedesktop.dbus.exceptions.DBusException;
 import org.ow2.erocci.backend.impl.CoreImpl;
+import org.ow2.erocci.model.DefaultEntityFactory;
+import org.ow2.erocci.model.EntityFactory;
 
 public class BackendDBusService {
 
 	private DBusConnection dbusConnection;
+	private CoreImpl coreImpl = new CoreImpl();
+	
+	/**
+	 * Register an OCCI entity factory, by entity category (OCCI kind).
+	 * @param kind The entity category name (OCCI kind)
+	 * @param entityFactory The entity factory, to create entities of specified category
+	 * @return The current DBus service backend
+	 */
+	public final BackendDBusService addEntityFactory(String kind, EntityFactory entityFactory) {
+		coreImpl.addEntityFactory(kind, entityFactory);
+		return this;
+	}
 
-	public void start() {
+	/**
+	 * Start the DBus service backend
+	 */
+	public final void start() {
 		try {
             dbusConnection = DBusConnection.getConnection(DBusConnection.SESSION);
             //Service Name can be changed
             dbusConnection.requestBusName("org.ow2.erocci.backend");
             //EROCCI consider that the service is available on / (convention)
-            dbusConnection.exportObject("/", new CoreImpl());
+            dbusConnection.exportObject("/", coreImpl);
 
             System.out.println(dbusConnection.getUniqueName());
 
@@ -38,9 +55,19 @@ public class BackendDBusService {
             e.printStackTrace(System.err);
         }
 	}
-	
+
+	/**
+	 * Sample main program
+	 * @param args
+	 */
 	public static void main(String[] args) {
-		new BackendDBusService().start();
+		new BackendDBusService()
+			.addEntityFactory("compute", new DefaultEntityFactory())
+			.addEntityFactory("storage", new DefaultEntityFactory())
+			.addEntityFactory("storagelink", new DefaultEntityFactory())
+			.addEntityFactory("network", new DefaultEntityFactory())
+			.addEntityFactory("networkinterface", new DefaultEntityFactory())
+			.start();
 	}
 
 }
