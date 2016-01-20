@@ -20,6 +20,7 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Logger;
 
 /**
  * Default OCCI entity class.
@@ -28,6 +29,8 @@ import java.util.Map;
  *
  */
 public class Entity {
+
+	private Logger logger = Logger.getLogger(this.getClass().getName());
 
 	private String id;
 	private String title;
@@ -112,11 +115,11 @@ public class Entity {
 		return links;
 	}
 
-	public String getTitle() {
+	public final String getTitle() {
 		return title;
 	}
 
-	public void setTitle(String title) {
+	public final void setTitle(String title) {
 		this.title = title;
 		attributes.put(OcciConstants.ATTRIBUTE_TITLE, title);
 	}
@@ -158,8 +161,16 @@ public class Entity {
 	}
 	
 	// OCCI action methods to override
-	public void occiPostCreate() { }
-	public void occiPreDelete() { }
-	public void occiPostUpdate(Map<String, String> attributes) { }
-	
+	public void occiPostCreate() {
+		logger.info("Generic occiPostCreate() method invoked - should be overridden ?");
+	}
+
+	public void occiPreDelete() {
+		logger.info("Generic occiPreDelete() method invoked - should be overridden ?");
+	}
+
+	public void occiPostUpdate(Map<String, String> attributes) {
+		logger.info("Generic occiPostUpdate() method invoked - should be overridden ?");
+	}
+
 }

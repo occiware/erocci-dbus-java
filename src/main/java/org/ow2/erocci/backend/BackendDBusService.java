@@ -57,12 +57,17 @@ public class BackendDBusService {
 
 	/**
 	 * Start the DBus service backend
+	 * @param name The DBus service name
+	 * (if null or empty, the package name of the current class will be used).
 	 */
-	public final void start() {
+	public final void start(String dbusServiceName) {
 		try {
+			if(dbusServiceName == null || dbusServiceName.trim().length() < 1)
+				dbusServiceName = this.getClass().getPackage().getName();
+
             dbusConnection = DBusConnection.getConnection(DBusConnection.SESSION);
             //Service Name can be changed
-            dbusConnection.requestBusName("org.ow2.erocci.backend");
+            dbusConnection.requestBusName(dbusServiceName.trim());
             //EROCCI considers that the service is available on / (convention)
             dbusConnection.exportObject("/", coreImpl);
 
@@ -85,7 +90,7 @@ public class BackendDBusService {
 			.addEntityFactory("http://schemas.ogf.org/occi/infrastructure#storagelink", new DefaultEntityFactory())
 			.addEntityFactory("http://schemas.ogf.org/occi/infrastructure#network", new DefaultEntityFactory())
 			.addEntityFactory("http://schemas.ogf.org/occi/infrastructure#networkinterface", new DefaultEntityFactory())
-			.start();
+			.start("org.ow2.erocci.backend");
 	}
 
 }
