@@ -36,7 +36,14 @@ public class Utils {
 		if(vmap == null) return null;
 		Map<String, String> map = new HashMap<String, String>();
 		for(Entry<String, Variant> e : vmap.entrySet()) {
-			map.put(e.getKey(), e.getValue().getValue().toString());
+			Variant variant = e.getValue();
+			// If byte array ("ay" for DBus), assume String !
+			if("ay".equals(variant.getSig())) {
+				map.put(e.getKey(), new String((byte[])variant.getValue()));
+			} else {
+				//TODO convert other types than String ??
+				System.err.println("WARNING: trying to convert variant of type " + variant.getSig());
+			}
 		}
 		return map;
 	}

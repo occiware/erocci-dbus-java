@@ -139,7 +139,7 @@ public class CoreImpl implements core, DBus.Properties {
 			java.util.List<String> mixins, Map<String, Variant> attributes,
 			String owner) {
 
-		logger.info("SaveResource invoked with id=" + id + ", kind=" + kind + ", mixins=" + mixins + ", attributes=" + attributes);
+		logger.info("SaveResource invoked with id=" + id + ", kind=" + kind + ", mixins=" + mixins + ", attributes=" + Utils.convertVariantMap(attributes));
 
 		EntityFactory factory = this.factories.get(kind);
 		
