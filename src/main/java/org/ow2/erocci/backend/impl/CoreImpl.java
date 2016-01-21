@@ -195,6 +195,8 @@ public class CoreImpl implements core, DBus.Properties {
 
 		source.getLinks().add(link);
 		entities.put(id, link);
+		
+		link.occiPostCreate();
 
 		return id;
 	}
@@ -226,6 +228,8 @@ public class CoreImpl implements core, DBus.Properties {
 			Entity entity = this.entities.get(entityId);
 			if(! entity.getMixins().contains(id)) entity.getMixins().add(id);
 			entity.incrementSerial();
+			
+			entity.occiMixinAdded(id);
 		}
 	}
 

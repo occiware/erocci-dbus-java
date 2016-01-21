@@ -173,4 +173,8 @@ public class Entity {
 		logger.info("Generic occiPostUpdate() method invoked - should be overridden ?");
 	}
 
+	public void occiMixinAdded(String mixinId) {
+		logger.info("Generic occiMixinAdded() method invoked - should be overridden ?");
+	}
+
 }
