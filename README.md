@@ -10,14 +10,6 @@
 $ make deps
 ```
 
-
-JDK + maven...
-
-Installation of dbus-java packages in the maven repository
-(.m2/repository/) :
-* Install dbus-java : apt-get install dbus-java-bin
-* Launch dbus-java-install-script.sh
-
 See "troubleshooting" part below in case of error.
 
 ## Quickstart
