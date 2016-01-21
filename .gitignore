@@ -2,6 +2,7 @@
 src/generated/**
 
 *.class
+*~
 
 # Package Files #
 *.jar
