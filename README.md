@@ -2,12 +2,13 @@
 
 ## Prerequisite
 
-JDK + maven...
+* JDK
+* Maven
+* java D-Bus implementation. It can be installed with:
 
-Installation of dbus-java packages in the maven repository
-(.m2/repository/) :
-* Install dbus-java : apt-get install dbus-java-bin
-* Launch dbus-java-install-script.sh
+```sh
+$ make deps
+```
 
 See "troubleshooting" part below in case of error.
 
