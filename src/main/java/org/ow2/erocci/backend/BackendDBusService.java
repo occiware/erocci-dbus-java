@@ -44,6 +44,7 @@ public class BackendDBusService {
 		return this;
 	}
 
+	
 	/**
 	 * Register an OCCI entity factory, by entity category (OCCI kind).
 	 * @param kind The entity category name (OCCI kind = scheme#term)
@@ -52,6 +53,15 @@ public class BackendDBusService {
 	 */
 	public final BackendDBusService addEntityFactory(String kind, EntityFactory entityFactory) {
 		coreImpl.addEntityFactory(kind, entityFactory);
+		return this;
+	}
+
+	/**
+	 * Register a default entity factory, to be used if no more relevant one is found.
+	 * @param factory The default factory
+	 */
+	public final BackendDBusService setDefaultEntityFactory(EntityFactory factory) {
+		coreImpl.setDefaultEntityFactory(factory);
 		return this;
 	}
 

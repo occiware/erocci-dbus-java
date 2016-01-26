@@ -50,6 +50,7 @@ public class CoreImpl implements core, DBus.Properties {
 	private String schema;
 
 	private Map<String, EntityFactory> factories = new HashMap<String, EntityFactory>();
+	private EntityFactory defaultEntityFactory;
 	private Map<String, Entity> entities = new HashMap<String, Entity>();
 	private Map<String, List<Entity>> categoryIdToEntity = new HashMap<String, List<Entity>>();
 	private Map<String, List<Struct2>> currentListRequests = new HashMap<String, List<Struct2>>();
@@ -60,6 +61,14 @@ public class CoreImpl implements core, DBus.Properties {
 	public CoreImpl() {
 		// Try to pick default schema (ignore error).
 		setSchema(this.getClass().getResourceAsStream("/schema.xml"));
+	}
+
+	/**
+	 * Register a default entity factory, to be used if no more relevant one is found.
+	 * @param factory The default factory
+	 */
+	public void setDefaultEntityFactory(EntityFactory factory) {
+		this.defaultEntityFactory = factory;
 	}
 
 	/**
@@ -142,6 +151,10 @@ public class CoreImpl implements core, DBus.Properties {
 		logger.info("SaveResource invoked with id=" + id + ", kind=" + kind + ", mixins=" + mixins + ", attributes=" + Utils.convertVariantMap(attributes));
 
 		EntityFactory factory = this.factories.get(kind);
+		if(factory == null) {
+			logger.fine("No factory found for kind " + kind + ": trying default");
+			factory = this.defaultEntityFactory;
+		}
 		
 		if(factory != null) {
 		
@@ -162,7 +175,7 @@ public class CoreImpl implements core, DBus.Properties {
 
 			return id;
 		} else {
-			logger.info("SaveResource: unknown kind, no factory found");
+			logger.info("SaveResource: unknown kind, no factory found and no default provided");
 			return null;
 		}
 	}
