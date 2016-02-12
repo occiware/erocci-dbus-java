@@ -33,13 +33,12 @@ public class MixinImpl implements mixin {
 
 	@Override
 	public void AddMixin(String id, String location, String owner) {
-		// TODO Auto-generated method stub
-
+		// TODO : Add a mixin.
 	}
 
 	@Override
 	public void DelMixin(String id) {
-		// TODO Auto-generated method stub
+		// TODO : delete a mixin.
 
 	}
 

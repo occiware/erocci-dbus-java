@@ -28,6 +28,7 @@ import java.util.logging.Logger;
 import org.freedesktop.DBus;
 import org.freedesktop.dbus.UInt32;
 import org.freedesktop.dbus.Variant;
+import org.occiware.clouddesigner.occi.Configuration;
 import org.ow2.erocci.backend.Pair;
 import org.ow2.erocci.backend.Quad;
 import org.ow2.erocci.backend.Struct1;
@@ -48,13 +49,14 @@ public class CoreImpl implements core, DBus.Properties {
 	private Logger logger = Logger.getLogger(this.getClass().getName());
 	
 	private String schema;
-
+	
 	private Map<String, EntityFactory> factories = new HashMap<String, EntityFactory>();
 	private EntityFactory defaultEntityFactory;
 	private Map<String, Entity> entities = new HashMap<String, Entity>();
 	private Map<String, List<Entity>> categoryIdToEntity = new HashMap<String, List<Entity>>();
 	private Map<String, List<Struct2>> currentListRequests = new HashMap<String, List<Struct2>>();
 
+	
 	/**
 	 * Default constructor
 	 */
@@ -114,23 +116,28 @@ public class CoreImpl implements core, DBus.Properties {
 	
 	@Override
 	public <A> void Set(String arg0, String arg1, A arg2) {
-		// TODO Auto-generated method stub
+		logger.info("set method invoked with arg0 : " + arg0);
+		logger.info("set method invoked with arg1 : " + arg1);
+		logger.info("set method invoked with arg2 : " + arg2);
+		
 	}
 
 	@Override
 	public boolean isRemote() {
-		// TODO Auto-generated method stub
+		logger.info("is remote invoked");
 		return false;
 	}
 
 	@Override
 	public void Init(Map<String, Variant> opts) {
-		// TODO Auto-generated method stub
+		logger.info("Init method invoked");
+		
+		
 	}
 
 	@Override
 	public void Terminate() {
-		// TODO Auto-generated method stub
+		logger.info("Terminate method invoked");
 	}
 
 	/**
@@ -175,7 +182,7 @@ public class CoreImpl implements core, DBus.Properties {
 
 			return id;
 		} else {
-			logger.info("SaveResource: unknown kind, no factory found and no default provided");
+			logger.warning("SaveResource: unknown kind, no factory found and no default provided");
 			return null;
 		}
 	}
@@ -230,8 +237,8 @@ public class CoreImpl implements core, DBus.Properties {
 			entity.updateAttributes(attrs);
 			entity.occiPostUpdate(attrs);
 		}
-		// TODO Auto-generated method stub
-		return null;
+		
+		return attributes;
 	}
 
 	@Override
@@ -274,6 +281,8 @@ public class CoreImpl implements core, DBus.Properties {
 		logger.info("Load invoked with opaque_id=" + opaque_id);
 		// TODO What is opaque_id ??
 		Entity entity = entities.get(opaque_id);
+		
+		// TODO : Attention ici, le dernier attribut peut poser des problèmes lors du lancement d'un delete resource.
 		return new Quad(entity.getId(),
 				entity.getKind(), entity.getMixins(), entity.getAttributes());
 	}
@@ -319,9 +328,14 @@ public class CoreImpl implements core, DBus.Properties {
 		return new LinkedList<Struct2>(); // Empty list
 	}
 
+	/**
+	 * Supprime la (les) resources du backend (pas du provider).
+	 * 
+	 * @param id 
+	 */
 	@Override
 	public void Delete(String id) {
-		// TODO unclear what this method exactly should do...
+		
 		logger.info("Delete invoked");
 
 		Entity removed = entities.remove(id);

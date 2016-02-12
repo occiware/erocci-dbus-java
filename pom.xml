@@ -23,7 +23,10 @@
   <artifactId>erocci-dbus-java</artifactId>
   <version>1.0-SNAPSHOT</version>
   <name>erocci-dbus-java</name>
-
+  <properties>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+  </properties>
+  
   <dependencies>
     <dependency>
       <groupId>net.windwards.3rdparty</groupId>
@@ -50,6 +53,37 @@
       <groupId>net.windwards.3rdparty</groupId>
       <artifactId>matthew-unix</artifactId>
       <version>0.5</version>
+    </dependency>
+    <dependency>
+      <!-- OCCI Core Model implementation. -->
+      <groupId>Clouddesigner</groupId>
+      <artifactId>org.occiware.clouddesigner.occi</artifactId>
+      <version>0.1.0-SNAPSHOT</version>
+      <scope>compile</scope>
+    </dependency>
+    <!-- Requires Eclipse Modeling Framework. -->
+     <dependency>
+		<groupId>org.eclipse.emf</groupId>
+		<artifactId>org.eclipse.emf.ecore</artifactId>
+		<version>2.11.1-v20150805-0538</version>
+	</dependency>
+    <dependency>
+		<groupId>org.eclipse.emf</groupId>
+		<artifactId>org.eclipse.emf.common</artifactId>
+		<version>2.11.0-v20150805-0538</version>
+	</dependency>    
+    <dependency>
+		<groupId>org.eclipse.emf</groupId>
+		<artifactId>org.eclipse.emf.ecore.xmi</artifactId>
+		<version>2.11.1-v20150805-0538</version>
+		<scope>runtime</scope>
+	</dependency>
+    <!-- Eclipse OCL required. -->
+    <dependency>
+      <groupId>org.eclipse.ocl</groupId>
+      <artifactId>org.eclipse.ocl.pivot</artifactId>
+      <version>1.0.1.v20150908-1239</version>
+      <scope>compile</scope>
     </dependency>
   </dependencies>
 

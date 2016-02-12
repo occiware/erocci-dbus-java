@@ -17,9 +17,14 @@
 package org.ow2.erocci.backend;
 
 import java.io.InputStream;
+import java.util.logging.Logger;
 
+import org.eclipse.ocl.pivot.evaluation.ModelManager;
 import org.freedesktop.dbus.DBusConnection;
+import org.freedesktop.dbus.DBusSignal;
+import org.freedesktop.dbus.bin.CreateInterface;
 import org.freedesktop.dbus.exceptions.DBusException;
+import org.ow2.erocci.backend.impl.ActionImpl;
 import org.ow2.erocci.backend.impl.CoreImpl;
 import org.ow2.erocci.model.DefaultEntityFactory;
 import org.ow2.erocci.model.EntityFactory;
@@ -32,8 +37,11 @@ import org.ow2.erocci.model.EntityFactory;
  */
 public class BackendDBusService {
 
+	private Logger logger = Logger.getLogger(this.getClass().getName());
+	
 	private DBusConnection dbusConnection;
 	private CoreImpl coreImpl = new CoreImpl();
+	private ActionImpl actionImpl = new ActionImpl();
 
 	/**
 	 * Set OCCI schema
@@ -80,10 +88,13 @@ public class BackendDBusService {
             dbusConnection.requestBusName(dbusServiceName.trim());
             //EROCCI considers that the service is available on / (convention)
             dbusConnection.exportObject("/", coreImpl);
-
-            System.out.println(dbusConnection.getUniqueName());
+            
+            // dbusConnection.exportObject("/", actionImpl);
+            
+            logger.info("Connected to dbus with unique name : " + dbusConnection.getUniqueName());
 
         } catch (DBusException e) {
+        	logger.warning("Error while connecting to DBUS !");
             e.printStackTrace(System.err);
         }
 	}
@@ -101,6 +112,8 @@ public class BackendDBusService {
 			.addEntityFactory("http://schemas.ogf.org/occi/infrastructure#network", new DefaultEntityFactory())
 			.addEntityFactory("http://schemas.ogf.org/occi/infrastructure#networkinterface", new DefaultEntityFactory())
 			.start("org.ow2.erocci.backend");
+		
+		
 	}
 
 }

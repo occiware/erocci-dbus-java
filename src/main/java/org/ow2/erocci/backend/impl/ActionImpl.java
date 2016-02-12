@@ -17,6 +17,7 @@
 package org.ow2.erocci.backend.impl;
 
 import java.util.Map;
+import java.util.logging.Logger;
 
 import org.freedesktop.dbus.Variant;
 import org.ow2.erocci.backend.action;
@@ -27,18 +28,19 @@ import org.ow2.erocci.backend.action;
  *
  */
 public class ActionImpl implements action {
-
+	private Logger logger = Logger.getLogger(this.getClass().getName());
+	
 	@Override
 	public boolean isRemote() {
-		// TODO Auto-generated method stub
+		
 		return false;
 	}
 
 	@Override
 	public void Action(String id, String action_id,
 			Map<String, Variant> attributes) {
-		// TODO Auto-generated method stub
-
+		logger.info("action " + action_id + " invoked");
 	}
+	
 
 }
