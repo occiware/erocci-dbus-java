@@ -29,31 +29,34 @@ import org.freedesktop.DBus;
 import org.freedesktop.dbus.UInt32;
 import org.freedesktop.dbus.Variant;
 import org.occiware.clouddesigner.occi.Configuration;
+import org.occiware.clouddesigner.occi.Entity;
 import org.ow2.erocci.backend.Pair;
 import org.ow2.erocci.backend.Quad;
 import org.ow2.erocci.backend.Struct1;
 import org.ow2.erocci.backend.Struct2;
 import org.ow2.erocci.backend.core;
-import org.ow2.erocci.model.Entity;
-import org.ow2.erocci.model.EntityFactory;
-import org.ow2.erocci.model.OcciConstants;
+import org.ow2.erocci.model.ConfigurationManager;
+import org.ow2.erocci.model.DefaultActionExecutor;
 
 /**
  * Implementation of OCCI core.
+ * 
  * @author Pierre-Yves Gibello - Linagora
- *
+ *			Christophe Gourdin - Inria
  */
 public class CoreImpl implements core, DBus.Properties {
 
 	public static byte NODE_ENTITY = 0;
 	private Logger logger = Logger.getLogger(this.getClass().getName());
 	
+	
+	
 	private String schema;
 	
-	private Map<String, EntityFactory> factories = new HashMap<String, EntityFactory>();
-	private EntityFactory defaultEntityFactory;
-	private Map<String, Entity> entities = new HashMap<String, Entity>();
-	private Map<String, List<Entity>> categoryIdToEntity = new HashMap<String, List<Entity>>();
+//	private Map<String, EntityFactory> factories = new HashMap<String, EntityFactory>();
+//	private EntityFactory defaultEntityFactory;
+//	private Map<String, Entity> entities = new HashMap<String, Entity>();
+//	private Map<String, List<Entity>> categoryIdToEntity = new HashMap<String, List<Entity>>();
 	private Map<String, List<Struct2>> currentListRequests = new HashMap<String, List<Struct2>>();
 
 	
@@ -62,25 +65,26 @@ public class CoreImpl implements core, DBus.Properties {
 	 */
 	public CoreImpl() {
 		// Try to pick default schema (ignore error).
+		// CGN : Represent a generic occi extension, with extension designed, it should be another one, for instance, this will be used as reference.
 		setSchema(this.getClass().getResourceAsStream("/schema.xml"));
 	}
 
-	/**
-	 * Register a default entity factory, to be used if no more relevant one is found.
-	 * @param factory The default factory
-	 */
-	public void setDefaultEntityFactory(EntityFactory factory) {
-		this.defaultEntityFactory = factory;
-	}
-
-	/**
-	 * Register an OCCI entity factory, by entity category (OCCI kind).
-	 * @param kind The entity category name (OCCI kind = scheme#term)
-	 * @param factory The entity factory, to create entities of specified category
-	 */
-	public void addEntityFactory(String kind, EntityFactory factory) {
-		factories.put(kind, factory);
-	}
+//	/**
+//	 * Register a default entity factory, to be used if no more relevant one is found.
+//	 * @param factory The default factory
+//	 */
+//	public void setDefaultEntityFactory(EntityFactory factory) {
+//		this.defaultEntityFactory = factory;
+//	}
+//
+//	/**
+//	 * Register an OCCI entity factory, by entity category (OCCI kind).
+//	 * @param kind The entity category name (OCCI kind = scheme#term)
+//	 * @param factory The entity factory, to create entities of specified category
+//	 */
+//	public void addEntityFactory(String kind, EntityFactory factory) {
+//		factories.put(kind, factory);
+//	}
 
 	/**
 	 * Set OCCI schema
@@ -131,13 +135,16 @@ public class CoreImpl implements core, DBus.Properties {
 	@Override
 	public void Init(Map<String, Variant> opts) {
 		logger.info("Init method invoked");
-		
+		// It may be here for using a new extension schema, to check.
 		
 	}
 
 	@Override
 	public void Terminate() {
 		logger.info("Terminate method invoked");
+		// TODO : Release all resources (and link) created and referenced here.
+		// TODO : Check with occi spec and erocci spec.
+		
 	}
 
 	/**
@@ -156,35 +163,44 @@ public class CoreImpl implements core, DBus.Properties {
 			String owner) {
 
 		logger.info("SaveResource invoked with id=" + id + ", kind=" + kind + ", mixins=" + mixins + ", attributes=" + Utils.convertVariantMap(attributes));
-
-		EntityFactory factory = this.factories.get(kind);
-		if(factory == null) {
-			logger.fine("No factory found for kind " + kind + ": trying default");
-			factory = this.defaultEntityFactory;
-		}
 		
-		if(factory != null) {
+		ConfigurationManager.addResourceToConfiguration(id, kind, mixins, attributes, owner);
 		
-			Entity entity = factory.newEntity(id, OcciConstants.TYPE_RESOURCE,
-					kind, mixins, Utils.convertVariantMap(attributes), owner, 1);
-
-			// 1st version of a resource, with serial no = 1
-			entities.put(id, entity);
-
-			entity.occiPostCreate();
-
-			List<Entity> entities = categoryIdToEntity.get(kind);
-			if(entities == null) {
-				entities = new LinkedList<Entity>();
-				categoryIdToEntity.put(kind, entities);
-			}
-			entities.add(entity);
-
-			return id;
-		} else {
-			logger.warning("SaveResource: unknown kind, no factory found and no default provided");
-			return null;
-		}
+		DefaultActionExecutor actionExecutor = new DefaultActionExecutor();
+		actionExecutor.occiPostCreate(ConfigurationManager.findResource(owner, id));
+	
+		return id;
+//		
+//		EntityFactory factory = this.factories.get(kind);
+//		if(factory == null) {
+//			logger.fine("No factory found for kind " + kind + ": trying default");
+//			factory = this.defaultEntityFactory;
+//		}
+//		
+//		if(factory != null) {
+//		
+//			Entity entity = factory.newEntity(id, OcciConstants.TYPE_RESOURCE,
+//					kind, mixins, Utils.convertVariantMap(attributes), owner, 1);
+//
+//			// 1st version of a resource, with serial no = 1
+//			entities.put(id, entity);
+//
+//			entity.occiPostCreate();
+//
+//			List<Entity> entities = categoryIdToEntity.get(kind);
+//			if(entities == null) {
+//				entities = new LinkedList<Entity>();
+//				categoryIdToEntity.put(kind, entities);
+//			}
+//			entities.add(entity);
+//
+//			return id;
+//		} else {
+//			logger.warning("SaveResource: unknown kind, no factory found and no default provided");
+//			return null;
+//		}
+		// return id;
+		
 	}
 
 	/**
@@ -206,17 +222,23 @@ public class CoreImpl implements core, DBus.Properties {
 		
 		logger.info("SaveLink invoked");
 
-		// 1st version of a link, with serial no = 1
-		Entity link = new Entity(id, OcciConstants.TYPE_LINK,
-				kind, mixins, Utils.convertVariantMap(attributes), owner, 1);
-		Entity source = entities.get(src);
-		link.setSource(source);
-		link.setTarget(entities.get(target));
-
-		source.getLinks().add(link);
-		entities.put(id, link);
+		ConfigurationManager.addLinkToConfiguration(id, kind, mixins, src, target, attributes, owner);
 		
-		link.occiPostCreate();
+		DefaultActionExecutor defaultActionExecutor = new DefaultActionExecutor();
+		defaultActionExecutor.occiPostCreate(ConfigurationManager.findLink(owner, id, src));
+		
+		
+		// 1st version of a link, with serial no = 1
+//		Entity link = new Entity(id, OcciConstants.TYPE_LINK,
+//				kind, mixins, Utils.convertVariantMap(attributes), owner, 1);
+//		Entity source = entities.get(src);
+//		link.setSource(source);
+//		link.setTarget(entities.get(target));
+//
+//		source.getLinks().add(link);
+//		entities.put(id, link);
+//		
+//		link.occiPostCreate();
 
 		return id;
 	}
@@ -231,28 +253,41 @@ public class CoreImpl implements core, DBus.Properties {
 			Map<String, Variant> attributes) {
 		logger.info("Update invoked");
 		
-		Entity entity = entities.get(id);
-		if(entity != null) {
-			Map<String, String> attrs = Utils.convertVariantMap(attributes);
-			entity.updateAttributes(attrs);
-			entity.occiPostUpdate(attrs);
-		}
+		// update attributes .
+		ConfigurationManager.updateAttributesForEntity(ConfigurationManager.DEFAULT_OWNER, id, attributes);
+		
+//		Entity entity = entities.get(id);
+//		if(entity != null) {
+//			Map<String, String> attrs = Utils.convertVariantMap(attributes);
+//			entity.updateAttributes(attrs);
+//			entity.occiPostUpdate(attrs);
+//		}
 		
 		return attributes;
 	}
 
+	/**
+	 * Associate a list of entities with a mixin, replacing existing list if any.
+	 * 
+	 * @param id (mixin id)
+	 * @param entityIds (list of entity Ids)
+	 */
 	@Override
 	public void SaveMixin(String id, java.util.List<String> entities) {
 		logger.info("SaveMixin invoked");
-		for(String entityId : entities) {
-			Entity entity = this.entities.get(entityId);
-			if(! entity.getMixins().contains(id)) entity.getMixins().add(id);
-			entity.incrementSerial();
-			
-			entity.occiMixinAdded(id);
-		}
+		
+		ConfigurationManager.saveMixinForEntities(ConfigurationManager.DEFAULT_OWNER, id, entities);
+		
+//		for(String entityId : entities) {
+//			Entity entity = this.entities.get(entityId);
+//			if(! entity.getMixins().contains(id)) entity.getMixins().add(id);
+//			entity.incrementSerial();
+//			
+//			entity.occiMixinAdded(id);
+//		}
 	}
 
+	
 	@Override
 	public void UpdateMixin(String id, java.util.List<String> entities) {
 		logger.info("UpdateMixin invoked");
@@ -260,16 +295,24 @@ public class CoreImpl implements core, DBus.Properties {
 		SaveMixin(id, entities);
 	}
 
+	/**
+	 * Find 
+	 */
 	@Override
 	//TODO unclear why this one returns a list of Struct...
 	public java.util.List<Struct1> Find(String id) {
 		logger.info("Find invoked with id=" + id);
-
+		
 		List<Struct1> ret = new LinkedList<Struct1>();
-		Entity entity = entities.get(id);
+		
+		// TODO : to update when an owner will be in parameter's method.
+		Entity entity = ConfigurationManager.findEntity(ConfigurationManager.DEFAULT_OWNER, id);
+		
 		if(entity != null) {
+			
 			ret.add(new Struct1(CoreImpl.NODE_ENTITY,
-					new Variant<String>(id), entity.getOwner(), new UInt32(entity.getSerial())));
+					new Variant<String>(id), ConfigurationManager.DEFAULT_OWNER, Utils.createEtagNumber(entity)));
+			
 		}
 
 		return ret;
@@ -279,7 +322,9 @@ public class CoreImpl implements core, DBus.Properties {
 	public Quad<String, String, java.util.List<String>, Map<String, Variant>> Load(
 			Variant opaque_id) {
 		logger.info("Load invoked with opaque_id=" + opaque_id);
-		// TODO What is opaque_id ??
+		
+		TODO here !!!!
+		
 		Entity entity = entities.get(opaque_id);
 		
 		// TODO : Attention ici, le dernier attribut peut poser des problèmes lors du lancement d'un delete resource.

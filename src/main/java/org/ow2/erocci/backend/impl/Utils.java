@@ -16,13 +16,19 @@
 
 package org.ow2.erocci.backend.impl;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.ObjectOutputStream;
 import java.io.OutputStream;
+import java.math.BigInteger;
 import java.nio.charset.Charset;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.UUID;
 import java.util.logging.Logger;
 
 import org.freedesktop.dbus.UInt16;
@@ -58,15 +64,17 @@ public class Utils {
 	// platform-specific mechanism (mnemonic: h for handle)
 	//
 	/**
-	 * Converti une map String, Variant en Map<String, String>. Variant est un
-	 * type spécifique à DBUS.
+	 * Convert a map <String, Variant> to Map<String, String>. Variant is a
+	 * specific type from DBUS.
 	 * 
 	 * @param vmap
-	 * @return a Map<String, String> OR null value
+	 * @return a Map<String, String>, the map will be empty if vmap is null.
 	 */
 	public static Map<String, String> convertVariantMap(Map<String, Variant> vmap) {
-		if (vmap == null)
-			return null;
+
+		if (vmap == null) {
+			vmap = new HashMap<String, Variant>();
+		}
 		Map<String, String> map = new HashMap<String, String>();
 		for (Entry<String, Variant> e : vmap.entrySet()) {
 			Variant variant = e.getValue();
@@ -77,39 +85,39 @@ public class Utils {
 					map.put(e.getKey(), new String((byte[]) variant.getValue(), Charset.forName("UTF-8")));
 					break;
 				case "b": // boolean (0 for false or 1 for true)
-						Boolean bool = (Boolean) variant.getValue();
-						map.put(e.getKey(), bool.toString());
+					Boolean bool = (Boolean) variant.getValue();
+					map.put(e.getKey(), bool.toString());
 					break;
 				case "n": // signed integer 16
 					Short valSho = (Short) variant.getValue();
 					map.put(e.getKey(), valSho.toString());
-					
+
 					break;
 				case "q": // unsigned integer 16
 					UInt16 uint16Val = (UInt16) variant.getValue();
 					map.put(e.getKey(), uint16Val.toString());
-					
+
 					break;
 				case "i": // signed integer 32
 					Integer valInt = (Integer) variant.getValue();
 					map.put(e.getKey(), valInt.toString());
-					
+
 					break;
 				case "u": // unsigned integer 32
-				
+
 					UInt32 uint32Val = (UInt32) variant.getValue();
 					map.put(e.getKey(), uint32Val.toString());
-					
+
 					break;
 				case "x": // signed integer 64
 					Long lonVal = (Long) variant.getValue();
 					map.put(e.getKey(), lonVal.toString());
-					
+
 					break;
 				case "t": // unsigned integer 64
 					UInt64 uint64Val = (UInt64) variant.getValue();
 					map.put(e.getKey(), uint64Val.toString());
-					
+
 					break;
 				case "d": // IEEE 754 double-precision floating point
 					Double douVal = (Double) variant.getValue();
@@ -118,29 +126,38 @@ public class Utils {
 				case "s":
 					String valStr = (String) variant.getValue();
 					map.put(e.getKey(), valStr);
-					
+
 				case "h": // Unsigned 32-bit integer representing an index into
 							// an out-of-band array of file descriptors,
 							// transferred via some platform-specific mechanism
 							// (mnemonic: h for handle)
 					UInt32 uint32ValHandle = (UInt32) variant.getValue();
 					map.put(e.getKey(), uint32ValHandle.toString());
-					
+
 					break;
 				default:
 					logger.warning("WARNING: trying to convert variant of type " + variant.getSig()
 							+ " but this doesnt exist for now, and will be implemented in future");
 					// TODO : Report exception.
+
 					break;
 				}
 			} else {
 				// TODO : Report exception.
 				// Variant must not be null.
+				logger.warning("WARNING: entry variant type is null, check this for key: " + e.getKey());
 			}
 		}
 		return map;
 	}
 
+	/**
+	 * Simple copy a stream with a buffer of 1024 bytes into an outputstream.
+	 * 
+	 * @param in
+	 * @param os
+	 * @throws IOException
+	 */
 	public static void copyStream(InputStream in, OutputStream os) throws IOException {
 		byte[] buf = new byte[1024];
 		int len;
@@ -149,6 +166,11 @@ public class Utils {
 		}
 	}
 
+	/**
+	 * Close quietly an inputstream without exception thrown.
+	 * 
+	 * @param in
+	 */
 	public static void closeQuietly(InputStream in) {
 		if (in != null) {
 			try {
@@ -158,6 +180,11 @@ public class Utils {
 		}
 	}
 
+	/**
+	 * Close quietly an outputstream without exception thrown.
+	 * 
+	 * @param os
+	 */
 	public static void closeQuietly(OutputStream os) {
 		if (os != null) {
 			try {
@@ -165,6 +192,74 @@ public class Utils {
 			} catch (IOException e) {
 				/* ignore */ }
 		}
+	}
+
+	/**
+	 * Serialize an object to make an MD5 hash after call getMd5Digest Method. 
+	 * @param obj
+	 * @return
+	 * @throws IOException
+	 */
+	public static byte[] serialize(Object obj) throws IOException {
+		byte[] byteArray = null;
+		ByteArrayOutputStream baos = null;
+		ObjectOutputStream out = null;
+		try {
+			// These objects are closed in the finally.
+			baos = new ByteArrayOutputStream();
+			out = new ObjectOutputStream(baos);
+			out.writeObject(obj);
+			byteArray = baos.toByteArray();
+		} finally {
+			if (out != null) {
+				out.close();
+			}
+		}
+		return byteArray;
+	}
+
+	/**
+	 * Create a MD5 hash.
+	 * @param bytes (array of bytes).
+	 * @return
+	 */
+	public static String getMd5Digest(byte[] bytes) {
+		MessageDigest md;
+		try {
+			md = MessageDigest.getInstance("MD5");
+		} catch (NoSuchAlgorithmException e) {
+			return "1";
+			// throw new RuntimeException("MD5 cryptographic algorithm is not
+			// available.", e);
+		}
+		byte[] messageDigest = md.digest(bytes);
+		BigInteger number = new BigInteger(1, messageDigest);
+		// prepend a zero to get a "proper" MD5 hash value
+		StringBuffer sb = new StringBuffer('0');
+		sb.append(number.toString(16));
+		return sb.toString();
+	}
+	
+	/**
+	 * Create an eTag (Serial number) for dbus interaction.
+	 * @param an object.
+	 * @return an eTag number.
+	 */
+	public static UInt32 createEtagNumber(Object obj) {
+		String eTag = null;
+		try {
+			eTag = getMd5Digest(serialize(obj));
+		} catch (IOException ioe) {
+			logger.warning("IOException thrown : " + ioe.getMessage());
+			eTag = "1";
+		}
+		
+		StringBuilder sb = new StringBuilder();
+	    for (char c : eTag.toCharArray()) {
+	    	sb.append((int)c);
+	    }
+	    return new UInt32(sb.toString());
+		
 	}
 
 	private static int uniqueInt = 1;

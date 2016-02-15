@@ -26,6 +26,7 @@ import org.freedesktop.dbus.bin.CreateInterface;
 import org.freedesktop.dbus.exceptions.DBusException;
 import org.ow2.erocci.backend.impl.ActionImpl;
 import org.ow2.erocci.backend.impl.CoreImpl;
+import org.ow2.erocci.model.ConfigurationManager;
 import org.ow2.erocci.model.DefaultEntityFactory;
 import org.ow2.erocci.model.EntityFactory;
 
@@ -42,7 +43,8 @@ public class BackendDBusService {
 	private DBusConnection dbusConnection;
 	private CoreImpl coreImpl = new CoreImpl();
 	private ActionImpl actionImpl = new ActionImpl();
-
+	private ConfigurationManager configManager;
+	
 	/**
 	 * Set OCCI schema
 	 * @param in InputStream to read schema from (will be closed at the end of this call)
@@ -53,23 +55,33 @@ public class BackendDBusService {
 	}
 
 	
-	/**
-	 * Register an OCCI entity factory, by entity category (OCCI kind).
-	 * @param kind The entity category name (OCCI kind = scheme#term)
-	 * @param entityFactory The entity factory, to create entities of specified category
-	 * @return The current DBus service backend
-	 */
-	public final BackendDBusService addEntityFactory(String kind, EntityFactory entityFactory) {
-		coreImpl.addEntityFactory(kind, entityFactory);
-		return this;
-	}
+//	/**
+//	 * Register an OCCI entity factory, by entity category (OCCI kind).
+//	 * @param kind The entity category name (OCCI kind = scheme#term)
+//	 * @param entityFactory The entity factory, to create entities of specified category
+//	 * @return The current DBus service backend
+//	 */
+//	public final BackendDBusService addEntityFactory(String kind, EntityFactory entityFactory) {
+//		coreImpl.addEntityFactory(kind, entityFactory);
+//		return this;
+//	}
 
+//	/**
+//	 * Register a default entity factory, to be used if no more relevant one is found.
+//	 * @param factory The default factory
+//	 */
+//	public final BackendDBusService setDefaultEntityFactory(EntityFactory factory) {
+//		coreImpl.setDefaultEntityFactory(factory);
+//		return this;
+//	}
+	
 	/**
-	 * Register a default entity factory, to be used if no more relevant one is found.
-	 * @param factory The default factory
+	 * Create a new Configuration manager.
+	 * @return
 	 */
-	public final BackendDBusService setDefaultEntityFactory(EntityFactory factory) {
-		coreImpl.setDefaultEntityFactory(factory);
+	public final BackendDBusService createConfigManager() {
+		configManager = new ConfigurationManager();
+		
 		return this;
 	}
 
@@ -106,11 +118,12 @@ public class BackendDBusService {
 	public static void main(String[] args) {
 		new BackendDBusService()
 			.setSchema(BackendDBusService.class.getResourceAsStream("/schema.xml"))
-			.addEntityFactory("http://schemas.ogf.org/occi/infrastructure#compute", new DefaultEntityFactory())
-			.addEntityFactory("http://schemas.ogf.org/occi/infrastructure#storage", new DefaultEntityFactory())
-			.addEntityFactory("http://schemas.ogf.org/occi/infrastructure#storagelink", new DefaultEntityFactory())
-			.addEntityFactory("http://schemas.ogf.org/occi/infrastructure#network", new DefaultEntityFactory())
-			.addEntityFactory("http://schemas.ogf.org/occi/infrastructure#networkinterface", new DefaultEntityFactory())
+			.createConfigManager()
+//			.addEntityFactory("http://schemas.ogf.org/occi/infrastructure#compute", new DefaultEntityFactory())
+//			.addEntityFactory("http://schemas.ogf.org/occi/infrastructure#storage", new DefaultEntityFactory())
+//			.addEntityFactory("http://schemas.ogf.org/occi/infrastructure#storagelink", new DefaultEntityFactory())
+//			.addEntityFactory("http://schemas.ogf.org/occi/infrastructure#network", new DefaultEntityFactory())
+//			.addEntityFactory("http://schemas.ogf.org/occi/infrastructure#networkinterface", new DefaultEntityFactory())
 			.start("org.ow2.erocci.backend");
 		
 		
