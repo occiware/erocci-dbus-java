@@ -148,7 +148,7 @@ public class ConfigurationManager {
 	 *            occi.network.gateway=10.1.255.254})
 	 * @return the updated configuration, can't return null
 	 */
-	public static Configuration addResourceToConfiguration(String id, String kind, List<String> mixins,
+	public static void addResourceToConfiguration(String id, String kind, List<String> mixins,
 			Map<String, Variant> attributes, String owner) {
 
 		if (owner == null) {
@@ -160,43 +160,50 @@ public class ConfigurationManager {
 
 		// Assign a new resource to configuration, if configuration has resource
 		// existed, inform by logger but overwrite existing one.
-		// Create an OCCI resource.
-		Resource resource = occiFactory.createResource();
+		boolean resourceOverwrite = false;
+		Resource resource = findResource(owner, id);
+		if (resource == null) {
+			resourceOverwrite = false;
+			// Create an OCCI resource.
+			resource = occiFactory.createResource();
+			// TODO : If id is null, we must generate an UUID.
+			resource.setId(id);
+			Kind occiKind;
+			
+			// Check if kind already exist in realm.
+			occiKind = findKind(owner, kind);
+			if (occiKind == null) {
+				// We create a new kind.
+				occiKind = createKindWithValues(id, kind);
+			}
+			// Add a new kind to resource (title, scheme, term).
+			resource.setKind(occiKind);
+			occiKind.getEntities().add(resource);
+			// Add the attributes...
+			addAttributesToEntity(resource, attributes);
+			
 
-		// TODO : Check if erocci send an entityUuid on the other form, cause
-		// here i have a pattern with term/title and not an uuid.
-		resource.setId(id);
-
-		Kind occiKind = createKindWithValues(id, kind);
-
-		// Add a new kind to resource (title, scheme, term).
-		resource.setKind(occiKind);
-
-		// Add the attributes...
-		addAttributesToEntity(resource, attributes);
-
+		} else {
+			logger.warning("resource already exist, overwriting...");
+			resourceOverwrite = true;
+			updateAttributesForEntity(owner, id, attributes);
+			
+		}
+		
 		// Add the mixins if any.
-		addMixinsToEntity(resource, mixins);
+		addMixinsToEntity(resource, mixins, owner);
+		
 
 		// Add resource to configuration.
-
-		// check before if the resource exist in configuration, if this is the
-		// case, the new resource will overwrite existing one.
-		Iterator<Resource> it = configuration.getResources().iterator();
-		while (it.hasNext()) {
-			Resource resourceCheck = it.next();
-			if (resourceCheck.getId().equals(id)) {
-				logger.warning("resource already exist, overwriting...");
-				it.remove();
-				break;
-			}
+		if (resourceOverwrite) {
+			logger.info("resource updated " + resource.getId() + " on OCCI configuration");
+		} else {
+			configuration.getResources().add(resource);
+			logger.info("Added Resource " + resource.getId() + " to configuration object.");
+			
 		}
-
-		configuration.getResources().add(resource);
-
-		logger.info("Added Resource " + resource.getId() + " to configuration object.");
+		
 		updateVersion(owner, id);
-		return configuration;
 
 	}
 
@@ -213,7 +220,7 @@ public class ConfigurationManager {
 	 * @param owner
 	 * @return a configuration updated.
 	 */
-	public static Configuration addLinkToConfiguration(String id, String kind, java.util.List<String> mixins,
+	public static void addLinkToConfiguration(String id, String kind, java.util.List<String> mixins,
 			String src, String target, Map<String, Variant> attributes, String owner) {
 
 		if (owner == null) {
@@ -222,50 +229,55 @@ public class ConfigurationManager {
 		}
 
 		Configuration configuration = getConfigurationForOwner(owner);
+		boolean overwrite = false;
+		Link link = findLink(owner, id);
+		if (link == null) {
+			
+			// Link doesnt exist on configuration, we create it.
+			link = occiFactory.createLink();
+			// TODO : Generate id uuid if this one is null.
+			link.setId(id);
+			
+			Kind occiKind;
+			
+			// Check if kind already exist in realm.
+			occiKind = findKind(owner, kind);
+			if (occiKind == null) {
+				// We create a new kind.
+				occiKind = createKindWithValues(id, kind);
+			}
+			// Add a new kind to resource (title, scheme, term).
+			link.setKind(occiKind);
+			
+			addAttributesToEntity(link, attributes);
 
-		if (configuration == null) {
-			configuration = createConfiguration(owner);
+		} else {
+			// Link exist upon our configuration, we update it.
+			updateAttributesForEntity(owner, id, attributes);
+			overwrite = true;
 		}
-
-		Link link = occiFactory.createLink();
-		link.setId(id);
-		Kind occiKind = createKindWithValues(id, kind);
-		link.setKind(occiKind);
-
-		Resource resourceSrc = findResource(configuration, src);
-
-		Resource resourceDest = findResource(configuration, target);
+		
+		Resource resourceSrc = findResource(owner, src);
+		Resource resourceDest = findResource(owner, target);
 
 		link.setSource(resourceSrc);
 		link.setTarget(resourceDest);
 
-		addAttributesToEntity(link, attributes);
-
-		addMixinsToEntity(link, mixins);
+		addMixinsToEntity(link, mixins, owner);
 		
-		
-		// check before if the resource exist in configuration, if this is the
-		// case, the new resource will overwrite existing one.
-		
-		
-		Iterator<Link> it = resourceSrc.getLinks().iterator();
-		while (it.hasNext()) {
-			Link linkCheck = it.next();
-			if (linkCheck.getId().equals(id)) {
-				logger.warning("link already exist, overwriting...");
-				
-				// TODO : Check if linkCheck.getTarget().getLinks().remove(linkCheck) is to do.
-				//  it's bidirectionnal normally, it made the trick.
-				it.remove();
-				
-				break;
-			}
-		}
 		
 		resourceSrc.getLinks().add(link);
+		resourceDest.getLinks().add(link);
+		
 		updateVersion(owner, id);
-		return configuration;
-
+		
+		if (overwrite) {
+			logger.info("Link " + id + " updated ! ");
+		} else {
+			logger.info("link " + id + " added to configuration !");
+		}
+		
+		
 	}
 	
 	/**
@@ -302,7 +314,10 @@ public class ConfigurationManager {
 		if (!found) {
 			// check if this is a kind id.
 			kind = findKind(owner, id);
-			kindEntitiesToDelete = true;
+			if (kind != null) {
+				kindEntitiesToDelete = true;
+				found = true;
+			}
 		}
 		if (!found) {
 			mixin = findMixin(owner, id);
@@ -332,8 +347,26 @@ public class ConfigurationManager {
 	 * @param resource
 	 */
 	public static void removeResource(final String owner, final Resource resource) {
-		Configuration config = getConfigurationForOwner(owner);;
+		Configuration config = getConfigurationForOwner(owner);
+		
+		if (resource.getLinks() != null) {
+			for (Link link : resource.getLinks()) {
+				removeLink(owner, link);
+			}
+		}
 		resource.getLinks().clear(); // Remove all links on that resource.
+		
+		Kind kind = resource.getKind();
+		if (kind.getEntities().contains(resource)) {
+			kind.getEntities().remove(resource);
+		}
+		
+		if (resource.getMixins() != null) {
+			for (Mixin mixin : resource.getMixins()) {
+				mixin.getEntities().remove(resource);
+			}
+		}
+		
 		config.getResources().remove(resource);
 		
 	}
@@ -347,6 +380,15 @@ public class ConfigurationManager {
 		Resource resourceTarget = link.getTarget();
 		resourceSrc.getLinks().remove(link);
 		resourceTarget.getLinks().remove(link);
+		Kind linkKind = link.getKind();
+		if (linkKind.getEntities().contains(link)) {
+			linkKind.getEntities().remove(link);
+		}
+		if (link.getMixins() != null) {
+			for (Mixin mixin : link.getMixins()) {
+				mixin.getEntities().remove(link);
+			}
+		}
 		
 	}
 	/**
@@ -373,34 +415,12 @@ public class ConfigurationManager {
 	 */
 	public static void dissociateMixinFromEntities(final String owner, final Mixin mixin) {
 		for (Entity entity : mixin.getEntities()) {
+			entity.getMixins().remove(mixin);
 			updateVersion(owner, entity.getId());
 		}
 		mixin.getEntities().clear();
 		
-	}
-	
-	
-	/**
-	 * Search for a resource in a configuration with it's id.
-	 * @param configuration
-	 * @param id
-	 * @return an OCCI resource if found, null if not found.
-	 */
-	public static Resource findResource(Configuration configuration, String id) {
-		Resource resFound = null;
-		if (configuration == null) {
-			return resFound;
-		}
 		
-		for (Resource resource : configuration.getResources()) {
-			if (resource.getId().equals(id)) {
-				resFound = resource;
-				// Resource found.
-				break;
-			}
-		}
-		
-		return resFound;
 	}
 	
 	/**
@@ -552,6 +572,8 @@ public class ConfigurationManager {
 			}
 			
 		}
+		
+		
 		return kind;
 		
 	}
@@ -605,6 +627,8 @@ public class ConfigurationManager {
 	 */
 	public static void resetAll() {
 		configurations.clear();
+		versionObjectMap.clear();
+		
 	}
 
 
@@ -723,25 +747,28 @@ public class ConfigurationManager {
 	 * @param mixins
 	 *            (List of mixins).
 	 */
-	public static void addMixinsToEntity(Entity entity, final List<String> mixins) {
+	public static void addMixinsToEntity(Entity entity, final List<String> mixins, final String owner) {
 		if (mixins != null && !mixins.isEmpty()) {
 			String scheme;
 			String term;
 			// String title;
 			
 			for (String mixinStr : mixins) {
+				// Check if this mixin already exist.
+				Mixin mixin = findMixin(owner, mixinStr);
+				if (mixin == null) {
+					mixin = occiFactory.createMixin();
+					term = mixinStr.split("#")[1];
+					scheme = mixinStr.split("#")[0] + "#";
+					// TODO : How to find the title in this string ?					
+					// mixin.setTitle(title);
+					mixin.setTerm(term);
+					mixin.setScheme(scheme);
 
-				term = mixinStr.split("#")[1];
-				scheme = mixinStr.split("#")[0] + "#";
-
-				// TODO : How to find the title in this string ?
-				Mixin mixin = occiFactory.createMixin();
-				// mixin.setTitle(title);
-				mixin.setTerm(term);
-				mixin.setScheme(scheme);
-
+				}
 				entity.getMixins().add(mixin);
-				logger.info("Mixin --> Term : " + term + " --< Scheme : " + scheme);
+				mixin.getEntities().add(entity);
+				logger.info("Mixin --> Term : " + mixin.getTerm() + " --< Scheme : " + mixin.getScheme());
 
 			}
 		}
