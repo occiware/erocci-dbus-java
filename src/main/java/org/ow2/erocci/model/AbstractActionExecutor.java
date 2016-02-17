@@ -21,7 +21,7 @@ public abstract class AbstractActionExecutor implements IActionExecutor {
 	}
 
 	@Override
-	public void occiPreDelete(Entity entity) {
+	public void occiPreDelete() {
 		// TODO Auto-generated method stub
 		logger.info("Generic occiPreDelete() method invoked - should be overridden ?");
 	}

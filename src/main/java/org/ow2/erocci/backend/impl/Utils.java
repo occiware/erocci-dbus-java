@@ -25,16 +25,24 @@ import java.math.BigInteger;
 import java.nio.charset.Charset;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.UUID;
 import java.util.logging.Logger;
 
+import org.eclipse.emf.common.util.EList;
 import org.freedesktop.dbus.UInt16;
 import org.freedesktop.dbus.UInt32;
 import org.freedesktop.dbus.UInt64;
 import org.freedesktop.dbus.Variant;
+import org.occiware.clouddesigner.occi.AttributeState;
+import org.occiware.clouddesigner.occi.Entity;
+import org.occiware.clouddesigner.occi.Kind;
+import org.occiware.clouddesigner.occi.Mixin;
+import org.ow2.erocci.backend.Quad;
 
 /**
  * Utilitary class for OCCI backend implem.
@@ -104,7 +112,7 @@ public class Utils {
 
 					break;
 				case "u": // unsigned integer 32
-
+					logger.info("Convert unsigned integer 32 to String value");
 					UInt32 uint32Val = (UInt32) variant.getValue();
 					map.put(e.getKey(), uint32Val.toString());
 
@@ -124,9 +132,10 @@ public class Utils {
 					map.put(e.getKey(), douVal.toString());
 					break;
 				case "s":
+					logger.info("String value on input => variant of type string");
 					String valStr = (String) variant.getValue();
 					map.put(e.getKey(), valStr);
-
+					break;
 				case "h": // Unsigned 32-bit integer representing an index into
 							// an out-of-band array of file descriptors,
 							// transferred via some platform-specific mechanism
@@ -150,6 +159,47 @@ public class Utils {
 		}
 		return map;
 	}
+	
+	/**
+	 * Convert an OCCI Entity to Quad object, this is for dialog with dbus protocol.
+	 * @param entity
+	 * @return
+	 */
+	public static Quad<String, String,List<String>,Map<String, Variant>> convertEntityToQuad(Entity entity) {
+		if (entity == null) {
+			return null;
+		}
+		
+		// to cast to String
+		Kind kind = entity.getKind();
+		
+		// to cast to List<String>
+		EList<Mixin> mixins = entity.getMixins();
+		
+		// to cast to Map<String, Variant>.
+		EList<AttributeState> attributes = entity.getAttributes();
+		
+		if (kind == null) {
+			logger.warning("No kind on this entity !!!");
+			// malformed entity. normally this never happen.
+			return null;
+		}
+		
+		String kindStr = kind.getScheme() + kind.getTerm();
+		List<String> mixinsStr = new ArrayList<>();
+		for (Mixin mixin : mixins) {
+			mixinsStr.add(mixin.getScheme() + mixin.getTerm());
+		}
+		
+		Map<String, Variant> attribVariant = new HashMap<>();
+		for (AttributeState attrState : attributes) {
+			attribVariant.put(attrState.getName(), new Variant(attrState.getValue()));
+		}
+		
+		return new Quad<>(entity.getId(), kindStr, mixinsStr, attribVariant);
+		
+	}
+	
 
 	/**
 	 * Simple copy a stream with a buffer of 1024 bytes into an outputstream.
@@ -241,7 +291,7 @@ public class Utils {
 	}
 	
 	/**
-	 * Create an eTag (Serial number) for dbus interaction.
+	 * Create an eTag (Serial number, serialize an object) for dbus interaction.
 	 * @param an object.
 	 * @return an eTag number.
 	 */
@@ -261,6 +311,41 @@ public class Utils {
 	    return new UInt32(sb.toString());
 		
 	}
+	
+	/**
+	 * Serialize a string (entity id for example with an owner)
+	 * @param id
+	 * @param owner
+	 * @param version (version number, will increment with each update on this object).
+	 * @return
+	 */
+	public static UInt32 createEtagNumber(final String id, final String owner, final int version) {
+		String eTag = null;
+		if (id == null) {
+			eTag = "1";
+		} else {
+			try {
+				eTag = getMd5Digest(serialize(id + owner + version));
+			} catch (IOException ioe) {
+				logger.warning("IOException thrown : " + ioe.getMessage());
+				eTag = "1";
+			}
+		}
+		StringBuilder sb = new StringBuilder();
+	    
+		int nb = 1;
+		for (char c : eTag.toCharArray()) {
+			sb.append((int)c);
+	    	nb++;
+	    	if (nb == 3) {
+	    		break;
+	    	}
+	    	
+	    }
+	    return new UInt32(sb.toString());
+	}
+	
+	
 
 	private static int uniqueInt = 1;
 

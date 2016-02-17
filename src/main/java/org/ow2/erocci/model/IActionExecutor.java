@@ -13,7 +13,7 @@ public interface IActionExecutor {
 	
 	public void occiPostCreate(Entity entity);
 
-	public void occiPreDelete(Entity entity); 
+	public void occiPreDelete(); 
 		
 	public void occiPostUpdate(Entity entity, final Map<String, String> attributes);
 

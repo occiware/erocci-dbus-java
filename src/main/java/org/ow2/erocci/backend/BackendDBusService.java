@@ -42,8 +42,8 @@ public class BackendDBusService {
 	
 	private DBusConnection dbusConnection;
 	private CoreImpl coreImpl = new CoreImpl();
-	private ActionImpl actionImpl = new ActionImpl();
-	private ConfigurationManager configManager;
+//	private ActionImpl actionImpl = new ActionImpl();
+	// private ConfigurationManager configManager;
 	
 	/**
 	 * Set OCCI schema
@@ -53,37 +53,16 @@ public class BackendDBusService {
 		coreImpl.setSchema(in);
 		return this;
 	}
-
 	
 //	/**
-//	 * Register an OCCI entity factory, by entity category (OCCI kind).
-//	 * @param kind The entity category name (OCCI kind = scheme#term)
-//	 * @param entityFactory The entity factory, to create entities of specified category
-//	 * @return The current DBus service backend
+//	 * Create a new Configuration manager.
+//	 * @return
 //	 */
-//	public final BackendDBusService addEntityFactory(String kind, EntityFactory entityFactory) {
-//		coreImpl.addEntityFactory(kind, entityFactory);
+//	public final BackendDBusService createConfigManager() {
+//		configManager = new ConfigurationManager();
+//		
 //		return this;
 //	}
-
-//	/**
-//	 * Register a default entity factory, to be used if no more relevant one is found.
-//	 * @param factory The default factory
-//	 */
-//	public final BackendDBusService setDefaultEntityFactory(EntityFactory factory) {
-//		coreImpl.setDefaultEntityFactory(factory);
-//		return this;
-//	}
-	
-	/**
-	 * Create a new Configuration manager.
-	 * @return
-	 */
-	public final BackendDBusService createConfigManager() {
-		configManager = new ConfigurationManager();
-		
-		return this;
-	}
 
 	/**
 	 * Start the DBus service backend
@@ -118,14 +97,13 @@ public class BackendDBusService {
 	public static void main(String[] args) {
 		new BackendDBusService()
 			.setSchema(BackendDBusService.class.getResourceAsStream("/schema.xml"))
-			.createConfigManager()
-//			.addEntityFactory("http://schemas.ogf.org/occi/infrastructure#compute", new DefaultEntityFactory())
-//			.addEntityFactory("http://schemas.ogf.org/occi/infrastructure#storage", new DefaultEntityFactory())
-//			.addEntityFactory("http://schemas.ogf.org/occi/infrastructure#storagelink", new DefaultEntityFactory())
-//			.addEntityFactory("http://schemas.ogf.org/occi/infrastructure#network", new DefaultEntityFactory())
-//			.addEntityFactory("http://schemas.ogf.org/occi/infrastructure#networkinterface", new DefaultEntityFactory())
+//			.createConfigManager()
 			.start("org.ow2.erocci.backend");
-		
+//		.addEntityFactory("http://schemas.ogf.org/occi/infrastructure#compute", new DefaultEntityFactory())
+//		.addEntityFactory("http://schemas.ogf.org/occi/infrastructure#storage", new DefaultEntityFactory())
+//		.addEntityFactory("http://schemas.ogf.org/occi/infrastructure#storagelink", new DefaultEntityFactory())
+//		.addEntityFactory("http://schemas.ogf.org/occi/infrastructure#network", new DefaultEntityFactory())
+//		.addEntityFactory("http://schemas.ogf.org/occi/infrastructure#networkinterface", new DefaultEntityFactory())
 		
 	}
 
