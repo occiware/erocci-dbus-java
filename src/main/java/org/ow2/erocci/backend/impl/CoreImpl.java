@@ -59,8 +59,6 @@ public class CoreImpl implements core, DBus.Properties {
 	 */
 	public CoreImpl() {
 		// Try to pick default schema (ignore error).
-		// CGN : Represent a generic occi extension, with extension designed, it
-		// should be another one, for instance, this will be used as reference.
 		setSchema(this.getClass().getResourceAsStream("/schema.xml"));
 	}
 
@@ -148,7 +146,7 @@ public class CoreImpl implements core, DBus.Properties {
 	@Override
 	public String SaveResource(String id, String kind, java.util.List<String> mixins, Map<String, Variant> attributes,
 			String owner) {
-
+		// TODO : generate uuid if id is null or empty.
 		logger.info("SaveResource invoked with id=" + id + ", kind=" + kind + ", mixins=" + mixins + ", attributes="
 				+ Utils.convertVariantMap(attributes));
 
@@ -184,12 +182,12 @@ public class CoreImpl implements core, DBus.Properties {
 		// Requete essayée :
 		// curl -s -v -i -X PUT http://localhost:8080/networkinterface/ni1 -H 'Content-Type: text/occi' -H 'Category: networkinterface; scheme="http://schemas.ogf.org/occi/infrastructure#"; class="kind", ipnetworkinterface; scheme="http://schemas.ogf.org/occi/infrastructure/networkinterface#"; class="mixin";' -H 'X-OCCI-Attribute: occi.networkinterface.mac="aa:bb:cc:dd:ee:11"' -H 'X-OCCI-Attribute: occi.networkinterface.interface="eth0"' -H 'X-OCCI-Attribute: occi.networkinterface.address="10.1.0.100/16"' -H 'X-OCCI-Attribute: occi.networkinterface.gateway="10.1.255.254"' -H 'X-OCCI-Attribute: occi.networkinterface.allocation="static"' -H 'X-OCCI-Attribute: occi.core.source="/compute/vm1", occi.core.target="/network/network1"' 
 		
+		// TODO : generate uuid if id is null or empty.
 		ConfigurationManager.addLinkToConfiguration(id, kind, mixins, src, target, attributes, owner);
 
 		DefaultActionExecutor defaultActionExecutor = new DefaultActionExecutor();
 		defaultActionExecutor.occiPostCreate(ConfigurationManager.findLink(owner, id, src));
-
-		// 1st version of a link, with serial no = 1
+		
 		return id;
 	}
 

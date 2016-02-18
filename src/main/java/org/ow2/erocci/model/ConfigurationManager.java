@@ -151,7 +151,7 @@ public class ConfigurationManager {
 	public static void addResourceToConfiguration(String id, String kind, List<String> mixins,
 			Map<String, Variant> attributes, String owner) {
 
-		if (owner == null) {
+		if (owner == null || owner.isEmpty()) {
 			// Assume if owner is not used to a default user uuid "anonymous".
 			owner = DEFAULT_OWNER;
 		}
@@ -223,7 +223,7 @@ public class ConfigurationManager {
 	public static void addLinkToConfiguration(String id, String kind, java.util.List<String> mixins,
 			String src, String target, Map<String, Variant> attributes, String owner) {
 
-		if (owner == null) {
+		if (owner == null || owner.isEmpty()) {
 			// Assume if owner is not used to a default user uuid "anonymous".
 			owner = DEFAULT_OWNER;
 		}
@@ -272,7 +272,7 @@ public class ConfigurationManager {
 		updateVersion(owner, id);
 		
 		if (overwrite) {
-			logger.info("Link " + id + " updated ! ");
+			logger.info("Link " + id + " updated ! Version: " + versionObjectMap.get(owner + id));
 		} else {
 			logger.info("link " + id + " added to configuration !");
 		}
