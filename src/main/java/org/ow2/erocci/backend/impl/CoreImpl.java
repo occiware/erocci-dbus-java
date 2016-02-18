@@ -176,18 +176,31 @@ public class CoreImpl implements core, DBus.Properties {
 			Map<String, Variant> attributes, String owner) {
 
 		logger.info("SaveLink invoked");
-		// ATTENTION, ne fonctionne pas avec la requete de test : 
-		// 	backend error: {'org.freedesktop.DBus.InvalidParameters',<<"ssasssa{sv}s">>}
+		// ATTENTION, ne fonctionne pas avec la requete de test :
+		// backend error:
+		// {'org.freedesktop.DBus.InvalidParameters',<<"ssasssa{sv}s">>}
 		// Essayer de creer d'autre requetes put de type link.
 		// Requete essayée :
-		// curl -s -v -i -X PUT http://localhost:8080/networkinterface/ni1 -H 'Content-Type: text/occi' -H 'Category: networkinterface; scheme="http://schemas.ogf.org/occi/infrastructure#"; class="kind", ipnetworkinterface; scheme="http://schemas.ogf.org/occi/infrastructure/networkinterface#"; class="mixin";' -H 'X-OCCI-Attribute: occi.networkinterface.mac="aa:bb:cc:dd:ee:11"' -H 'X-OCCI-Attribute: occi.networkinterface.interface="eth0"' -H 'X-OCCI-Attribute: occi.networkinterface.address="10.1.0.100/16"' -H 'X-OCCI-Attribute: occi.networkinterface.gateway="10.1.255.254"' -H 'X-OCCI-Attribute: occi.networkinterface.allocation="static"' -H 'X-OCCI-Attribute: occi.core.source="/compute/vm1", occi.core.target="/network/network1"' 
-		
+		// curl -s -v -i -X PUT http://localhost:8080/networkinterface/ni1 -H
+		// 'Content-Type: text/occi' -H 'Category: networkinterface;
+		// scheme="http://schemas.ogf.org/occi/infrastructure#"; class="kind",
+		// ipnetworkinterface;
+		// scheme="http://schemas.ogf.org/occi/infrastructure/networkinterface#";
+		// class="mixin";' -H 'X-OCCI-Attribute:
+		// occi.networkinterface.mac="aa:bb:cc:dd:ee:11"' -H 'X-OCCI-Attribute:
+		// occi.networkinterface.interface="eth0"' -H 'X-OCCI-Attribute:
+		// occi.networkinterface.address="10.1.0.100/16"' -H 'X-OCCI-Attribute:
+		// occi.networkinterface.gateway="10.1.255.254"' -H 'X-OCCI-Attribute:
+		// occi.networkinterface.allocation="static"' -H 'X-OCCI-Attribute:
+		// occi.core.source="/compute/vm1",
+		// occi.core.target="/network/network1"'
+
 		// TODO : generate uuid if id is null or empty.
 		ConfigurationManager.addLinkToConfiguration(id, kind, mixins, src, target, attributes, owner);
 
 		DefaultActionExecutor defaultActionExecutor = new DefaultActionExecutor();
 		defaultActionExecutor.occiPostCreate(ConfigurationManager.findLink(owner, id, src));
-		
+
 		return id;
 	}
 
@@ -227,8 +240,8 @@ public class CoreImpl implements core, DBus.Properties {
 	@Override
 	public void UpdateMixin(String id, java.util.List<String> entities) {
 		logger.info("UpdateMixin invoked");
-		// TODO Why should it be different from SaveMixin ??
-		SaveMixin(id, entities);
+		ConfigurationManager.updateMixinForEntities(ConfigurationManager.DEFAULT_OWNER, id, entities);
+		
 	}
 
 	/**
@@ -262,32 +275,31 @@ public class CoreImpl implements core, DBus.Properties {
 	@Override
 	public Quad<String, String, java.util.List<String>, Map<String, Variant>> Load(Variant opaque_id) {
 		logger.info("Load invoked with opaque_id=" + opaque_id);
-		
+
 		logger.info("opaque_id variant sig: " + opaque_id.getSig());
 		logger.info("opaque_id variant type: " + opaque_id.getType());
 		logger.info("opaque_id variant value: " + opaque_id.getValue().toString());
-		
+
 		String entityId = opaque_id.getValue().toString();
-		
+
 		// Search for entity.
 		Entity entity = ConfigurationManager.findEntity(ConfigurationManager.DEFAULT_OWNER, entityId);
-		
+
 		if (entity != null) {
 			ConfigurationManager.printEntity(entity);
-			
+
 			logger.info("Entity : " + entity.getId() + " loaded with success, transaction with dbus to come...");
 			return Utils.convertEntityToQuad(entity);
 		} else {
 			logger.info("Entity : " + entityId + " --< entity doesnt exist !");
-			
+
 		}
-		
+
 		List<String> vals = new ArrayList<>();
 		Map<String, Variant> attrDefault = new HashMap<>();
-		
+
 		return new Quad(entityId, "", vals, attrDefault);
 	}
-	
 
 	@Override
 	/**

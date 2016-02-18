@@ -48,35 +48,35 @@ public class ConfigurationManager {
 		OCCIRegistry.getInstance().registerExtension("http://schemas.ogf.org/occi/infrastructure#",
 				"model/infrastructure.occie");
 		// TODO : Register other extensions on demand.
-		
+
 	}
 
 	private static Logger logger = Logger.getLogger("ConfigurationManager");
 
 	/**
-	 * Used for now when no owner defined (on dbus methods find for example or no owner defined).
-	 * Will be removed when the owner parameter will be always defined on input dbus method.
+	 * Used for now when no owner defined (on dbus methods find for example or
+	 * no owner defined). Will be removed when the owner parameter will be
+	 * always defined on input dbus method.
 	 */
 	public static final String DEFAULT_OWNER = "anonymous";
-	
+
 	/**
 	 * This map reference all occi configurations by users. The first ref string
 	 * is the user uuid. To be updated for multiusers and multiconfigs.
 	 */
 	protected static Map<String, Configuration> configurations = new HashMap<>();
-	
+
 	/**
 	 * Obtain the factory to create OCCI objects.
 	 */
 	protected static OCCIFactory occiFactory = OCCIFactory.eINSTANCE;
 
 	/**
-	 * Used only to create an eTag when object are updated.
-	 * Key : owner+objectId
+	 * Used only to create an eTag when object are updated. Key : owner+objectId
 	 * Value : version number. First version is 1.
 	 */
 	private static Map<String, Integer> versionObjectMap = new HashMap<>();
-	
+
 	/**
 	 * Get a configuration from the configuration's map.
 	 * 
@@ -85,7 +85,7 @@ public class ConfigurationManager {
 		if (configurations.get(owner) == null) {
 			createConfiguration(owner);
 		}
-		
+
 		return configurations.get(owner);
 	}
 
@@ -97,7 +97,7 @@ public class ConfigurationManager {
 	 * @return a new configuration for the user.
 	 */
 	public static Configuration createConfiguration(final String owner) {
-		
+
 		// Create an empty OCCI configuration.
 		Configuration configuration = occiFactory.createConfiguration();
 
@@ -169,7 +169,7 @@ public class ConfigurationManager {
 			// TODO : If id is null, we must generate an UUID.
 			resource.setId(id);
 			Kind occiKind;
-			
+
 			// Check if kind already exist in realm.
 			occiKind = findKind(owner, kind);
 			if (occiKind == null) {
@@ -181,18 +181,16 @@ public class ConfigurationManager {
 			occiKind.getEntities().add(resource);
 			// Add the attributes...
 			addAttributesToEntity(resource, attributes);
-			
 
 		} else {
 			logger.warning("resource already exist, overwriting...");
 			resourceOverwrite = true;
 			updateAttributesForEntity(owner, id, attributes);
-			
+
 		}
-		
+
 		// Add the mixins if any.
 		addMixinsToEntity(resource, mixins, owner);
-		
 
 		// Add resource to configuration.
 		if (resourceOverwrite) {
@@ -200,9 +198,9 @@ public class ConfigurationManager {
 		} else {
 			configuration.getResources().add(resource);
 			logger.info("Added Resource " + resource.getId() + " to configuration object.");
-			
+
 		}
-		
+
 		updateVersion(owner, id);
 
 	}
@@ -220,8 +218,8 @@ public class ConfigurationManager {
 	 * @param owner
 	 * @return a configuration updated.
 	 */
-	public static void addLinkToConfiguration(String id, String kind, java.util.List<String> mixins,
-			String src, String target, Map<String, Variant> attributes, String owner) {
+	public static void addLinkToConfiguration(String id, String kind, java.util.List<String> mixins, String src,
+			String target, Map<String, Variant> attributes, String owner) {
 
 		if (owner == null || owner.isEmpty()) {
 			// Assume if owner is not used to a default user uuid "anonymous".
@@ -232,14 +230,14 @@ public class ConfigurationManager {
 		boolean overwrite = false;
 		Link link = findLink(owner, id);
 		if (link == null) {
-			
+
 			// Link doesnt exist on configuration, we create it.
 			link = occiFactory.createLink();
 			// TODO : Generate id uuid if this one is null.
 			link.setId(id);
-			
+
 			Kind occiKind;
-			
+
 			// Check if kind already exist in realm.
 			occiKind = findKind(owner, kind);
 			if (occiKind == null) {
@@ -248,7 +246,7 @@ public class ConfigurationManager {
 			}
 			// Add a new kind to resource (title, scheme, term).
 			link.setKind(occiKind);
-			
+
 			addAttributesToEntity(link, attributes);
 
 		} else {
@@ -256,7 +254,7 @@ public class ConfigurationManager {
 			updateAttributesForEntity(owner, id, attributes);
 			overwrite = true;
 		}
-		
+
 		Resource resourceSrc = findResource(owner, src);
 		Resource resourceDest = findResource(owner, target);
 
@@ -264,26 +262,28 @@ public class ConfigurationManager {
 		link.setTarget(resourceDest);
 
 		addMixinsToEntity(link, mixins, owner);
-		
-		
+
 		resourceSrc.getLinks().add(link);
 		resourceDest.getLinks().add(link);
-		
+
 		updateVersion(owner, id);
-		
+
 		if (overwrite) {
 			logger.info("Link " + id + " updated ! Version: " + versionObjectMap.get(owner + id));
 		} else {
 			logger.info("link " + id + " added to configuration !");
 		}
-		
-		
+
 	}
-	
+
 	/**
-	 * Remove an entity (resource or link) from the owner's configuration or delete all entities from given kind id or disassociate entities from given mixin id.
+	 * Remove an entity (resource or link) from the owner's configuration or
+	 * delete all entities from given kind id or disassociate entities from
+	 * given mixin id.
+	 * 
 	 * @param owner
-	 * @param id (kind id or mixin id or entity Id!)
+	 * @param id
+	 *            (kind id or mixin id or entity Id!)
 	 */
 	public static void removeOrDissociateFromConfiguration(final String owner, final String id) {
 		// Find if this is an entity id or a mixin id or a kind id.
@@ -292,12 +292,12 @@ public class ConfigurationManager {
 		boolean kindEntitiesToDelete = false;
 		boolean linkToDelete = false;
 		boolean mixinToDissociate = false;
-		
+
 		Kind kind = null;
 		Resource resource;
 		Link link = null;
 		Mixin mixin = null;
-		
+
 		// searching in resources.
 		resource = findResource(owner, id);
 		if (resource != null) {
@@ -326,7 +326,7 @@ public class ConfigurationManager {
 				mixinToDissociate = true;
 			}
 		}
-		
+
 		if (resourceToDelete) {
 			removeResource(owner, resource);
 		}
@@ -339,39 +339,42 @@ public class ConfigurationManager {
 		if (mixinToDissociate) {
 			dissociateMixinFromEntities(owner, mixin);
 		}
-		
+
 	}
-	
+
 	/**
 	 * Remove a resource from owner's configuration.
+	 * 
 	 * @param resource
 	 */
 	public static void removeResource(final String owner, final Resource resource) {
 		Configuration config = getConfigurationForOwner(owner);
-		
+
 		if (resource.getLinks() != null) {
 			for (Link link : resource.getLinks()) {
 				removeLink(owner, link);
 			}
 		}
 		resource.getLinks().clear(); // Remove all links on that resource.
-		
+
 		Kind kind = resource.getKind();
 		if (kind.getEntities().contains(resource)) {
 			kind.getEntities().remove(resource);
 		}
-		
+
 		if (resource.getMixins() != null) {
 			for (Mixin mixin : resource.getMixins()) {
 				mixin.getEntities().remove(resource);
 			}
 		}
-		
+
 		config.getResources().remove(resource);
-		
+
 	}
+
 	/**
 	 * Remove a link from owner's configuration.
+	 * 
 	 * @param owner
 	 * @param link
 	 */
@@ -389,27 +392,31 @@ public class ConfigurationManager {
 				mixin.getEntities().remove(link);
 			}
 		}
-		
+
 	}
+
 	/**
 	 * Remove all entities for this kind.
+	 * 
 	 * @param owner
 	 * @param kind
 	 */
 	public static void removeEntitiesForKind(final String owner, final Kind kind) {
 		// Configuration config = configurations.get(owner);
-		
+
 		for (Entity entity : kind.getEntities()) {
 			if (entity instanceof Resource) {
-				removeResource(owner, (Resource)entity);
+				removeResource(owner, (Resource) entity);
 			} else if (entity instanceof Link) {
-				removeLink(owner, (Link)entity);
+				removeLink(owner, (Link) entity);
 			}
 		}
 		kind.getEntities().clear();
 	}
+
 	/**
 	 * Dissociate entities from this mixin.
+	 * 
 	 * @param owner
 	 * @param mixin
 	 */
@@ -419,12 +426,12 @@ public class ConfigurationManager {
 			updateVersion(owner, entity.getId());
 		}
 		mixin.getEntities().clear();
-		
-		
+
 	}
-	
+
 	/**
 	 * Find a resource for owner and entity Id.
+	 * 
 	 * @param owner
 	 * @param id
 	 * @return an OCCI resource.
@@ -432,7 +439,7 @@ public class ConfigurationManager {
 	public static Resource findResource(final String owner, final String id) {
 		Resource resFound = null;
 		Configuration configuration = getConfigurationForOwner(owner);
-		
+
 		for (Resource resource : configuration.getResources()) {
 			if (resource.getId().equals(id)) {
 				resFound = resource;
@@ -442,17 +449,19 @@ public class ConfigurationManager {
 		}
 		return resFound;
 	}
-	
+
 	/**
 	 * Find a link for owner, entity id and source Resource Id.
+	 * 
 	 * @param owner
 	 * @param id
 	 * @param srcResourceId
-	 * @return an OCCI Link. May be null if configuration or link doesnt exist anymore.
+	 * @return an OCCI Link. May be null if configuration or link doesnt exist
+	 *         anymore.
 	 */
 	public static Link findLink(final String owner, final String id, final String srcResourceId) {
 		Link linkFound = null;
-		
+
 		Resource resourceSrc = findResource(owner, srcResourceId);
 		if (resourceSrc == null) {
 			return linkFound;
@@ -464,17 +473,19 @@ public class ConfigurationManager {
 				break;
 			}
 		}
-		
+
 		return linkFound;
-		
+
 	}
+
 	/**
 	 * Find a link on all chains of resources.
+	 * 
 	 * @return
 	 */
 	public static Link findLink(final String owner, final String id) {
 		Configuration configuration = getConfigurationForOwner(owner);
-		
+
 		Link link = null;
 		EList<Link> links;
 		for (Resource resource : configuration.getResources()) {
@@ -484,28 +495,30 @@ public class ConfigurationManager {
 					if (lnk.getId().equals(id)) {
 						link = lnk;
 						break;
-						
+
 					}
 				}
 				if (link != null) {
 					break;
 				}
 			}
-			
+
 		}
 		return link;
 	}
-	
+
 	/**
 	 * Search an entity (link or resource) on the current configuration.
+	 * 
 	 * @param owner
-	 * @param id (entityId)
-	 * @return an OCCI Entity, could be null, if entity has is not found. 
+	 * @param id
+	 *            (entityId)
+	 * @return an OCCI Entity, could be null, if entity has is not found.
 	 */
 	public static Entity findEntity(final String owner, final String id) {
 		Entity entity = null;
 		Resource resource = findResource(owner, id);
-		
+
 		Link link = null;
 		if (resource == null) {
 			link = findLink(owner, id);
@@ -517,8 +530,10 @@ public class ConfigurationManager {
 		}
 		return entity;
 	}
+
 	/**
 	 * Search the first entity found on all owner's configurations.
+	 * 
 	 * @param ownerFound
 	 * @param id
 	 * @return
@@ -527,7 +542,7 @@ public class ConfigurationManager {
 		if (configurations.isEmpty()) {
 			return null;
 		}
-		
+
 		Set<String> owners = configurations.keySet();
 		Entity entity = null;
 		for (String owner : owners) {
@@ -542,9 +557,10 @@ public class ConfigurationManager {
 		}
 		return entity;
 	}
-	
+
 	/**
 	 * Search for a kind.
+	 * 
 	 * @param owner
 	 * @param id
 	 * @return
@@ -570,18 +586,19 @@ public class ConfigurationManager {
 			if (kind != null) {
 				break;
 			}
-			
+
 		}
-		
-		
+
 		return kind;
-		
+
 	}
-	
+
 	/**
-	 * Find entities for a categoryId (kind or Mixin or actions). actions has no entity list and it's not used here.
+	 * Find entities for a categoryId (kind or Mixin or actions). actions has no
+	 * entity list and it's not used here.
+	 * 
 	 * @param categoryId
-	 * @return an hmap (key: owner, value : List of entities). 
+	 * @return an hmap (key: owner, value : List of entities).
 	 */
 	public static Map<String, List<Entity>> findAllEntitiesForCategoryId(final String categoryId) {
 		Map<String, List<Entity>> entitiesMap = new HashMap<>();
@@ -590,7 +607,7 @@ public class ConfigurationManager {
 		}
 		Set<String> owners = configurations.keySet();
 		List<Entity> entities = null;
-		
+
 		for (String owner : owners) {
 			Kind kind = findKind(owner, categoryId);
 			Mixin mixin = findMixin(owner, categoryId);
@@ -609,28 +626,28 @@ public class ConfigurationManager {
 			entities = null;
 		}
 		return entitiesMap;
-		
+
 	}
-	
+
 	/**
 	 * Remove referenced configuration for an owner.
+	 * 
 	 * @param owner
 	 */
 	public static void resetForOwner(final String owner) {
 		Configuration configuration = getConfigurationForOwner(owner);
 		removeConfiguration(configuration);
-		
+
 	}
-	
+
 	/**
 	 * Destroy all configurations for all owners.
 	 */
 	public static void resetAll() {
 		configurations.clear();
 		versionObjectMap.clear();
-		
-	}
 
+	}
 
 	/**
 	 * Create a new OCCI Kind with default values (title, term and scheme).
@@ -681,7 +698,7 @@ public class ConfigurationManager {
 			String key;
 			String value;
 			Map<String, String> mapAttr = Utils.convertVariantMap(attributes);
-			
+
 			for (Map.Entry<String, String> entry : mapAttr.entrySet()) {
 				key = entry.getKey();
 				value = entry.getValue();
@@ -698,9 +715,10 @@ public class ConfigurationManager {
 
 		}
 	}
-	
+
 	/**
 	 * Update attributes on an entity (link or resource).
+	 * 
 	 * @param entity
 	 * @param attributes
 	 */
@@ -708,16 +726,16 @@ public class ConfigurationManager {
 		if (attributes != null && !attributes.isEmpty()) {
 			String key;
 			String value;
-			
+
 			Map<String, String> mapAttr = Utils.convertVariantMap(attributes);
-			
+
 			EList<AttributeState> attrStates;
 			for (Map.Entry<String, String> entry : mapAttr.entrySet()) {
 				key = entry.getKey();
 				value = entry.getValue();
 				// Check if this attribute already exist.
 				attrStates = entity.getAttributes();
-				
+
 				Iterator<AttributeState> it = attrStates.iterator();
 				while (it.hasNext()) {
 					AttributeState attrState = it.next();
@@ -732,10 +750,12 @@ public class ConfigurationManager {
 				attrState.setValue(value);
 				entity.getAttributes().add(attrState);
 			}
-			
-			
-			
+
+		} else if (attributes != null && attributes.isEmpty()) {
+			// Remove all attributes on entity.
+			entity.getAttributes().clear();
 		}
+
 	}
 
 	/**
@@ -752,19 +772,12 @@ public class ConfigurationManager {
 			String scheme;
 			String term;
 			// String title;
-			
+
 			for (String mixinStr : mixins) {
 				// Check if this mixin already exist.
 				Mixin mixin = findMixin(owner, mixinStr);
 				if (mixin == null) {
-					mixin = occiFactory.createMixin();
-					term = mixinStr.split("#")[1];
-					scheme = mixinStr.split("#")[0] + "#";
-					// TODO : How to find the title in this string ?					
-					// mixin.setTitle(title);
-					mixin.setTerm(term);
-					mixin.setScheme(scheme);
-
+					mixin = createMixin(mixinStr);
 				}
 				entity.getMixins().add(mixin);
 				mixin.getEntities().add(entity);
@@ -772,10 +785,12 @@ public class ConfigurationManager {
 
 			}
 		}
-		
+
 	}
+
 	/**
 	 * Increment a version of an object (resource or link << entity)
+	 * 
 	 * @param owner
 	 * @param id
 	 */
@@ -785,13 +800,14 @@ public class ConfigurationManager {
 		if (version == null) {
 			version = 1;
 		}
-		version ++;
+		version++;
 		versionObjectMap.put(key, version);
-		
+
 	}
-	
+
 	/**
 	 * Search mixin on owner's configuration.
+	 * 
 	 * @param owner
 	 * @param mixinId
 	 * @return a mixin found or null if not found
@@ -800,7 +816,7 @@ public class ConfigurationManager {
 		Configuration configuration = getConfigurationForOwner(owner);
 		Mixin mixinToReturn = null;
 		boolean mixinOk;
-		
+
 		for (Resource res : configuration.getResources()) {
 			mixinOk = false;
 			for (Mixin mixin : res.getMixins()) {
@@ -808,9 +824,9 @@ public class ConfigurationManager {
 					mixinToReturn = mixin;
 					mixinOk = true;
 					break;
-				} 
+				}
 			}
-			
+
 			if (mixinOk) {
 				break;
 			} else {
@@ -831,47 +847,132 @@ public class ConfigurationManager {
 			if (mixinOk) {
 				break;
 			}
-			
+
 		}
-		
+
 		return mixinToReturn;
 	}
-	
+
 	/**
-	 * Associate a list of entities with a mixin, replacing existing list if any.
+	 * Associate a list of entities with a mixin, replacing existing list if
+	 * any. if mixin doest exist, this will create it.
+	 * 
 	 * @param mixinId
 	 * @param entityIds
 	 */
 	public static void saveMixinForEntities(final String owner, final String mixinId, final List<String> entityIds) {
-		
+
 		// searching for the mixin to register on entities.
 		Mixin mixin = findMixin(owner, mixinId);
-		
+		if (mixin == null) {
+			mixin = createMixin(mixinId);
+		}
+		logger.info("Mixin --> Term : " + mixin.getTerm() + " --< Scheme : " + mixin.getScheme());
+
 		for (String entityId : entityIds) {
-			Entity entity = findEntity(entityId, owner);
+			Entity entity = findEntity(owner, entityId);
+
 			if (entity != null && !mixin.getEntities().contains(entity)) {
 				mixin.getEntities().add(entity);
+				entity.getMixins().add(mixin);
+				
 				updateVersion(owner, entityId);
-			} 
+			}
 		}
-		
-	}
-	
 
+		boolean found;
+		// Remove entities those are not in the list.
+		Iterator<Entity> it = mixin.getEntities().iterator();
+		while (it.hasNext()) {
+			found = false;
+			Entity entityMixin = it.next();
+			for (String entityId : entityIds) {
+				if (entityMixin.getId().equals(entityId)) {
+					found = true;
+					break;
+				}
+			}
+
+			if (!found) {
+				// Remove reference mixin of the entity.
+				entityMixin.getMixins().remove(mixin);
+				
+				// Remove the entity from mixin.
+				it.remove();
+			}
+
+		}
+
+	}
+
+	/**
+	 * Update mixin association with entities, if mixin doesnt exist, create it
+	 * and associate a list of entities with this mixin, if it exist, entities
+	 * that are not in entities list are kept.
+	 * 
+	 * @param mixinId
+	 * @param entityIds
+	 */
+	public static void updateMixinForEntities(final String owner, final String mixinId, final List<String> entityIds) {
+
+		// searching for the mixin to register on entities.
+		Mixin mixin = findMixin(owner, mixinId);
+		if (mixin == null) {
+			mixin = createMixin(mixinId);
+		}
+		logger.info("Mixin --> Term : " + mixin.getTerm() + " --< Scheme : " + mixin.getScheme());
+
+		for (String entityId : entityIds) {
+			Entity entity = findEntity(owner, entityId);
+			if (entity != null && !mixin.getEntities().contains(entity)) {
+				
+				entity.getMixins().add(mixin);
+				mixin.getEntities().add(entity);
+				updateVersion(owner, entityId);
+			}
+		}
+
+	}
+
+	/** 
+	 * Create a new mixin without any association.
+	 * @param mixinId
+	 * @return
+	 */
+	public static Mixin createMixin(final String mixinId) {
+		Mixin mixin = occiFactory.createMixin();
+		if (mixinId != null) {
+			// Create mixin.
+			String scheme;
+			String term;
+			// String title;
+			// mixin = occiFactory.createMixin();
+			term = mixinId.split("#")[1];
+			scheme = mixinId.split("#")[0] + "#";
+			// TODO : How to find the title in this string ?
+			// mixin.setTitle(title);
+			mixin.setTerm(term);
+			mixin.setScheme(scheme);
+		}
+
+		return mixin;
+	}
 
 	/**
 	 * Update attributes for an entity (resource or link).
+	 * 
 	 * @param owner
 	 * @param entityId
 	 * @param attributes
 	 */
 	public static void updateAttributesForEntity(String owner, String entityId, Map<String, Variant> attributes) {
-		// Searching on resources, if not found searching on link of each resources.
+		// Searching on resources, if not found searching on link of each
+		// resources.
 		Configuration configuration = getConfigurationForOwner(owner);
 		EList<Resource> entities = configuration.getResources();
 		EList<Link> entitiesLnk;
 		Entity entityFound = null;
-		
+
 		for (Resource res : entities) {
 			if (res.getId().equals(entityId)) {
 				// Entity found !
@@ -889,7 +990,7 @@ public class ConfigurationManager {
 					}
 					if (entityFound != null) {
 						break;
-					} 
+					}
 				}
 			}
 		}
@@ -898,14 +999,16 @@ public class ConfigurationManager {
 			updateAttributesToEntity(entityFound, attributes);
 			updateVersion(owner, entityId);
 		} else {
-			// TODO : Report an exception, impossible to update entity, it doesnt exist.
+			// TODO : Report an exception, impossible to update entity, it
+			// doesnt exist.
 			logger.warning("The entity " + entityId + " doesnt exist, can't update ! ");
 		}
-		
+
 	}
 
 	/**
 	 * Generate eTag number from version map.
+	 * 
 	 * @param owner
 	 * @param id
 	 * @return
@@ -918,15 +1021,14 @@ public class ConfigurationManager {
 		// Generate eTag.
 		return Utils.createEtagNumber(id, owner, version);
 	}
-	
+
 	/**
 	 * 
 	 * @param entity
 	 * @return
 	 */
 	public static void printEntity(Entity entity) {
-		
-		
+
 		StringBuilder builder = new StringBuilder("");
 		if (entity instanceof Resource) {
 			builder.append("Entity is a resource. \n");
@@ -947,11 +1049,11 @@ public class ConfigurationManager {
 		}
 		for (AttributeState attribute : entity.getAttributes()) {
 			builder.append("--> name : " + attribute.getName() + " \n ");
-			builder.append("-- value : " + attribute.getValue()+ " \n ");
+			builder.append("-- value : " + attribute.getValue() + " \n ");
 		}
-		
+
 		logger.info(builder.toString());
-		
+
 	}
-	
+
 }
