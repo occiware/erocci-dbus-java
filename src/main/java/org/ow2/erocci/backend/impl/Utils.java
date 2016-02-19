@@ -200,7 +200,12 @@ public class Utils {
 		
 	}
 	
+	public static String createUUID() {
+		return UUID.randomUUID().toString();
+		
+	}
 
+	
 	/**
 	 * Simple copy a stream with a buffer of 1024 bytes into an outputstream.
 	 * 

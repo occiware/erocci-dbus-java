@@ -1,14 +1,19 @@
 package org.ow2.erocci.backend.impl.test;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 
+import org.freedesktop.dbus.UInt32;
 import org.freedesktop.dbus.Variant;
 import org.junit.After;
 import org.junit.AfterClass;
@@ -18,9 +23,12 @@ import org.junit.Test;
 import org.occiware.clouddesigner.occi.Entity;
 import org.occiware.clouddesigner.occi.Mixin;
 import org.occiware.clouddesigner.occi.Resource;
+import org.ow2.erocci.backend.Pair;
+import org.ow2.erocci.backend.Quad;
 import org.ow2.erocci.backend.Struct1;
 import org.ow2.erocci.backend.Struct2;
 import org.ow2.erocci.backend.impl.CoreImpl;
+import org.ow2.erocci.backend.impl.Utils;
 import org.ow2.erocci.model.ConfigurationManager;
 
 public class CoreImplTest {
@@ -34,7 +42,7 @@ public class CoreImplTest {
 	private final String SCHEME_INFRA = "http://schemas.ogf.org/occi/infrastructure#";
 	private final String COMPUTE_KIND = SCHEME_INFRA + "compute";
 	private final String STORAGE_KIND = SCHEME_INFRA + "storage";
-	private final String STORAGE_LINK_KIND = SCHEME_INFRA + "storageLink";
+	private final String STORAGE_LINK_KIND = SCHEME_INFRA + "storagelink";
 	private final String NETWORK_KIND = SCHEME_INFRA + "network";
 	private final String NETWORK_INTERFACE_LINK_KIND = SCHEME_INFRA + "networkinterface";
 
@@ -61,7 +69,7 @@ public class CoreImplTest {
 
 	}
 
-	// @Test
+	@Test
 	public void testSaveResourceAndLinks() {
 
 		List<String> resourcePartialIds = new ArrayList<String>();
@@ -190,7 +198,7 @@ public class CoreImplTest {
 	/**
 	 * Test update attributes on entity.
 	 */
-	// @Test
+	@Test
 	public void testUpdate() {
 		// build or rebuild infra test.
 		buildInfraTest();
@@ -347,30 +355,140 @@ public class CoreImplTest {
 		
 	}
 
-	// @Test
+	@Test
 	public void testFind() {
+		buildInfraTest();
+		testSaveResourceAndLinks();
 		
+		String id = "compute/vm1";
+		String idLink = "storagelink/sl1";
 		
+		// search a resource via core.find(id).
+		List<Struct1> structRes = core.Find(id);
+		assertNotNull(structRes);
+		assertFalse(structRes.isEmpty());
+		for (Struct1 structRes1 : structRes) {
+			assertEquals(id, structRes1.b.getValue());
+			assertNotNull(structRes1.d);
+		}
+		
+		// search a link via core.find(idlink).
+		List<Struct1> structLink = core.Find(idLink);
+		assertNotNull(structLink);
+		assertFalse(structLink.isEmpty());
+		for (Struct1 structLink1 : structLink) {
+			assertEquals(idLink, structLink1.b.getValue());
+			assertNotNull(structLink1.d);
+		}
+		
+		// Check if null return an empty list.
+		List<Struct1> structEmpty = core.Find(null);
+		assertNotNull(structEmpty);
+		assertTrue(structEmpty.isEmpty());
+		
+		// Check if partial id.
+		id = "compute";
+		List<Struct1> structP = core.Find(id);
+		assertNotNull(structP);
+		assertFalse(structP.isEmpty());
+		for (Struct1 structPls : structP) {
+			assertNotNull(structPls.d);
+			assertNotNull(structPls.b);
+		}
 	}
 
-	// @Test
+    @Test
 	public void testLoad() {
-		fail("Not yet implemented");
+		buildInfraTest();
+		testSaveResourceAndLinks();
+		
+		// Get entity occi object for loading.
+		String id = "networkinterface/ni1";
+		
+		// Load the content of an entity via the core module.
+		Quad<String, String, List<String>, Map<String, Variant>> quad = core.Load(new Variant(id));
+		// Check the result.
+		assertNotNull(quad);
+		// Quad<>(entityId, kind, mixins, attribVariant);
+		String entityId = quad.a;
+		String kind = quad.b;
+		List<String> mixins = quad.c;
+		Map<String, Variant> attribs = quad.d;
+		
+		// Check if no value is null.
+		assertNotNull(entityId);
+		assertNotNull(kind);
+		assertNotNull(mixins);
+		assertNotNull(attribs);
+		
+		// Check if no values are empty.
+		assertFalse(entityId.isEmpty());
+		assertFalse(kind.isEmpty());
+		assertFalse(mixins.isEmpty());
+		assertFalse(attribs.isEmpty());
 	}
 
-	// @Test
-	public void testList() {
-		fail("Not yet implemented");
+	@Test
+	public void testListNext() {
+		buildInfraTest();
+		testSaveResourceAndLinks();
+		Map<String, Variant> filters = new HashMap<>();
+		String id = STORAGE_LINK_KIND;
+		Pair<Variant, UInt32> pair = core.List(id, filters);
+		assertNotNull(pair);
+		assertNotNull(pair.a);
+		assertTrue(pair.a.toString().contains("collection"));
+		assertNotNull(pair.b);
+		
+		// TODO : Test filters on method list (and implement filters).
+		assertNotNull(pair);
+		assertNotNull(pair.a);
+		assertNotNull(pair.b);
+		List<Struct2> structLst = core.Next((new Variant((String)pair.a.getValue())), new UInt32(0), new UInt32(0));
+		assertNotNull(structLst);
+		assertFalse(structLst.isEmpty());
+		for (Struct2 struct : structLst) {
+			assertNotNull(struct.a);
+			assertNotNull(struct.b);
+		}
+		
+		pair = core.List(id, filters);
+		
+		// Test du renvoi d'un seul item.
+		structLst = core.Next((new Variant((String)pair.a.getValue())), new UInt32(0), new UInt32(1));
+		assertNotNull(structLst);
+		assertTrue(structLst.size() == 1);
+		
 	}
 
-	// @Test
-	public void testNext() {
-		fail("Not yet implemented");
-	}
-
-	// @Test
+	@Test
 	public void testDelete() {
-		fail("Not yet implemented");
+		buildInfraTest();
+		overwriteTestCount = 1;
+		testSaveResourceAndLinks();
+		
+		// Test remove entity.
+		String id = "compute/vm2";
+		Entity entity = ConfigurationManager.findEntity(DEFAULT_OWNER, id);
+		assertNotNull(entity);
+		
+		core.Delete(id);
+		
+		entity = ConfigurationManager.findEntity(DEFAULT_OWNER, id);
+		assertNull(entity);
+		
+		// test dissociate mixin.
+		id = "http://schemas.openstack.org/template/os#cirros-0.3.0-x86_64-uec";
+		Mixin mixin = ConfigurationManager.findMixin(DEFAULT_OWNER, id);
+		assertNotNull(mixin);
+		assertFalse(mixin.getEntities().isEmpty());
+		
+		core.Delete(id);
+		
+		mixin = ConfigurationManager.findMixin(DEFAULT_OWNER, id);
+	
+		// vm1 has this mixin, if we remove the entity reference, mixin will be null (Configuration Object can only search a mixin by resource (and their links).
+		assertNull(mixin);
 	}
 
 	private void buildInfraTest() {
@@ -388,7 +506,7 @@ public class CoreImplTest {
 		containers.put(id, buildComputeContainer(id, "vm2", "x64", 2, 16.0, mixinsEmpty, DEFAULT_OWNER));
 
 		// Build resource with id generated uuid.
-		id = "compute/" + UUID.randomUUID().toString();
+		id = "compute/" + Utils.createUUID();
 		containers.put(id, buildComputeContainer(id, "vm3", "x64", 2, 16.0, mixinsEmpty, DEFAULT_OWNER));
 
 		// Build resource storage/storage1.

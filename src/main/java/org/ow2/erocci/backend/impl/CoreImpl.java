@@ -146,7 +146,11 @@ public class CoreImpl implements core, DBus.Properties {
 	@Override
 	public String SaveResource(String id, String kind, java.util.List<String> mixins, Map<String, Variant> attributes,
 			String owner) {
-		// TODO : generate uuid if id is null or empty.
+		
+		if (id == null || id.isEmpty()) {
+			id = Utils.createUUID();
+		}
+		
 		logger.info("SaveResource invoked with id=" + id + ", kind=" + kind + ", mixins=" + mixins + ", attributes="
 				+ Utils.convertVariantMap(attributes));
 
@@ -195,7 +199,10 @@ public class CoreImpl implements core, DBus.Properties {
 		// occi.core.source="/compute/vm1",
 		// occi.core.target="/network/network1"'
 
-		// TODO : generate uuid if id is null or empty.
+		if (id == null || id.isEmpty()) {
+			id = Utils.createUUID();
+		}
+		
 		ConfigurationManager.addLinkToConfiguration(id, kind, mixins, src, target, attributes, owner);
 
 		DefaultActionExecutor defaultActionExecutor = new DefaultActionExecutor();
@@ -257,11 +264,26 @@ public class CoreImpl implements core, DBus.Properties {
 
 		// TODO : to update when an owner will be in parameter's method.
 		Entity entity = ConfigurationManager.findEntity(ConfigurationManager.DEFAULT_OWNER, id);
-
+		
 		if (entity != null) {
 			ConfigurationManager.printEntity(entity);
 			ret.add(new Struct1(CoreImpl.NODE_ENTITY, new Variant<String>(id), ConfigurationManager.DEFAULT_OWNER,
 					ConfigurationManager.getEtagNumber(ConfigurationManager.DEFAULT_OWNER, id)));
+		} else if (id != null && !id.isEmpty()) {
+			// Partial id ?
+			// Search all entities has this partial Id in their ids.
+			List<Entity> entities = ConfigurationManager.findAllEntitiesLikePartialId(ConfigurationManager.DEFAULT_OWNER, id);
+			
+			if (entities.isEmpty()) {
+				logger.info("Entity " + id + " --< doesnt exist !");
+			}
+			for (Entity entityLs : entities) {
+				logger.info("Entities found : ");
+				ConfigurationManager.printEntity(entityLs);
+				ret.add(new Struct1(CoreImpl.NODE_ENTITY, new Variant<String>(entityLs.getId()), ConfigurationManager.DEFAULT_OWNER,
+						ConfigurationManager.getEtagNumber(ConfigurationManager.DEFAULT_OWNER, entityLs.getId())));
+			}
+			
 		} else {
 			logger.info("Entity " + id + " --< doesnt exist !");
 		}
@@ -276,9 +298,9 @@ public class CoreImpl implements core, DBus.Properties {
 	public Quad<String, String, java.util.List<String>, Map<String, Variant>> Load(Variant opaque_id) {
 		logger.info("Load invoked with opaque_id=" + opaque_id);
 
-		logger.info("opaque_id variant sig: " + opaque_id.getSig());
-		logger.info("opaque_id variant type: " + opaque_id.getType());
-		logger.info("opaque_id variant value: " + opaque_id.getValue().toString());
+//		logger.info("opaque_id variant sig: " + opaque_id.getSig());
+//		logger.info("opaque_id variant type: " + opaque_id.getType());
+//		logger.info("opaque_id variant value: " + opaque_id.getValue().toString());
 
 		String entityId = opaque_id.getValue().toString();
 

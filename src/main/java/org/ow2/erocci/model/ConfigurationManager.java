@@ -246,7 +246,7 @@ public class ConfigurationManager {
 			}
 			// Add a new kind to resource (title, scheme, term).
 			link.setKind(occiKind);
-
+			occiKind.getEntities().add(link);
 			addAttributesToEntity(link, attributes);
 
 		} else {
@@ -630,6 +630,39 @@ public class ConfigurationManager {
 	}
 
 	/**
+	 * Return all entity based on a partial Id (like request).
+	 * 
+	 * @param owner
+	 * @param partialId
+	 * @return
+	 */
+	public static List<Entity> findAllEntitiesLikePartialId(final String owner, final String partialId) {
+		List<Entity> entities = new ArrayList<>();
+
+		Configuration configuration = getConfigurationForOwner(owner);
+
+		if (partialId == null) {
+			return entities;
+		}
+
+		List<Resource> resources = configuration.getResources();
+		for (Resource resource : resources) {
+			if (resource.getId().contains(partialId)) {
+				entities.add(resource);
+			}
+			if (!resource.getLinks().isEmpty()) {
+				for (Link link : resource.getLinks()) {
+					if (link.getId().contains(partialId)) {
+						entities.add(link);
+					}
+				}
+			}
+		}
+
+		return entities;
+	}
+
+	/**
 	 * Remove referenced configuration for an owner.
 	 * 
 	 * @param owner
@@ -849,7 +882,7 @@ public class ConfigurationManager {
 			}
 
 		}
-
+		
 		return mixinToReturn;
 	}
 
@@ -875,7 +908,7 @@ public class ConfigurationManager {
 			if (entity != null && !mixin.getEntities().contains(entity)) {
 				mixin.getEntities().add(entity);
 				entity.getMixins().add(mixin);
-				
+
 				updateVersion(owner, entityId);
 			}
 		}
@@ -896,7 +929,7 @@ public class ConfigurationManager {
 			if (!found) {
 				// Remove reference mixin of the entity.
 				entityMixin.getMixins().remove(mixin);
-				
+
 				// Remove the entity from mixin.
 				it.remove();
 			}
@@ -925,7 +958,7 @@ public class ConfigurationManager {
 		for (String entityId : entityIds) {
 			Entity entity = findEntity(owner, entityId);
 			if (entity != null && !mixin.getEntities().contains(entity)) {
-				
+
 				entity.getMixins().add(mixin);
 				mixin.getEntities().add(entity);
 				updateVersion(owner, entityId);
@@ -934,8 +967,9 @@ public class ConfigurationManager {
 
 	}
 
-	/** 
+	/**
 	 * Create a new mixin without any association.
+	 * 
 	 * @param mixinId
 	 * @return
 	 */
@@ -954,7 +988,7 @@ public class ConfigurationManager {
 			mixin.setTerm(term);
 			mixin.setScheme(scheme);
 		}
-
+		
 		return mixin;
 	}
 
