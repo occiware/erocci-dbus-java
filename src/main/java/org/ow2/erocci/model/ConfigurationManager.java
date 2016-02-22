@@ -8,8 +8,13 @@ import java.util.Map;
 import java.util.Set;
 import java.util.logging.Logger;
 
+import org.eclipse.emf.common.util.Diagnostic;
 import org.eclipse.emf.common.util.EList;
+import org.eclipse.emf.common.util.URI;
+import org.eclipse.emf.ecore.EObject;
+import org.eclipse.emf.ecore.resource.ResourceSet;
 import org.eclipse.emf.ecore.resource.Resource.Factory.Registry;
+import org.eclipse.emf.ecore.util.Diagnostician;
 import org.freedesktop.dbus.UInt32;
 import org.freedesktop.dbus.Variant;
 import org.occiware.clouddesigner.occi.Action;
@@ -23,8 +28,10 @@ import org.occiware.clouddesigner.occi.OCCIPackage;
 import org.occiware.clouddesigner.occi.OCCIRegistry;
 import org.occiware.clouddesigner.occi.Resource;
 import org.occiware.clouddesigner.occi.util.OCCIResourceFactoryImpl;
+import org.occiware.clouddesigner.occi.util.OCCIResourceSet;
 import org.ow2.erocci.backend.impl.Utils;
 import org.occiware.clouddesigner.occi.Entity;
+import org.occiware.clouddesigner.occi.Extension;
 
 /**
  * Manage configurations (OCCI Model).
@@ -52,7 +59,11 @@ public class ConfigurationManager {
 	}
 
 	private static Logger logger = Logger.getLogger("ConfigurationManager");
-
+	
+	private static Extension extensionOcciCore;
+	private static Extension extensionOcciInfra;
+	// Others extensions...
+	
 	/**
 	 * Used for now when no owner defined (on dbus methods find for example or
 	 * no owner defined). Will be removed when the owner parameter will be
@@ -100,9 +111,18 @@ public class ConfigurationManager {
 
 		// Create an empty OCCI configuration.
 		Configuration configuration = occiFactory.createConfiguration();
-
+		
+		extensionOcciCore = loadExtension("model/core.occie");
+		extensionOcciInfra = loadExtension("model/infrastructure.occie");
+		
+		configuration.getUse().add(extensionOcciCore);
+		configuration.getUse().add(extensionOcciInfra);
+		
 		// Update reference configuration map.
 		configurations.put(owner, configuration);
+		
+		
+		
 
 		logger.info("Configuration for user " + owner + " created");
 
@@ -882,7 +902,7 @@ public class ConfigurationManager {
 			}
 
 		}
-		
+
 		return mixinToReturn;
 	}
 
@@ -988,7 +1008,7 @@ public class ConfigurationManager {
 			mixin.setTerm(term);
 			mixin.setScheme(scheme);
 		}
-		
+
 		return mixin;
 	}
 
@@ -1088,6 +1108,83 @@ public class ConfigurationManager {
 
 		logger.info(builder.toString());
 
+	}
+
+	/**
+	 * EMF and OCL validation of a given OCCI object.
+	 * 
+	 * @param occi
+	 *            the given OCCI object.
+	 */
+	public static boolean validate(EObject occi) {
+//		if (!Boolean.getBoolean("validation")) {
+//			return true;
+//		}
+		// Does the validation when the Java system property 'validation' is set
+		// to 'true'.
+		Diagnostic diagnostic = Diagnostician.INSTANCE.validate(occi);
+		if (diagnostic.getSeverity() != Diagnostic.OK) {
+			StringBuffer stringBuffer = printDiagnostic(diagnostic, "", new StringBuffer());
+			System.err.println(stringBuffer.toString());
+			return false;
+		}
+		return true;
+	}
+
+	/**
+	 * Print an EMF validation diagnostic.
+	 * 
+	 * @param diagnostic
+	 * @param indent
+	 * @param stringBuffer
+	 * @return
+	 */
+	private static StringBuffer printDiagnostic(Diagnostic diagnostic, String indent, StringBuffer stringBuffer) {
+		stringBuffer.append(indent);
+		stringBuffer.append(diagnostic.getMessage());
+		stringBuffer.append("\n");
+		for (Diagnostic child : diagnostic.getChildren()) {
+			printDiagnostic(child, indent + "  ", stringBuffer);
+		}
+		return stringBuffer;
+	}
+
+	/**
+	 * Load an OCCI extension.
+	 * 
+	 * @param extensionURI
+	 *            URI of the extension to load.
+	 * @return the loaded extension.
+	 */
+	public static Extension loadExtension(String extensionURI) {
+		return (Extension) loadOCCI(extensionURI);
+	}
+
+	/**
+	 * Load an OCCI configuration.
+	 * 
+	 * @param configurationURI
+	 *            URI of the configuration to load.
+	 * @return the loaded configuration.
+	 */
+	public static Configuration loadConfiguration(String configurationURI) {
+		return (Configuration) loadOCCI(configurationURI);
+	}
+
+	/**
+	 * Load an OCCI object.
+	 * 
+	 * @param uri
+	 *            URI of the OCCI object to load.
+	 * @return the loaded OCCI object.
+	 */
+	private static Object loadOCCI(String uri) {
+		// Create a new resource set.
+		ResourceSet resourceSet = new OCCIResourceSet();
+		// Load the OCCI resource.
+		org.eclipse.emf.ecore.resource.Resource resource = resourceSet.getResource(URI.createURI(uri), true);
+		// Return the first element.
+		return resource.getContents().get(0);
 	}
 
 }

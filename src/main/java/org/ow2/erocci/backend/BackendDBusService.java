@@ -42,8 +42,9 @@ public class BackendDBusService {
 	
 	private DBusConnection dbusConnection;
 	private CoreImpl coreImpl = new CoreImpl();
-//	private ActionImpl actionImpl = new ActionImpl();
-	// private ConfigurationManager configManager;
+
+	// private ActionImpl actionImpl = new ActionImpl();
+	
 	
 	/**
 	 * Set OCCI schema
@@ -54,16 +55,6 @@ public class BackendDBusService {
 		return this;
 	}
 	
-//	/**
-//	 * Create a new Configuration manager.
-//	 * @return
-//	 */
-//	public final BackendDBusService createConfigManager() {
-//		configManager = new ConfigurationManager();
-//		
-//		return this;
-//	}
-
 	/**
 	 * Start the DBus service backend
 	 * @param name The DBus service name
@@ -79,8 +70,8 @@ public class BackendDBusService {
             dbusConnection.requestBusName(dbusServiceName.trim());
             //EROCCI considers that the service is available on / (convention)
             dbusConnection.exportObject("/", coreImpl);
+            // dbusConnection.exportObject("/action/", actionImpl);
             
-            // dbusConnection.exportObject("/", actionImpl);
             
             logger.info("Connected to dbus with unique name : " + dbusConnection.getUniqueName());
 
@@ -97,13 +88,9 @@ public class BackendDBusService {
 	public static void main(String[] args) {
 		new BackendDBusService()
 			.setSchema(BackendDBusService.class.getResourceAsStream("/schema.xml"))
-//			.createConfigManager()
 			.start("org.ow2.erocci.backend");
-//		.addEntityFactory("http://schemas.ogf.org/occi/infrastructure#compute", new DefaultEntityFactory())
-//		.addEntityFactory("http://schemas.ogf.org/occi/infrastructure#storage", new DefaultEntityFactory())
-//		.addEntityFactory("http://schemas.ogf.org/occi/infrastructure#storagelink", new DefaultEntityFactory())
-//		.addEntityFactory("http://schemas.ogf.org/occi/infrastructure#network", new DefaultEntityFactory())
-//		.addEntityFactory("http://schemas.ogf.org/occi/infrastructure#networkinterface", new DefaultEntityFactory())
+		ConfigurationManager.getConfigurationForOwner(ConfigurationManager.DEFAULT_OWNER);
+		
 		
 	}
 
