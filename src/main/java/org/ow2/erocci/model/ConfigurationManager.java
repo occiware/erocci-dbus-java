@@ -12,14 +12,16 @@ import org.eclipse.emf.common.util.Diagnostic;
 import org.eclipse.emf.common.util.EList;
 import org.eclipse.emf.common.util.URI;
 import org.eclipse.emf.ecore.EObject;
-import org.eclipse.emf.ecore.resource.ResourceSet;
 import org.eclipse.emf.ecore.resource.Resource.Factory.Registry;
+import org.eclipse.emf.ecore.resource.ResourceSet;
 import org.eclipse.emf.ecore.util.Diagnostician;
 import org.freedesktop.dbus.UInt32;
 import org.freedesktop.dbus.Variant;
 import org.occiware.clouddesigner.occi.Action;
 import org.occiware.clouddesigner.occi.AttributeState;
 import org.occiware.clouddesigner.occi.Configuration;
+import org.occiware.clouddesigner.occi.Entity;
+import org.occiware.clouddesigner.occi.Extension;
 import org.occiware.clouddesigner.occi.Kind;
 import org.occiware.clouddesigner.occi.Link;
 import org.occiware.clouddesigner.occi.Mixin;
@@ -30,8 +32,6 @@ import org.occiware.clouddesigner.occi.Resource;
 import org.occiware.clouddesigner.occi.util.OCCIResourceFactoryImpl;
 import org.occiware.clouddesigner.occi.util.OCCIResourceSet;
 import org.ow2.erocci.backend.impl.Utils;
-import org.occiware.clouddesigner.occi.Entity;
-import org.occiware.clouddesigner.occi.Extension;
 
 /**
  * Manage configurations (OCCI Model).
@@ -59,11 +59,11 @@ public class ConfigurationManager {
 	}
 
 	private static Logger logger = Logger.getLogger("ConfigurationManager");
-	
+
 	private static Extension extensionOcciCore;
 	private static Extension extensionOcciInfra;
 	// Others extensions...
-	
+
 	/**
 	 * Used for now when no owner defined (on dbus methods find for example or
 	 * no owner defined). Will be removed when the owner parameter will be
@@ -111,18 +111,16 @@ public class ConfigurationManager {
 
 		// Create an empty OCCI configuration.
 		Configuration configuration = occiFactory.createConfiguration();
-		
+
 		extensionOcciCore = loadExtension("model/core.occie");
 		extensionOcciInfra = loadExtension("model/infrastructure.occie");
-		
-		configuration.getUse().add(extensionOcciCore);
+		// TODO : For other extensions, precise full path as argument.
+
 		configuration.getUse().add(extensionOcciInfra);
-		
+		configuration.getUse().add(extensionOcciCore);
+
 		// Update reference configuration map.
 		configurations.put(owner, configuration);
-		
-		
-		
 
 		logger.info("Configuration for user " + owner + " created");
 
@@ -186,19 +184,27 @@ public class ConfigurationManager {
 			resourceOverwrite = false;
 			// Create an OCCI resource.
 			resource = occiFactory.createResource();
-			// TODO : If id is null, we must generate an UUID.
+
 			resource.setId(id);
+
 			Kind occiKind;
 
-			// Check if kind already exist in realm.
-			occiKind = findKind(owner, kind);
+			// Check if kind already exist in realm (on extension model).
+			occiKind = findKindFromExtension(owner, kind);
+
 			if (occiKind == null) {
+				// Kind not found on extension, searching on entities.
+				occiKind = findKindFromEntities(owner, kind);
+
 				// We create a new kind.
-				occiKind = createKindWithValues(id, kind);
+				// occiKind = createKindWithValues(id, kind);
 			}
 			// Add a new kind to resource (title, scheme, term).
+
+			// if occiKind is null, this will give a default kind parent.
 			resource.setKind(occiKind);
-			occiKind.getEntities().add(resource);
+			// occiKind.getEntities().add(resource);
+
 			// Add the attributes...
 			addAttributesToEntity(resource, attributes);
 
@@ -246,8 +252,8 @@ public class ConfigurationManager {
 			owner = DEFAULT_OWNER;
 		}
 
-		Configuration configuration = getConfigurationForOwner(owner);
 		boolean overwrite = false;
+
 		Link link = findLink(owner, id);
 		if (link == null) {
 
@@ -257,16 +263,20 @@ public class ConfigurationManager {
 			link.setId(id);
 
 			Kind occiKind;
+			// Check if kind already exist in realm (on extension model).
+			occiKind = findKindFromExtension(owner, kind);
 
-			// Check if kind already exist in realm.
-			occiKind = findKind(owner, kind);
 			if (occiKind == null) {
+				// Kind not found on extension, searching on entities.
+				occiKind = findKindFromEntities(owner, kind);
+
 				// We create a new kind.
-				occiKind = createKindWithValues(id, kind);
+				// occiKind = createKindWithValues(id, kind);
 			}
+
 			// Add a new kind to resource (title, scheme, term).
 			link.setKind(occiKind);
-			occiKind.getEntities().add(link);
+			// occiKind.getEntities().add(link);
 			addAttributesToEntity(link, attributes);
 
 		} else {
@@ -283,8 +293,9 @@ public class ConfigurationManager {
 
 		addMixinsToEntity(link, mixins, owner);
 
+		// Assign link to resource source.
 		resourceSrc.getLinks().add(link);
-		resourceDest.getLinks().add(link);
+		// resourceDest.getLinks().add(link);
 
 		updateVersion(owner, id);
 
@@ -333,14 +344,14 @@ public class ConfigurationManager {
 		}
 		if (!found) {
 			// check if this is a kind id.
-			kind = findKind(owner, id);
+			kind = findKindFromEntities(owner, id);
 			if (kind != null) {
 				kindEntitiesToDelete = true;
 				found = true;
 			}
 		}
 		if (!found) {
-			mixin = findMixin(owner, id);
+			mixin = findMixinOnEntities(owner, id);
 			if (mixin != null) {
 				found = true;
 				mixinToDissociate = true;
@@ -423,15 +434,20 @@ public class ConfigurationManager {
 	 */
 	public static void removeEntitiesForKind(final String owner, final Kind kind) {
 		// Configuration config = configurations.get(owner);
-
-		for (Entity entity : kind.getEntities()) {
+		if (kind == null) {
+			return;
+		}
+		List<Entity> entities = findAllEntitiesForKind(owner, kind.getScheme() + kind.getTerm());
+		
+		for (Entity entity : entities) {
 			if (entity instanceof Resource) {
 				removeResource(owner, (Resource) entity);
 			} else if (entity instanceof Link) {
 				removeLink(owner, (Link) entity);
 			}
 		}
-		kind.getEntities().clear();
+		entities.clear();
+		// kind.getEntities().clear();
 	}
 
 	/**
@@ -441,11 +457,16 @@ public class ConfigurationManager {
 	 * @param mixin
 	 */
 	public static void dissociateMixinFromEntities(final String owner, final Mixin mixin) {
-		for (Entity entity : mixin.getEntities()) {
+		if (mixin == null) {
+			return;
+		}
+		List<Entity> entities = findAllEntitiesForMixin(owner, mixin.getScheme() + mixin.getTerm());
+		for (Entity entity : entities) {
 			entity.getMixins().remove(mixin);
 			updateVersion(owner, entity.getId());
 		}
-		mixin.getEntities().clear();
+		entities.clear();
+		// mixin.getEntities().clear();
 
 	}
 
@@ -585,10 +606,11 @@ public class ConfigurationManager {
 	 * @param id
 	 * @return
 	 */
-	public static Kind findKind(final String owner, final String id) {
+	public static Kind findKindFromEntities(final String owner, final String id) {
 		Configuration configuration = getConfigurationForOwner(owner);
 		Kind kind = null;
 		EList<Link> links;
+		
 		EList<Resource> resources = configuration.getResources();
 		for (Resource resource : resources) {
 			if ((resource.getKind().getScheme() + resource.getKind().getTerm()).equals(id)) {
@@ -614,6 +636,34 @@ public class ConfigurationManager {
 	}
 
 	/**
+	 * Search for a kind from referenced extension model.
+	 * 
+	 * @param owner
+	 * @param kindId
+	 * @return
+	 */
+	public static Kind findKindFromExtension(final String owner, final String kindId) {
+		Configuration config = getConfigurationForOwner(owner);
+		Kind kindToReturn = null;
+		EList<Kind> kinds;
+		for (Extension ext : config.getUse()) {
+			kinds = ext.getKinds();
+			for (Kind kind : kinds) {
+				if (((kind.getScheme() + kind.getTerm()).equals(kindId))) {
+					kindToReturn = kind;
+					break;
+				}
+			}
+			if (kindToReturn != null) {
+				break;
+			}
+		}
+
+		return kindToReturn;
+
+	}
+
+	/**
 	 * Find entities for a categoryId (kind or Mixin or actions). actions has no
 	 * entity list and it's not used here.
 	 * 
@@ -626,18 +676,15 @@ public class ConfigurationManager {
 			return entitiesMap;
 		}
 		Set<String> owners = configurations.keySet();
-		List<Entity> entities = null;
+		List<Entity> entities = new ArrayList<>();
 
 		for (String owner : owners) {
-			Kind kind = findKind(owner, categoryId);
-			Mixin mixin = findMixin(owner, categoryId);
-			if (kind != null) {
-				entities = kind.getEntities();
-			}
-			if (mixin != null) {
-				entities = mixin.getEntities();
-			}
-			if (entities != null) {
+			
+			
+			entities.addAll(findAllEntitiesForKind(owner, categoryId));
+			entities.addAll(findAllEntitiesForMixin(owner, categoryId));
+
+			if (entities != null && !entities.isEmpty()) {
 				entitiesMap.put(owner, entities);
 			} else {
 				entities = new ArrayList<>();
@@ -648,6 +695,57 @@ public class ConfigurationManager {
 		return entitiesMap;
 
 	}
+	
+	/**
+	 * Find all entities with that kind. (replace getEntities from kind object).
+	 * @param owner
+	 * @param categoryId
+	 * @return
+	 */
+	public static List<Entity> findAllEntitiesForKind(final String owner, final String categoryId) {
+		List<Entity> entities = new ArrayList<>();
+		for (Resource res : getConfigurationForOwner(owner).getResources()) {
+			if ((res.getKind().getScheme() + res.getKind().getTerm()).equals(categoryId)) {
+				entities.add(res);
+			}
+			for (Link link : res.getLinks()) {
+				if ((link.getKind().getScheme() + link.getKind().getTerm()).equals(categoryId)) {
+					entities.add(link);
+				}
+			}
+			
+		}
+		return entities;
+		
+	}
+	
+	/**
+	 * Find all entities for a mixin (replace getEntities() method from Mixin object).
+	 * @param owner
+	 * @param categoryId
+	 * @return
+	 */
+	public static List<Entity> findAllEntitiesForMixin(final String owner, final String categoryId) {
+		List<Entity> entities = new ArrayList<>();
+		for (Resource res : getConfigurationForOwner(owner).getResources()) {
+			for (Mixin mix : res.getMixins()) {
+				if ((mix.getScheme() + mix.getTerm()).equals(categoryId)) {
+					entities.add(res);
+				}
+			}
+			for (Link link : res.getLinks()) {
+				for (Mixin mix : link.getMixins()) {
+					if ((mix.getScheme() + mix.getTerm()).equals(categoryId)) {
+						entities.add(link);
+					}
+				}
+				
+			}
+			
+		}
+		return entities;
+	}
+	
 
 	/**
 	 * Return all entity based on a partial Id (like request).
@@ -822,18 +920,26 @@ public class ConfigurationManager {
 	 */
 	public static void addMixinsToEntity(Entity entity, final List<String> mixins, final String owner) {
 		if (mixins != null && !mixins.isEmpty()) {
+
 			String scheme;
 			String term;
 			// String title;
 
 			for (String mixinStr : mixins) {
-				// Check if this mixin already exist.
-				Mixin mixin = findMixin(owner, mixinStr);
+				// Check if this mixin exist in realm extensions.
+				Mixin mixin = findMixinOnExtension(owner, mixinStr);
+
 				if (mixin == null) {
-					mixin = createMixin(mixinStr);
+					// Search the mixin on entities.
+					mixin = findMixinOnEntities(owner, mixinStr);
+
+					if (mixin == null) {
+						mixin = createMixin(mixinStr);
+					}
+
 				}
 				entity.getMixins().add(mixin);
-				mixin.getEntities().add(entity);
+				// mixin.getEntities().add(entity);
 				logger.info("Mixin --> Term : " + mixin.getTerm() + " --< Scheme : " + mixin.getScheme());
 
 			}
@@ -865,7 +971,7 @@ public class ConfigurationManager {
 	 * @param mixinId
 	 * @return a mixin found or null if not found
 	 */
-	public static Mixin findMixin(final String owner, final String mixinId) {
+	public static Mixin findMixinOnEntities(final String owner, final String mixinId) {
 		Configuration configuration = getConfigurationForOwner(owner);
 		Mixin mixinToReturn = null;
 		boolean mixinOk;
@@ -907,6 +1013,31 @@ public class ConfigurationManager {
 	}
 
 	/**
+	 * Find a mixin on loaded extension on configuration.
+	 * 
+	 * @param owner
+	 * @param mixinId
+	 */
+	public static Mixin findMixinOnExtension(final String owner, final String mixinId) {
+		Configuration config = getConfigurationForOwner(owner);
+		Mixin mixinToReturn = null;
+		for (Extension ext : config.getUse()) {
+			for (Mixin mixin : ext.getMixins()) {
+				if ((mixin.getScheme() + mixin.getTerm()).equals(mixinId)) {
+					mixinToReturn = mixin;
+					break;
+				}
+
+			}
+			if (mixinToReturn != null) {
+				break;
+			}
+		}
+
+		return mixinToReturn;
+	}
+
+	/**
 	 * Associate a list of entities with a mixin, replacing existing list if
 	 * any. if mixin doest exist, this will create it.
 	 * 
@@ -915,10 +1046,16 @@ public class ConfigurationManager {
 	 */
 	public static void saveMixinForEntities(final String owner, final String mixinId, final List<String> entityIds) {
 
-		// searching for the mixin to register on entities.
-		Mixin mixin = findMixin(owner, mixinId);
+		// searching for the mixin to register.
+		Mixin mixin = findMixinOnExtension(owner, mixinId);
+
 		if (mixin == null) {
-			mixin = createMixin(mixinId);
+			mixin = findMixinOnEntities(owner, mixinId);
+
+			if (mixin == null) {
+				// TODO : Check this : User mixin tag ?
+				mixin = createMixin(mixinId);
+			}
 		}
 		logger.info("Mixin --> Term : " + mixin.getTerm() + " --< Scheme : " + mixin.getScheme());
 
@@ -926,7 +1063,7 @@ public class ConfigurationManager {
 			Entity entity = findEntity(owner, entityId);
 
 			if (entity != null && !mixin.getEntities().contains(entity)) {
-				mixin.getEntities().add(entity);
+				// mixin.getEntities().add(entity);
 				entity.getMixins().add(mixin);
 
 				updateVersion(owner, entityId);
@@ -951,7 +1088,7 @@ public class ConfigurationManager {
 				entityMixin.getMixins().remove(mixin);
 
 				// Remove the entity from mixin.
-				it.remove();
+				// it.remove();
 			}
 
 		}
@@ -969,9 +1106,15 @@ public class ConfigurationManager {
 	public static void updateMixinForEntities(final String owner, final String mixinId, final List<String> entityIds) {
 
 		// searching for the mixin to register on entities.
-		Mixin mixin = findMixin(owner, mixinId);
+		Mixin mixin = findMixinOnExtension(owner, mixinId);
+
 		if (mixin == null) {
-			mixin = createMixin(mixinId);
+			mixin = findMixinOnEntities(owner, mixinId);
+
+			if (mixin == null) {
+				// TODO : Check this : User mixin tag ?
+				mixin = createMixin(mixinId);
+			}
 		}
 		logger.info("Mixin --> Term : " + mixin.getTerm() + " --< Scheme : " + mixin.getScheme());
 
@@ -980,7 +1123,7 @@ public class ConfigurationManager {
 			if (entity != null && !mixin.getEntities().contains(entity)) {
 
 				entity.getMixins().add(mixin);
-				mixin.getEntities().add(entity);
+				// mixin.getEntities().add(entity);
 				updateVersion(owner, entityId);
 			}
 		}
@@ -1117,9 +1260,9 @@ public class ConfigurationManager {
 	 *            the given OCCI object.
 	 */
 	public static boolean validate(EObject occi) {
-//		if (!Boolean.getBoolean("validation")) {
-//			return true;
-//		}
+		// if (!Boolean.getBoolean("validation")) {
+		// return true;
+		// }
 		// Does the validation when the Java system property 'validation' is set
 		// to 'true'.
 		Diagnostic diagnostic = Diagnostician.INSTANCE.validate(occi);

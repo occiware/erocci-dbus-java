@@ -13,6 +13,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.eclipse.emf.ecore.EDataType;
 import org.freedesktop.dbus.UInt32;
 import org.freedesktop.dbus.Variant;
 import org.junit.After;
@@ -20,8 +21,14 @@ import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.occiware.clouddesigner.occi.Action;
+import org.occiware.clouddesigner.occi.Attribute;
+import org.occiware.clouddesigner.occi.AttributeState;
+import org.occiware.clouddesigner.occi.Configuration;
 import org.occiware.clouddesigner.occi.Entity;
 import org.occiware.clouddesigner.occi.Extension;
+import org.occiware.clouddesigner.occi.Kind;
+import org.occiware.clouddesigner.occi.Link;
 import org.occiware.clouddesigner.occi.Mixin;
 import org.occiware.clouddesigner.occi.Resource;
 import org.ow2.erocci.backend.Pair;
@@ -29,7 +36,6 @@ import org.ow2.erocci.backend.Quad;
 import org.ow2.erocci.backend.Struct1;
 import org.ow2.erocci.backend.Struct2;
 import org.ow2.erocci.backend.impl.CoreImpl;
-import org.ow2.erocci.backend.impl.Utils;
 import org.ow2.erocci.model.ConfigurationManager;
 
 public class CoreImplTest {
@@ -46,6 +52,8 @@ public class CoreImplTest {
 	private final String STORAGE_LINK_KIND = SCHEME_INFRA + "storagelink";
 	private final String NETWORK_KIND = SCHEME_INFRA + "network";
 	private final String NETWORK_INTERFACE_LINK_KIND = SCHEME_INFRA + "networkinterface";
+	private final String MIXIN_OS_GENERIC_ID = "http://schemas.ogf.org/occi/infrastructure#os_tpl";
+	
 
 	private final String DEFAULT_OWNER = "anonymous";
 
@@ -67,17 +75,16 @@ public class CoreImplTest {
 
 	@After
 	public void tearDown() throws Exception {
-
+		// Validate model in the end.
+		validateModel();
 	}
 
-	// @Test
+	@Test
 	public void testSaveResourceAndLinks() {
 
 		List<String> resourcePartialIds = new ArrayList<String>();
 		List<String> resourceIds = new ArrayList<String>();
 		resourcePartialIds.add("compute/");
-		resourcePartialIds.add("compute/");
-		resourcePartialIds.add("storage/");
 		resourcePartialIds.add("storage/");
 		resourcePartialIds.add("network/");
 
@@ -173,24 +180,27 @@ public class CoreImplTest {
 			// update the container.
 			container.getAttributes().put("occi.compute.hostname", new Variant("vmTest1"));
 			List<String> mixinsAddToCompute = new ArrayList<>();
-			mixinsAddToCompute.add("http://schemas.openstack.org/template/os#cirros-0.3.0-x86_64-uec");
+			mixinsAddToCompute.add(MIXIN_OS_GENERIC_ID);
 			container.setMixins(mixinsAddToCompute);
 
 			testSaveResourceAndLinks();
 
 			// check if update attribute is found.
-			Mixin mixin = ConfigurationManager.findMixin(container.getOwner(),
-					"http://schemas.openstack.org/template/os#cirros-0.3.0-x86_64-uec");
+			Mixin mixin = ConfigurationManager.findMixinOnEntities(container.getOwner(),
+					MIXIN_OS_GENERIC_ID);
 			assertNotNull(mixin);
-			assertEquals("http://schemas.openstack.org/template/os#", mixin.getScheme());
-			assertEquals("cirros-0.3.0-x86_64-uec", mixin.getTerm());
+			assertEquals(SCHEME_INFRA, mixin.getScheme());
+			assertEquals("os_tpl", mixin.getTerm());
 			// Search resource update via configuration and check if mixin is
 			// referenced.
 			Resource updComputeRes = ConfigurationManager.findResource(container.getOwner(), "compute/vm1");
 			assertNotNull(updComputeRes);
 			List<Mixin> mixins = updComputeRes.getMixins();
 			assertTrue(mixins.contains(mixin));
-			assertTrue(mixin.getEntities().contains(updComputeRes));
+			
+			mixin = ConfigurationManager.findMixinOnExtension(container.getOwner(), MIXIN_OS_GENERIC_ID);
+			assertNotNull(mixin);
+			// assertTrue(mixin.getEntities().contains(updComputeRes));
 
 		}
 
@@ -199,7 +209,7 @@ public class CoreImplTest {
 	/**
 	 * Test update attributes on entity.
 	 */
-	// @Test
+	@Test
 	public void testUpdate() {
 		// build or rebuild infra test.
 		buildInfraTest();
@@ -232,7 +242,7 @@ public class CoreImplTest {
 
 	}
 
-	// @Test
+	@Test
 	public void testSaveMixin() {
 		buildInfraTest();
 		testSaveResourceAndLinks();
@@ -241,7 +251,7 @@ public class CoreImplTest {
 		List<String> resourceIds = new ArrayList<String>();
 		resourcePartialIds.add("compute/");
 
-		String mixinId = "http://schemas.openstack.org/template/os#cirros-0.3.0-x86_64-uec";
+		String mixinId = MIXIN_OS_GENERIC_ID;
 		// update keys list for resources.
 		for (String partialId : resourcePartialIds) {
 			for (String key : containers.keySet()) {
@@ -274,22 +284,22 @@ public class CoreImplTest {
 		}
 
 		// Check mixin object.
-		Mixin mixin = ConfigurationManager.findMixin(DEFAULT_OWNER, mixinId);
+		Mixin mixin = ConfigurationManager.findMixinOnEntities(DEFAULT_OWNER, mixinId);
 		assertNotNull(mixin);
 
 	}
 
-	// @Test
+	@Test
 	public void testUpdateMixin() {
 		buildInfraTest();
 		testSaveResourceAndLinks();
 
 		List<String> resourcePartialIds = new ArrayList<String>();
 		List<String> resourceIds = new ArrayList<String>();
-		resourcePartialIds.add("storage/");
+		// resourcePartialIds.add("storage/"); ==>> not compatible with mixin applies.
 		resourcePartialIds.add("compute/");
 
-		String mixinId = "http://aws.amazon.com/template/os#ubuntu-15.10-x86_64-fr";
+		String mixinId = MIXIN_OS_GENERIC_ID;
 
 		// update keys list for resources.
 		for (String partialId : resourcePartialIds) {
@@ -306,7 +316,7 @@ public class CoreImplTest {
 		// Update the mixins for an entity link and all computes.
 		resourceIds.clear();
 		resourcePartialIds.remove("storage/");
-		resourcePartialIds.add("storageLink");
+		// resourcePartialIds.add("storagelink");
 		// update keys list for resources.
 		for (String partialId : resourcePartialIds) {
 			for (String key : containers.keySet()) {
@@ -315,9 +325,9 @@ public class CoreImplTest {
 				}
 			}
 		}
-		
+
 		core.UpdateMixin(mixinId, resourceIds);
-		
+
 		Entity entity;
 		boolean mixinFound = false;
 		for (String id : resourceIds) {
@@ -339,31 +349,16 @@ public class CoreImplTest {
 
 		}
 
-		// Check mixin object.
-		Mixin mixin = ConfigurationManager.findMixin(DEFAULT_OWNER, mixinId);
-		assertNotNull(mixin);
-		boolean entityStorFound = false;
-		// Check if all storage resource are here (id began with "storage/".
-		for (Entity ent: mixin.getEntities()) {
-			entityStorFound = false;
-			if (ent.getId().contains("storage/")) {
-				entityStorFound = true;
-				break;
-			}
-		}
-		assertTrue(entityStorFound);
-		
-		
 	}
 
-	// @Test
+	@Test
 	public void testFind() {
 		buildInfraTest();
 		testSaveResourceAndLinks();
-		
+
 		String id = "compute/vm1";
 		String idLink = "storagelink/sl1";
-		
+
 		// search a resource via core.find(id).
 		List<Struct1> structRes = core.Find(id);
 		assertNotNull(structRes);
@@ -372,7 +367,7 @@ public class CoreImplTest {
 			assertEquals(id, structRes1.b.getValue());
 			assertNotNull(structRes1.d);
 		}
-		
+
 		// search a link via core.find(idlink).
 		List<Struct1> structLink = core.Find(idLink);
 		assertNotNull(structLink);
@@ -381,12 +376,12 @@ public class CoreImplTest {
 			assertEquals(idLink, structLink1.b.getValue());
 			assertNotNull(structLink1.d);
 		}
-		
+
 		// Check if null return an empty list.
 		List<Struct1> structEmpty = core.Find(null);
 		assertNotNull(structEmpty);
 		assertTrue(structEmpty.isEmpty());
-		
+
 		// Check if partial id.
 		id = "compute";
 		List<Struct1> structP = core.Find(id);
@@ -398,14 +393,14 @@ public class CoreImplTest {
 		}
 	}
 
-    // @Test
+	@Test
 	public void testLoad() {
 		buildInfraTest();
 		testSaveResourceAndLinks();
-		
+
 		// Get entity occi object for loading.
 		String id = "networkinterface/ni1";
-		
+
 		// Load the content of an entity via the core module.
 		Quad<String, String, List<String>, Map<String, Variant>> quad = core.Load(new Variant(id));
 		// Check the result.
@@ -415,13 +410,13 @@ public class CoreImplTest {
 		String kind = quad.b;
 		List<String> mixins = quad.c;
 		Map<String, Variant> attribs = quad.d;
-		
+
 		// Check if no value is null.
 		assertNotNull(entityId);
 		assertNotNull(kind);
 		assertNotNull(mixins);
 		assertNotNull(attribs);
-		
+
 		// Check if no values are empty.
 		assertFalse(entityId.isEmpty());
 		assertFalse(kind.isEmpty());
@@ -429,7 +424,7 @@ public class CoreImplTest {
 		assertFalse(attribs.isEmpty());
 	}
 
-	// @Test
+	@Test
 	public void testListNext() {
 		buildInfraTest();
 		testSaveResourceAndLinks();
@@ -440,72 +435,83 @@ public class CoreImplTest {
 		assertNotNull(pair.a);
 		assertTrue(pair.a.toString().contains("collection"));
 		assertNotNull(pair.b);
-		
+
 		// TODO : Test filters on method list (and implement filters).
 		assertNotNull(pair);
 		assertNotNull(pair.a);
 		assertNotNull(pair.b);
-		List<Struct2> structLst = core.Next((new Variant((String)pair.a.getValue())), new UInt32(0), new UInt32(0));
+		List<Struct2> structLst = core.Next((new Variant((String) pair.a.getValue())), new UInt32(0), new UInt32(0));
 		assertNotNull(structLst);
 		assertFalse(structLst.isEmpty());
 		for (Struct2 struct : structLst) {
 			assertNotNull(struct.a);
 			assertNotNull(struct.b);
 		}
-		
+
 		pair = core.List(id, filters);
-		
+
 		// Test du renvoi d'un seul item.
-		structLst = core.Next((new Variant((String)pair.a.getValue())), new UInt32(0), new UInt32(1));
+		structLst = core.Next((new Variant((String) pair.a.getValue())), new UInt32(0), new UInt32(1));
 		assertNotNull(structLst);
 		assertTrue(structLst.size() == 1);
-		
+
 	}
 
-	// @Test
+	@Test
 	public void testDelete() {
 		buildInfraTest();
 		overwriteTestCount = 1;
 		testSaveResourceAndLinks();
-		
+
 		// Test remove entity.
 		String id = "compute/vm2";
 		Entity entity = ConfigurationManager.findEntity(DEFAULT_OWNER, id);
 		assertNotNull(entity);
-		
+
 		core.Delete(id);
-		
+
 		entity = ConfigurationManager.findEntity(DEFAULT_OWNER, id);
 		assertNull(entity);
-		
+
 		// test dissociate mixin.
-		id = "http://schemas.openstack.org/template/os#cirros-0.3.0-x86_64-uec";
-		Mixin mixin = ConfigurationManager.findMixin(DEFAULT_OWNER, id);
+		id = MIXIN_OS_GENERIC_ID;
+		Mixin mixin = ConfigurationManager.findMixinOnEntities(DEFAULT_OWNER, id);
 		assertNotNull(mixin);
-		assertFalse(mixin.getEntities().isEmpty());
-		
+		assertFalse(ConfigurationManager.findAllEntitiesForCategoryId(MIXIN_OS_GENERIC_ID).isEmpty());
+
 		core.Delete(id);
+
+		// Searching all entities with that mixin.
+		List<Entity> entities = ConfigurationManager.findAllEntitiesForMixin(DEFAULT_OWNER, id);
+		assertTrue(entities.isEmpty());
 		
-		mixin = ConfigurationManager.findMixin(DEFAULT_OWNER, id);
-	
-		// vm1 has this mixin, if we remove the entity reference, mixin will be null (Configuration Object can only search a mixin by resource (and their links).
-		assertNull(mixin);
 	}
+
 	
-	@Test
 	public void validateModel() {
+
 		buildInfraTest();
+		// To bypass test overwrite resource.
+		overwriteTestCount = 2;
 		testSaveResourceAndLinks();
-		
-		for(Extension extension : ConfigurationManager.getConfigurationForOwner(DEFAULT_OWNER).getUse()) {
-			
+
+		boolean result;
+		for (Extension extension : ConfigurationManager.getConfigurationForOwner(DEFAULT_OWNER).getUse()) {
+
 			System.out.println("    * Extension " + extension.getName() + " " + extension.getScheme());
+			result = ConfigurationManager.validate(extension); // Validate
+																// extension.
+			assertTrue(result);
+			print(extension);
+
 		}
-		
-		// Model validation ocl.
-		boolean result = ConfigurationManager.validate(ConfigurationManager.getConfigurationForOwner(DEFAULT_OWNER));
+
+		// Model validation with ocl.
+		result = ConfigurationManager.validate(ConfigurationManager.getConfigurationForOwner(DEFAULT_OWNER));
+		// Print our configuration.
+		print(ConfigurationManager.getConfigurationForOwner(DEFAULT_OWNER));
 		assertTrue(result);
-		
+
 	}
 
 	private void buildInfraTest() {
@@ -524,7 +530,8 @@ public class CoreImplTest {
 
 		// Build resource with id generated uuid.
 		// id = "compute/" + Utils.createUUID();
-		// containers.put(id, buildComputeContainer(id, "vm3", "x64", 2, 16.0, mixinsEmpty, DEFAULT_OWNER));
+		// containers.put(id, buildComputeContainer(id, "vm3", "x64", 2, 16.0,
+		// mixinsEmpty, DEFAULT_OWNER));
 
 		// Build resource storage/storage1.
 		id = "storage/storage1";
@@ -591,7 +598,7 @@ public class CoreImplTest {
 				buildStorageLinkContainer(id, deviceId, mountPoint, resSrc, resTarget, mixinsEmpty, DEFAULT_OWNER));
 
 		// Build link storage to vm2.
-		id = "storagelink/sl1";
+		id = "storagelink/sl2";
 		deviceId = "nfs:...";
 		mountPoint = "/mnt/scratch";
 		resSrc = "compute/vm2";
@@ -750,6 +757,146 @@ public class CoreImplTest {
 		storageLink = new InputContainer(id, STORAGE_LINK_KIND, mixins, attribs, owner, resSrc, resTarget);
 
 		return storageLink;
+	}
+
+	/**
+	 * Print a given OCCI extension.
+	 * 
+	 * @param extension
+	 *            the given OCCI extension.
+	 */
+	public static void print(Extension extension) {
+		System.out.println("Extension");
+		System.out.println("  - name: " + extension.getName());
+		System.out.println("  - scheme: " + extension.getScheme());
+		System.out.println("  - import extensions:");
+		for (Extension importExtension : extension.getImport()) {
+			System.out.println("        * Extension " + importExtension.getName() + " " + importExtension.getScheme());
+		}
+		System.out.println("  - kinds:");
+		for (Kind kind : extension.getKinds()) {
+			System.out.println("    * Kind");
+			System.out.println("      - term: " + kind.getTerm());
+			System.out.println("      - scheme: " + kind.getScheme());
+			System.out.println("      - title: " + kind.getTitle());
+			Kind parent = kind.getParent();
+			if (parent != null) {
+				System.out.println("      - parent: " + parent.getScheme() + parent.getTerm());
+			} else {
+				System.out.println("      - no parent");
+			}
+			System.out.println("      - attributes:");
+			for (Attribute attribute : kind.getAttributes()) {
+				System.out.println("        * Attribute");
+				System.out.println("          - name: " + attribute.getName());
+				System.out.println("          - description: " + attribute.getDescription());
+				System.out.println("          - mutable: " + attribute.isMutable());
+				System.out.println("          - required: " + attribute.isRequired());
+				System.out.println("          - type: " + attribute.getType().getName());
+				System.out.println("          - default: " + attribute.getDefault());
+			}
+			System.out.println("      - actions:");
+			for (Action action : kind.getActions()) {
+				System.out.println("        * Action");
+				System.out.println("          - term: " + action.getTerm());
+				System.out.println("          - scheme: " + action.getScheme());
+				System.out.println("          - title: " + action.getTitle());
+			}
+			System.out.println("      - entities:");
+			for (Entity entity : kind.getEntities()) {
+				System.out.println("        * Entity id " + entity.getId());
+			}
+		}
+		System.out.println("  - mixins:");
+		for (Mixin mixin : extension.getMixins()) {
+			System.out.println("    * Mixin");
+			System.out.println("      - term: " + mixin.getTerm());
+			System.out.println("      - scheme: " + mixin.getScheme());
+			System.out.println("      - title: " + mixin.getTitle());
+			System.out.println("      - depends:");
+			for (Mixin depend : mixin.getDepends()) {
+				System.out.println("        * Mixin " + depend.getScheme() + depend.getTerm());
+			}
+			System.out.println("      - applies:");
+			for (Kind apply : mixin.getApplies()) {
+				System.out.println("        * Kind " + apply.getScheme() + apply.getTerm());
+			}
+			System.out.println("      - attributes:");
+			for (Attribute attribute : mixin.getAttributes()) {
+				System.out.println("        * Attribute");
+				System.out.println("          - name: " + attribute.getName());
+				System.out.println("          - description: " + attribute.getDescription());
+				System.out.println("          - mutable: " + attribute.isMutable());
+				System.out.println("          - required: " + attribute.isRequired());
+				System.out.println("          - type: " + attribute.getType().getName());
+				System.out.println("          - default: " + attribute.getDefault());
+			}
+			System.out.println("      - actions:");
+			for (Action action : mixin.getActions()) {
+				System.out.println("        * Action");
+				System.out.println("          - term: " + action.getTerm());
+				System.out.println("          - scheme: " + action.getScheme());
+				System.out.println("          - title: " + action.getTitle());
+			}
+			System.out.println("      - entities:");
+			for (Entity entity : mixin.getEntities()) {
+				System.out.println("        * Entity id " + entity.getId());
+			}
+		}
+		System.out.println("  - types:");
+		for (EDataType type : extension.getTypes()) {
+			System.out.println("    * EDataType " + type.getName());
+		}
+	}
+
+	/**
+	 * Print a given OCCI configuration.
+	 * 
+	 * @param configuration
+	 *            the given OCCI configuration.
+	 */
+	public static void print(Configuration configuration) {
+		System.out.println("Configuration");
+		System.out.println("  - used extensions:");
+		for (Extension extension : configuration.getUse()) {
+			System.out.println("    * Extension " + extension.getName() + " " + extension.getScheme());
+		}
+		System.out.println("  - resources:");
+		for (Resource resource : configuration.getResources()) {
+			System.out.println("    * Resource id " + resource.getId());
+			Kind resourceKind = resource.getKind();
+			System.out.println("      - Kind " + resourceKind.getScheme() + resourceKind.getTerm());
+			System.out.println("      - mixins:");
+			for (Mixin mixin : resource.getMixins()) {
+				System.out.println("        * Mixin " + mixin.getScheme() + mixin.getTerm());
+			}
+			System.out.println("      - attributes:");
+			for (AttributeState as : resource.getAttributes()) {
+				System.out.println("        * AttributeState " + as.getName() + "=" + as.getValue());
+			}
+			System.out.println("      - links:");
+			for (Link link : resource.getLinks()) {
+				System.out.println("        * Link id " + link.getId());
+				Kind linkKind = link.getKind();
+				System.out.println("         - Kind " + linkKind.getScheme() + linkKind.getTerm());
+				System.out.println("         - mixins:");
+				for (Mixin mixin : link.getMixins()) {
+					System.out.println("        * Mixin " + mixin.getScheme() + mixin.getTerm());
+				}
+				System.out.println("         - attributes:");
+				for (AttributeState as : link.getAttributes()) {
+					System.out.println("           * AttributeState " + as.getName() + "=" + as.getValue());
+				}
+				Resource source = link.getSource();
+				System.out.println("        - source id " + source.getId());
+				Resource target = link.getTarget();
+				if (target != null) {
+					System.out.println("        - target id " + target.getId());
+				} else {
+					System.out.println("        - no target");
+				}
+			}
+		}
 	}
 
 	// #! /bin/sh
