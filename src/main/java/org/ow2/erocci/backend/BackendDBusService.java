@@ -71,7 +71,7 @@ public class BackendDBusService {
             //EROCCI considers that the service is available on / (convention)
             dbusConnection.exportObject("/", coreImpl);
             
-            // dbusConnection.exportObject("/action/", actionImpl);
+            // dbusConnection.exportObject("/action", actionImpl);
             
             
             logger.info("Connected to dbus with unique name : " + dbusConnection.getUniqueName());

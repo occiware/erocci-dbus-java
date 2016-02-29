@@ -36,16 +36,19 @@ import org.ow2.erocci.backend.Pair;
 import org.ow2.erocci.backend.Quad;
 import org.ow2.erocci.backend.Struct1;
 import org.ow2.erocci.backend.Struct2;
+import org.ow2.erocci.backend.action;
 import org.ow2.erocci.backend.core;
+import org.ow2.erocci.backend.mixin;
 import org.ow2.erocci.model.ConfigurationManager;
 import org.ow2.erocci.model.DefaultActionExecutor;
 
 /**
  * Implementation of OCCI core.
  * 
- * @author Pierre-Yves Gibello - Linagora Christophe Gourdin - Inria
+ * @author Pierre-Yves Gibello - Linagora 
+ * @author Christophe Gourdin - Inria
  */
-public class CoreImpl implements core, DBus.Properties {
+public class CoreImpl implements core, action, mixin, DBus.Properties {
 
 	public static byte NODE_ENTITY = 0;
 	private Logger logger = Logger.getLogger(this.getClass().getName());
@@ -53,7 +56,11 @@ public class CoreImpl implements core, DBus.Properties {
 	private String schema;
 
 	private Map<String, List<Struct2>> currentListRequests = new HashMap<String, List<Struct2>>();
-
+	// Delegate to action.
+	private ActionImpl actionImpl = new ActionImpl(); 
+	// Delegate to mixin methods.
+	private MixinImpl mixinImpl = new MixinImpl();
+	
 	/**
 	 * Default constructor
 	 */
@@ -413,4 +420,36 @@ public class CoreImpl implements core, DBus.Properties {
 
 		return ret;
 	}
+
+	/**
+	 * Delegate Action method to Action Object method.
+	 * @param id
+	 * @param action_id
+	 * @param attributes
+	 */
+	@Override
+	public void Action(String id, String action_id, Map<String, Variant> attributes) {
+		actionImpl.Action(id, action_id, attributes);	
+	}
+
+	/**
+	 * Delegate to Mixin Object addMixin method.
+	 * @param id
+	 * @param location
+	 * @param owner
+	 */
+	@Override
+	public void AddMixin(String id, String location, String owner) {
+		mixinImpl.AddMixin(id, location, owner);
+	}
+
+	/**
+	 * Delegate to Mixin object delMixin method.
+	 * @param id
+	 */
+	@Override
+	public void DelMixin(String id) {
+		mixinImpl.DelMixin(id);
+	}
+	
 }
