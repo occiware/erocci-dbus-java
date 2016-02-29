@@ -17,12 +17,16 @@
 package org.ow2.erocci.backend;
 
 import java.io.InputStream;
+import java.util.logging.Logger;
 
+import org.eclipse.ocl.pivot.evaluation.ModelManager;
 import org.freedesktop.dbus.DBusConnection;
+import org.freedesktop.dbus.DBusSignal;
+import org.freedesktop.dbus.bin.CreateInterface;
 import org.freedesktop.dbus.exceptions.DBusException;
+import org.ow2.erocci.backend.impl.ActionImpl;
 import org.ow2.erocci.backend.impl.CoreImpl;
-import org.ow2.erocci.model.DefaultEntityFactory;
-import org.ow2.erocci.model.EntityFactory;
+import org.ow2.erocci.model.ConfigurationManager;
 
 /**
  * Erocci backend DBus service implementation.
@@ -32,9 +36,14 @@ import org.ow2.erocci.model.EntityFactory;
  */
 public class BackendDBusService {
 
+	private Logger logger = Logger.getLogger(this.getClass().getName());
+	
 	private DBusConnection dbusConnection;
 	private CoreImpl coreImpl = new CoreImpl();
 
+	// private ActionImpl actionImpl = new ActionImpl();
+	
+	
 	/**
 	 * Set OCCI schema
 	 * @param in InputStream to read schema from (will be closed at the end of this call)
@@ -43,28 +52,7 @@ public class BackendDBusService {
 		coreImpl.setSchema(in);
 		return this;
 	}
-
 	
-	/**
-	 * Register an OCCI entity factory, by entity category (OCCI kind).
-	 * @param kind The entity category name (OCCI kind = scheme#term)
-	 * @param entityFactory The entity factory, to create entities of specified category
-	 * @return The current DBus service backend
-	 */
-	public final BackendDBusService addEntityFactory(String kind, EntityFactory entityFactory) {
-		coreImpl.addEntityFactory(kind, entityFactory);
-		return this;
-	}
-
-	/**
-	 * Register a default entity factory, to be used if no more relevant one is found.
-	 * @param factory The default factory
-	 */
-	public final BackendDBusService setDefaultEntityFactory(EntityFactory factory) {
-		coreImpl.setDefaultEntityFactory(factory);
-		return this;
-	}
-
 	/**
 	 * Start the DBus service backend
 	 * @param name The DBus service name
@@ -80,10 +68,14 @@ public class BackendDBusService {
             dbusConnection.requestBusName(dbusServiceName.trim());
             //EROCCI considers that the service is available on / (convention)
             dbusConnection.exportObject("/", coreImpl);
-
-            System.out.println(dbusConnection.getUniqueName());
+            
+            // dbusConnection.exportObject("/action", actionImpl);
+            
+            
+            logger.info("Connected to dbus with unique name : " + dbusConnection.getUniqueName());
 
         } catch (DBusException e) {
+        	logger.warning("Error while connecting to DBUS !");
             e.printStackTrace(System.err);
         }
 	}
@@ -95,12 +87,10 @@ public class BackendDBusService {
 	public static void main(String[] args) {
 		new BackendDBusService()
 			.setSchema(BackendDBusService.class.getResourceAsStream("/schema.xml"))
-			.addEntityFactory("http://schemas.ogf.org/occi/infrastructure#compute", new DefaultEntityFactory())
-			.addEntityFactory("http://schemas.ogf.org/occi/infrastructure#storage", new DefaultEntityFactory())
-			.addEntityFactory("http://schemas.ogf.org/occi/infrastructure#storagelink", new DefaultEntityFactory())
-			.addEntityFactory("http://schemas.ogf.org/occi/infrastructure#network", new DefaultEntityFactory())
-			.addEntityFactory("http://schemas.ogf.org/occi/infrastructure#networkinterface", new DefaultEntityFactory())
 			.start("org.ow2.erocci.backend");
+		ConfigurationManager.getConfigurationForOwner(ConfigurationManager.DEFAULT_OWNER);
+		// TODO : Add argument for specifying an extension to use (with infrastructure and core) or specify it in init method.
+		
 	}
 
 }

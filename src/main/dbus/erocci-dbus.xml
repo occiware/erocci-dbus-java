@@ -1,117 +1,118 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<!DOCTYPE node PUBLIC "-//freedesktop//DTD D-BUS Object Introspection 1.0//EN"
-"http://www.freedesktop.org/standards/dbus/1.0/introspect.dtd" >
+
 <node
-    xmlns="https://raw.githubusercontent.com/kbirken/dbus-emf-model/master/plugins/model.emf.dbusxml/spec/introspect.xsd"
-    xmlns:xs="http://www.w3.org/2001/XMLSchema" >
-  
-  <interface name="org.ow2.erocci.backend.core">
-    
-    <method name="Init" >
-      <arg name="opts" type="a{sv}" direction="in" />
-    </method>
 
-    <method name="Terminate" >
-    </method>
-    
-    <method name="SaveResource" >
-      <arg name="id" type="s" direction="in" />
-      <arg name="kind" type="s" direction="in" />
-      <arg name="mixins" type="as" direction="in" />
-      <arg name="attributes" type="a{sv}" direction="in" />
-      <arg name="owner" type="s" direction="in" />
+	xmlns="https://raw.githubusercontent.com/kbirken/dbus-emf-model/master/plugins/model.emf.dbusxml/spec/introspect.xsd"
+	xmlns:xs="http://www.w3.org/2001/XMLSchema">
 
-      <arg name="id" type="s" direction="out" />
-    </method>
 
-    <method name="SaveLink" >
-      <arg name="id" type="s" direction="in" />
-      <arg name="kind" type="s" direction="in" />
-      <arg name="mixins" type="as" direction="in" />
-      <arg name="src" type="s" direction="in" />
-      <arg name="target" type="s" direction="in" />
-      <arg name="attributes" type="a{sv}" direction="in" />
-      <arg name="owner" type="s" direction="in" />
+	<interface name="org.ow2.erocci.backend.core">
 
-      <arg name="id" type="s" direction="out" />      
-    </method>
+		<method name="Init">
+			<arg name="opts" type="a{sv}" direction="in" />
+		</method>
 
-    <method name="Update" >
-      <arg name="id" type="s" direction="in" />
-      <arg name="attributes" type="a{sv}" direction="in" />
+		<method name="Terminate">
+		</method>
 
-      <arg name="attributes" type="a{sv}" direction="out" />
-    </method>
+		<method name="SaveResource">
+			<arg name="id" type="s" direction="in" />
+			<arg name="kind" type="s" direction="in" />
+			<arg name="mixins" type="as" direction="in" />
+			<arg name="attributes" type="a{sv}" direction="in" />
+			<arg name="owner" type="s" direction="in" />
 
-    <method name="SaveMixin" >
-      <arg name="id" type="s" direction="in" />
-      <arg name="entities" type="as" direction="in" />
-    </method>
+			<arg name="id" type="s" direction="out" />
+		</method>
 
-    <method name="UpdateMixin" >
-      <arg name="id" type="s" direction="in" />
-      <arg name="entities" type="as" direction="in" />
-    </method>
+		<method name="SaveLink">
+			<arg name="id" type="s" direction="in" />
+			<arg name="kind" type="s" direction="in" />
+			<arg name="mixins" type="as" direction="in" />
+			<arg name="src" type="s" direction="in" />
+			<arg name="target" type="s" direction="in" />
+			<arg name="attributes" type="a{sv}" direction="in" />
+			<arg name="owner" type="s" direction="in" />
 
-    <method name="Find" >
-      <arg name="id" type="s" direction="in" />
+			<arg name="id" type="s" direction="out" />
+		</method>
 
-      <arg name="entities" type="a(yvsu)" direction="out" />
-    </method>
+		<method name="Update">
+			<arg name="id" type="s" direction="in" />
+			<arg name="attributes" type="a{sv}" direction="in" />
 
-    <method name="Load" >
-      <arg name="opaque_id" type="v" direction="in" />
+			<arg name="attributes" type="a{sv}" direction="out" />
+		</method>
 
-      <arg name="id" type="s" direction="out" />
-      <arg name="kind" type="s" direction="out" />
-      <arg name="mixins" type="as" direction="out" />
-      <arg name="attributes" type="a{sv}" direction="out" />
-    </method>
+		<method name="SaveMixin">
+			<arg name="id" type="s" direction="in" />
+			<arg name="entities" type="as" direction="in" />
+		</method>
 
-    <method name="List" >
-      <arg name="id" type="s" direction="in" />
-      <arg name="filters" type="a{sv}" direction="in" />
+		<method name="UpdateMixin">
+			<arg name="id" type="s" direction="in" />
+			<arg name="entities" type="as" direction="in" />
+		</method>
 
-      <arg name="opaque_id" type="v" direction="out" />
-      <arg name="serial" type="u" direction="out" />
-    </method>
+		<method name="Find">
+			<arg name="id" type="s" direction="in" />
 
-    <method name="Next" >
-      <arg name="opaque_id" type="v" direction="in" />
-      <arg name="start" type="u" direction="in" />
-      <arg name="items" type="u" direction="in" />
+			<arg name="entities" type="a(yvsu)" direction="out" />
+		</method>
 
-      <arg name="entities" type="a(ss)" direction="out" />
-    </method>
+		<method name="Load">
+			<arg name="opaque_id" type="v" direction="in" />
 
-    <method name="Delete" >
-      <arg name="id" type="s" direction="in" />
-    </method>
+			<arg name="id" type="s" direction="out" />
+			<arg name="kind" type="s" direction="out" />
+			<arg name="mixins" type="as" direction="out" />
+			<arg name="attributes" type="a{sv}" direction="out" />
+		</method>
 
-    <property name="schema" type="s" access="read" >
-    </property>
-  </interface>
-  
-  <interface name="org.ow2.erocci.backend.mixin">
+		<method name="List">
+			<arg name="id" type="s" direction="in" />
+			<arg name="filters" type="a{sv}" direction="in" />
 
-    <method name="AddMixin" >
-      <arg name="id" type="s" direction="in" />
-      <arg name="location" type="s" direction="in" />
-      <arg name="owner" type="s" direction="in" />
-    </method>
+			<arg name="opaque_id" type="v" direction="out" />
+			<arg name="serial" type="u" direction="out" />
+		</method>
 
-    <method name="DelMixin" >
-      <arg name="id" type="s" direction="in" />
-    </method>
-  </interface>
+		<method name="Next">
+			<arg name="opaque_id" type="v" direction="in" />
+			<arg name="start" type="u" direction="in" />
+			<arg name="items" type="u" direction="in" />
 
-  <interface name="org.ow2.erocci.backend.action" >
- 
-    <method name="Action" >
-      <arg name="id" type="s" direction="in" />
-      <arg name="action_id" type="s" direction="in" />
-      <arg name="attributes" type="a{sv}" direction="in" />
-    </method>
-  </interface>
+			<arg name="entities" type="a(ss)" direction="out" />
+		</method>
+
+		<method name="Delete">
+			<arg name="id" type="s" direction="in" />
+		</method>
+
+		<property name="schema" type="s" access="read">
+		</property>
+	</interface>
+
+	<interface name="org.ow2.erocci.backend.mixin">
+
+		<method name="AddMixin">
+			<arg name="id" type="s" direction="in" />
+			<arg name="location" type="s" direction="in" />
+			<arg name="owner" type="s" direction="in" />
+		</method>
+
+		<method name="DelMixin">
+			<arg name="id" type="s" direction="in" />
+		</method>
+	</interface>
+
+	<interface name="org.ow2.erocci.backend.action">
+
+		<method name="Action">
+			<arg name="id" type="s" direction="in" />
+			<arg name="action_id" type="s" direction="in" />
+			<arg name="attributes" type="a{sv}" direction="in" />
+		</method>
+	</interface>
 </node>
 
