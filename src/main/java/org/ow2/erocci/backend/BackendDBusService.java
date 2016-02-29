@@ -27,8 +27,6 @@ import org.freedesktop.dbus.exceptions.DBusException;
 import org.ow2.erocci.backend.impl.ActionImpl;
 import org.ow2.erocci.backend.impl.CoreImpl;
 import org.ow2.erocci.model.ConfigurationManager;
-import org.ow2.erocci.model.DefaultEntityFactory;
-import org.ow2.erocci.model.EntityFactory;
 
 /**
  * Erocci backend DBus service implementation.
