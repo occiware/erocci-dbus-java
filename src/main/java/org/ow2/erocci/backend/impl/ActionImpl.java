@@ -40,6 +40,7 @@ public class ActionImpl implements action {
 	public void Action(String id, String action_id,
 			Map<String, Variant> attributes) {
 		logger.info("action " + action_id + " invoked");
+		
 	}
 	
 

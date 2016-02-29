@@ -70,6 +70,7 @@ public class BackendDBusService {
             dbusConnection.requestBusName(dbusServiceName.trim());
             //EROCCI considers that the service is available on / (convention)
             dbusConnection.exportObject("/", coreImpl);
+            
             // dbusConnection.exportObject("/action/", actionImpl);
             
             
@@ -90,7 +91,7 @@ public class BackendDBusService {
 			.setSchema(BackendDBusService.class.getResourceAsStream("/schema.xml"))
 			.start("org.ow2.erocci.backend");
 		ConfigurationManager.getConfigurationForOwner(ConfigurationManager.DEFAULT_OWNER);
-		// TODO : Add argument for specifying an extension to use (with infrastructure and core).
+		// TODO : Add argument for specifying an extension to use (with infrastructure and core) or specify it in init method.
 		
 	}
 
