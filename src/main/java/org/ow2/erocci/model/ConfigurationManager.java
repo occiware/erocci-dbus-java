@@ -1248,7 +1248,14 @@ public class ConfigurationManager {
 			builder.append("--> name : " + attribute.getName() + " \n ");
 			builder.append("-- value : " + attribute.getValue() + " \n ");
 		}
-
+		if (entity.getKind().getActions().isEmpty()) {
+			builder.append("entity has no action \n ");
+		} else {
+			builder.append("entity has actions available : \n ");
+			for(Action action : entity.getKind().getActions()) {
+				builder.append(action.getTitle() + "--> " + action.getScheme() + action.getTerm() + " \n ");
+			}
+		}
 		logger.info(builder.toString());
 
 	}
