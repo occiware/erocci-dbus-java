@@ -429,6 +429,8 @@ public class CoreImpl implements core, action, mixin, DBus.Properties {
 	 */
 	@Override
 	public void Action(String id, String action_id, Map<String, Variant> attributes) {
+		logger.info("---------------------->Action method invoked !!!");
+		
 		actionImpl.Action(id, action_id, attributes);	
 	}
 
