@@ -30,12 +30,8 @@ $(JAR):
 
 deps: deps_dbus_java
 	$(install_dbus_java)
-	$(MVN) install:install-file -Dfile=/usr/share/java/dbus-2.8.jar -DgroupId=net.windwards.3rdparty -DartifactId=dbus -Dversion=2.8 -Dpackaging=jar
-	$(MVN) install:install-file -Dfile=/usr/share/java/dbus-bin-2.8.jar -DgroupId=net.windwards.3rdparty -DartifactId=dbus-bin -Dversion=2.8 -Dpackaging=jar
-	$(MVN) install:install-file -Dfile=/usr/share/java/hexdump-0.2.jar -DgroupId=net.windwards.3rdparty -DartifactId=matthew-hexdump -Dversion=0.2 -Dpackaging=jar
-	$(MVN) install:install-file -Dfile=/usr/share/java/unix-0.5.jar -DgroupId=net.windwards.3rdparty -DartifactId=matthew-unix -Dversion=0.5 -Dpackaging=jar
-	$(MVN) install:install-file -Dfile=/usr/share/java/debug-enable-1.1.jar -DgroupId=net.windwards.3rdparty -DartifactId=matthew-debug -Dversion=1.1 -Dpackaging=jar
-	
+	./dbus-java-install-script.sh
+
 ifneq ($(shell which apt-get),)
 deps_dbus_java:
 	sudo apt-get install dbus-java-bin
