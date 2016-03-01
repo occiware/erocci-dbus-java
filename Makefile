@@ -34,7 +34,9 @@ deps: deps_dbus_java
 
 ifneq ($(shell which apt-get),)
 deps_dbus_java:
-	sudo apt-get install dbus-java-bin
+	@if [ ! -e /usr/share/java/dbus-bin.jar ]; then \
+	  echo "INSTALL dbus-java-bin"; sudo apt-get install dbus-java-bin; \
+	fi
 else
 deps_dbus_java:
 	@echo "Don't know how to install dbus-java-bin on your system..."; \
