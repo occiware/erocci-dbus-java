@@ -81,21 +81,21 @@ DBUS_SESSION_BUS_ADDRESS=$(printenv DBUS_SESSION_BUS_ADDRESS | sed -e 's/kernel:
 ```
 
 ## Installation from scratch
-* On Ubuntu 15.10
-0 - Install openjdk 8 : ```sudo apt-get install openjdk-8-jdk``` 
-1 - Download Erlang 1.8.x for Ubuntu on the website editor (https://www.erlang-solutions.com/resources/download.html) or use : 
+### On Ubuntu 15.10
+* Install openjdk 8 : ```sudo apt-get install openjdk-8-jdk``` 
+* Download Erlang 1.8.x for Ubuntu on the website editor (https://www.erlang-solutions.com/resources/download.html) or use : 
 ```sudo apt-get install erlang```
-2 - Git Clone the Erocci project
-3 - Git Clone the Erocci-dbus-java project
-4 - Install maven3 using  ```sudo apt-get install maven```
-5 - Install dbus binaries for java : sudo apt-get install dbus-java-bin
-6 - Copy jni file like this : ```cp /usr/lib/jni/libunix-java.so /usr/lib/jvm/java-1.8.0-openjdk-amd64/lib/amd64/```
-7 - Go to erocci-dbus-java root directory
-8 - ```make deps```
-9 - ```make```
-10 - Go to Erocci root directory
-11 - launch ```./bootstrap``` and then ```make``` after the message "release successfully created" will display if all ok.
-12 - Launch erocci-dbus-java on first place before Erocci
-13 - Launch Erocci as describe upper.
+* Git Clone the Erocci project
+* Git Clone the Erocci-dbus-java project
+* Install maven3 using  ```sudo apt-get install maven```
+* Install dbus binaries for java : sudo apt-get install dbus-java-bin
+* Copy jni file like this : ```cp /usr/lib/jni/libunix-java.so /usr/lib/jvm/java-1.8.0-openjdk-amd64/lib/amd64/```
+* Go to erocci-dbus-java root directory
+* ```make deps```
+* ```make```
+* Go to Erocci root directory
+* launch ```./bootstrap``` and then ```make``` after the message "release successfully created" will display if all ok.
+* Launch erocci-dbus-java on first place before Erocci
+* Launch Erocci as describe upper.
 
 
