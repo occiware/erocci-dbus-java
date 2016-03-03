@@ -38,7 +38,7 @@ import org.ow2.erocci.backend.Struct2;
 import org.ow2.erocci.backend.impl.CoreImpl;
 import org.ow2.erocci.model.ConfigurationManager;
 
-public class CoreImplTest {
+public class InputDBUSTest {
 	private CoreImpl core = new CoreImpl();
 
 	/**
@@ -364,7 +364,8 @@ public class CoreImplTest {
 		assertNotNull(structRes);
 		assertFalse(structRes.isEmpty());
 		for (Struct1 structRes1 : structRes) {
-			assertEquals(id, structRes1.b.getValue());
+			// structRes1.b.value is the opaqueId (generated id by this backend with format : owner + ";" + relativePath).
+			assertEquals(id, structRes1.b.getValue().toString().split(";")[1]);
 			assertNotNull(structRes1.d);
 		}
 
@@ -373,7 +374,7 @@ public class CoreImplTest {
 		assertNotNull(structLink);
 		assertFalse(structLink.isEmpty());
 		for (Struct1 structLink1 : structLink) {
-			assertEquals(idLink, structLink1.b.getValue());
+			assertEquals(idLink, structLink1.b.getValue().toString().split(";")[1]);
 			assertNotNull(structLink1.d);
 		}
 
@@ -382,15 +383,15 @@ public class CoreImplTest {
 		assertNotNull(structEmpty);
 		assertTrue(structEmpty.isEmpty());
 
-		// Check if partial id.
-		id = "compute";
-		List<Struct1> structP = core.Find(id);
-		assertNotNull(structP);
-		assertFalse(structP.isEmpty());
-		for (Struct1 structPls : structP) {
-			assertNotNull(structPls.d);
-			assertNotNull(structPls.b);
-		}
+//		// Check if partial id.
+//		id = "compute";
+//		List<Struct1> structP = core.Find(id);
+//		assertNotNull(structP);
+//		assertFalse(structP.isEmpty());
+//		for (Struct1 structPls : structP) {
+//			assertNotNull(structPls.d);
+//			assertNotNull(structPls.b);
+//		}
 	}
 
 	@Test
@@ -399,10 +400,11 @@ public class CoreImplTest {
 		testSaveResourceAndLinks();
 
 		// Get entity occi object for loading.
-		String id = "networkinterface/ni1";
+		// Erocci will give opaqueId as parameter on load method.
+		String opaqueId = "anonymous;networkinterface/ni1";
 
 		// Load the content of an entity via the core module.
-		Quad<String, String, List<String>, Map<String, Variant>> quad = core.Load(new Variant(id));
+		Quad<String, String, List<String>, Map<String, Variant>> quad = core.Load(new Variant(opaqueId));
 		// Check the result.
 		assertNotNull(quad);
 		// Quad<>(entityId, kind, mixins, attribVariant);
@@ -430,7 +432,15 @@ public class CoreImplTest {
 		testSaveResourceAndLinks();
 		Map<String, Variant> filters = new HashMap<>();
 		String id = STORAGE_LINK_KIND;
-		Pair<Variant, UInt32> pair = core.List(id, filters);
+		list(id, filters);
+		
+		id = "http://schemas.ogf.org/occi/infrastructure/compute/action#start";
+		list(id, filters);
+
+	}
+	
+	private void list(String catId, Map<String, Variant> filters) {
+		Pair<Variant, UInt32> pair = core.List(catId, filters);
 		assertNotNull(pair);
 		assertNotNull(pair.a);
 		assertTrue(pair.a.toString().contains("collection"));
@@ -448,13 +458,12 @@ public class CoreImplTest {
 			assertNotNull(struct.b);
 		}
 
-		pair = core.List(id, filters);
+		pair = core.List(catId, filters);
 
 		// Test du renvoi d'un seul item.
 		structLst = core.Next((new Variant((String) pair.a.getValue())), new UInt32(0), new UInt32(1));
 		assertNotNull(structLst);
 		assertTrue(structLst.size() == 1);
-
 	}
 
 	@Test
@@ -487,6 +496,22 @@ public class CoreImplTest {
 		
 	}
 
+	@Test
+	public void testAction() {
+		buildInfraTest();
+		testSaveResourceAndLinks();
+		String relativeEntityPath = "compute/vm1";
+		String actionFullPath = "http://schemas.ogf.org/occi/infrastructure/compute/action#start"; 
+		Map<String, Variant> attributes = new HashMap<>();
+		attributes.put("method", new Variant("start"));
+		
+		core.Action(relativeEntityPath, actionFullPath, attributes);
+		
+		relativeEntityPath = "test/doesntexist";
+		actionFullPath = "noAction";
+		attributes.clear();
+		core.Action(relativeEntityPath, actionFullPath, attributes);
+	}
 	
 	public void validateModel() {
 

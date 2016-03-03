@@ -211,7 +211,7 @@ public class ConfigurationManager {
 		} else {
 			logger.warning("resource already exist, overwriting...");
 			resourceOverwrite = true;
-			updateAttributesForEntity(owner, id, attributes);
+			updateAttributesToEntity(resource, attributes);
 
 		}
 
@@ -281,7 +281,7 @@ public class ConfigurationManager {
 
 		} else {
 			// Link exist upon our configuration, we update it.
-			updateAttributesForEntity(owner, id, attributes);
+			updateAttributesToEntity(link, attributes);
 			overwrite = true;
 		}
 
@@ -307,6 +307,19 @@ public class ConfigurationManager {
 
 	}
 
+	/**
+	 * Remove an entity (resource or link) from the configuration on overall owners.
+	 * @param id if full url: category id (bounded collection)
+     * if path relative url part: unbounded collection or entity
+	 */
+	public static void removeOrDissociate(final String id) {
+		// get the owners
+		Set<String> owners = configurations.keySet();
+		for (String owner : owners) {
+			removeOrDissociateFromConfiguration(owner, id);
+		}
+	}
+	
 	/**
 	 * Remove an entity (resource or link) from the owner's configuration or
 	 * delete all entities from given kind id or disassociate entities from
@@ -679,22 +692,82 @@ public class ConfigurationManager {
 		List<Entity> entities = new ArrayList<>();
 
 		for (String owner : owners) {
-			
+			entities.clear();
 			
 			entities.addAll(findAllEntitiesForKind(owner, categoryId));
 			entities.addAll(findAllEntitiesForMixin(owner, categoryId));
-
+			entities.addAll(findAllEntitiesForAction(owner, categoryId));
+			
+			
 			if (entities != null && !entities.isEmpty()) {
 				entitiesMap.put(owner, entities);
 			} else {
 				entities = new ArrayList<>();
 				entitiesMap.put(owner, entities);
 			}
-			entities = null;
+			
 		}
 		return entitiesMap;
 
 	}
+	
+	/**
+	 * Search for an action with entityId and a full category scheme.
+	 * 
+	 * @param relativePath
+	 *            (like "compute/vm1")
+	 * @param actionId
+	 *            (like
+	 *            "http://schemas.ogf.org/occi/infrastructure/compute/action#start")
+	 * @param owner
+	 * @return an entity map (key=owner, value=Entity) with this relative path and has this actionId, may return empty map if action not found on
+	 *         entity object, or if entity not found.
+	 */
+	public static Map<String, Entity> findEntityAction(final String relativePath, final String actionId) {
+		
+		Map<String, Entity> entities = findEntitiesOnAllOwner(relativePath);
+		
+		Map<String, Entity> entitiesFound = new HashMap<>();
+		if (entities.isEmpty()) {
+			return entities;
+		}
+		
+		Map<String, List<Entity>> entitiesAction = findAllEntitiesForCategoryId(actionId);
+
+		List<Entity> entitiesToCompare;
+		// Search relative path entity.
+		String owner;
+		for (Map.Entry<String, List<Entity>> entry : entitiesAction.entrySet()) { 
+			owner = entry.getKey();
+			entitiesToCompare = entry.getValue();
+			for (Entity ent : entitiesToCompare) {
+				if (entities.get(owner) != null && entities.get(owner).equals(ent)) {
+					// Entity is found for this action.
+					entitiesFound.put(owner, ent);
+				}
+			}	
+		}
+		return entitiesFound;
+
+	}
+	/**
+	 * Find a list of entity with his relative path.
+	 * 
+	 * @param entityId
+	 * @return entities
+	 */
+	public static Map<String, Entity> findEntitiesOnAllOwner(final String entityId) {
+		Entity entity;
+		Map<String, Entity> entitiesMap = new HashMap<>();
+		for (String owner : configurations.keySet()) {
+			entity = findEntity(owner, entityId);
+			if (entity != null) {
+				entitiesMap.put(owner, entity);
+			}
+		}
+		return entitiesMap;
+	}
+	
 	
 	/**
 	 * Find all entities with that kind. (replace getEntities from kind object).
@@ -746,6 +819,54 @@ public class ConfigurationManager {
 		return entities;
 	}
 	
+	/**
+	 * Find all entities for an action (replace getEntities() method from Mixin
+	 * object).
+	 * 
+	 * @param owner
+	 * @param categoryId (id of kind, mixin or action, composed by scheme+term.
+	 * @return
+	 */
+	public static List<Entity> findAllEntitiesForAction(final String owner, final String categoryId) {
+		List<Entity> entities = new ArrayList<>();
+		for (Resource res : getConfigurationForOwner(owner).getResources()) {
+
+			for (Action act : res.getKind().getActions()) {
+				if ((act.getScheme() + act.getTerm()).equals(categoryId)) {
+					entities.add(res);
+				}
+
+			}
+			// Search in mixins.
+			for (Mixin mixin : res.getMixins()) {
+				for (Action act : mixin.getActions()) {
+
+					if ((act.getScheme() + act.getTerm()).equals(categoryId)) {
+						entities.add(res);
+					}
+				}
+			}
+
+			for (Link link : res.getLinks()) {
+				for (Action act : link.getKind().getActions()) {
+					if ((act.getScheme() + act.getTerm()).equals(categoryId)) {
+						entities.add(link);
+					}
+				}
+				for (Mixin mixin : link.getMixins()) {
+					for (Action act : mixin.getActions()) {
+
+						if ((act.getScheme() + act.getTerm()).equals(categoryId)) {
+							entities.add(link);
+						}
+					}
+				}
+			}
+
+		}
+		return entities;
+	}
+
 
 	/**
 	 * Return all entity based on a partial Id (like request).
@@ -1038,13 +1159,28 @@ public class ConfigurationManager {
 	}
 
 	/**
+	 *  Associate a list of entities with a mixin, replacing existing list if
+	 * any. if mixin doest exist, this will create it.
+	 * @param mixinId
+	 * @param entityIds
+	 * @param updateMode
+	 */
+	public static void saveMixinForEntities(final String mixinId, final List<String> entityIds, final boolean updateMode) {
+		// TODO : Pass owner on coreImpl saveMixin and UpdateMixin method.
+		for (String owner : configurations.keySet()) {
+			saveMixinForEntities(owner, mixinId, entityIds, updateMode);
+		}
+		
+	}
+	
+	/**
 	 * Associate a list of entities with a mixin, replacing existing list if
 	 * any. if mixin doest exist, this will create it.
 	 * 
 	 * @param mixinId
 	 * @param entityIds
 	 */
-	public static void saveMixinForEntities(final String owner, final String mixinId, final List<String> entityIds) {
+	public static void saveMixinForEntities(final String owner, final String mixinId, final List<String> entityIds, final boolean updateMode) {
 
 		// searching for the mixin to register.
 		Mixin mixin = findMixinOnExtension(owner, mixinId);
@@ -1069,64 +1205,33 @@ public class ConfigurationManager {
 				updateVersion(owner, entityId);
 			}
 		}
-
-		boolean found;
-		// Remove entities those are not in the list.
-		Iterator<Entity> it = mixin.getEntities().iterator();
-		while (it.hasNext()) {
-			found = false;
-			Entity entityMixin = it.next();
-			for (String entityId : entityIds) {
-				if (entityMixin.getId().equals(entityId)) {
-					found = true;
-					break;
+		
+		if (!updateMode) {
+			boolean found;
+			// Remove entities those are not in the list.
+			Iterator<Entity> it = mixin.getEntities().iterator();
+			while (it.hasNext()) {
+				found = false;
+				Entity entityMixin = it.next();
+				for (String entityId : entityIds) {
+					if (entityMixin.getId().equals(entityId)) {
+						found = true;
+						break;
+					}
 				}
-			}
 
-			if (!found) {
-				// Remove reference mixin of the entity.
-				entityMixin.getMixins().remove(mixin);
+				if (!found) {
+					// Remove reference mixin of the entity.
+					entityMixin.getMixins().remove(mixin);
 
-				// Remove the entity from mixin.
-				// it.remove();
-			}
+					// Remove the entity from mixin.
+					// it.remove();
+				}
 
-		}
-
-	}
-
-	/**
-	 * Update mixin association with entities, if mixin doesnt exist, create it
-	 * and associate a list of entities with this mixin, if it exist, entities
-	 * that are not in entities list are kept.
-	 * 
-	 * @param mixinId
-	 * @param entityIds
-	 */
-	public static void updateMixinForEntities(final String owner, final String mixinId, final List<String> entityIds) {
-
-		// searching for the mixin to register on entities.
-		Mixin mixin = findMixinOnExtension(owner, mixinId);
-
-		if (mixin == null) {
-			mixin = findMixinOnEntities(owner, mixinId);
-
-			if (mixin == null) {
-				// TODO : Check this : User mixin tag ?
-				mixin = createMixin(mixinId);
 			}
 		}
-		logger.info("Mixin --> Term : " + mixin.getTerm() + " --< Scheme : " + mixin.getScheme());
 
-		for (String entityId : entityIds) {
-			Entity entity = findEntity(owner, entityId);
-			if (entity != null && !mixin.getEntities().contains(entity)) {
-
-				entity.getMixins().add(mixin);
-				// mixin.getEntities().add(entity);
-				updateVersion(owner, entityId);
-			}
-		}
+		
 
 	}
 
@@ -1156,52 +1261,73 @@ public class ConfigurationManager {
 	}
 
 	/**
-	 * Update attributes for an entity (resource or link).
-	 * 
-	 * @param owner
-	 * @param entityId
-	 * @param attributes
+	 * Update attributes for all entities that have this path.
+	 * @param entityId , relative path of the entity
+	 * @param attributes , attributes to update
 	 */
-	public static void updateAttributesForEntity(String owner, String entityId, Map<String, Variant> attributes) {
-		// Searching on resources, if not found searching on link of each
-		// resources.
-		Configuration configuration = getConfigurationForOwner(owner);
-		EList<Resource> entities = configuration.getResources();
-		EList<Link> entitiesLnk;
-		Entity entityFound = null;
-
-		for (Resource res : entities) {
-			if (res.getId().equals(entityId)) {
-				// Entity found !
-				entityFound = res;
-				break;
-			} else {
-				// searching on his links.
-				entitiesLnk = res.getLinks();
-				if (!entitiesLnk.isEmpty()) {
-					for (Link link : entitiesLnk) {
-						if (link.getId().equals(entityId)) {
-							entityFound = link;
-							break;
-						}
-					}
-					if (entityFound != null) {
-						break;
-					}
-				}
-			}
-		}
-		if (entityFound != null) {
+	public static void updateAttributesForEntity(final String entityId, Map<String, Variant> attributes) {
+		String ownerFound = null;
+		Entity entity = findEntityOnAllOwner(ownerFound, entityId);
+		
+		if (entity != null) {
 			// update the attributes.
-			updateAttributesToEntity(entityFound, attributes);
-			updateVersion(owner, entityId);
+			updateAttributesToEntity(entity, attributes);
+			updateVersion(ownerFound, entityId);
 		} else {
 			// TODO : Report an exception, impossible to update entity, it
 			// doesnt exist.
 			logger.warning("The entity " + entityId + " doesnt exist, can't update ! ");
 		}
-
+		 
 	}
+	
+//	/**
+//	 * Update attributes for an entity (resource or link).
+//	 * 
+//	 * @param owner
+//	 * @param entityId
+//	 * @param attributes
+//	 */
+//	public static void updateAttributesForEntity(String owner, String entityId, Map<String, Variant> attributes) {
+//		// Searching on resources, if not found searching on link of each
+//		// resources.
+//		Configuration configuration = getConfigurationForOwner(owner);
+//		EList<Resource> entities = configuration.getResources();
+//		EList<Link> entitiesLnk;
+//		Entity entityFound = null;
+//
+//		for (Resource res : entities) {
+//			if (res.getId().equals(entityId)) {
+//				// Entity found !
+//				entityFound = res;
+//				break;
+//			} else {
+//				// searching on his links.
+//				entitiesLnk = res.getLinks();
+//				if (!entitiesLnk.isEmpty()) {
+//					for (Link link : entitiesLnk) {
+//						if (link.getId().equals(entityId)) {
+//							entityFound = link;
+//							break;
+//						}
+//					}
+//					if (entityFound != null) {
+//						break;
+//					}
+//				}
+//			}
+//		}
+//		if (entityFound != null) {
+//			// update the attributes.
+//			updateAttributesToEntity(entityFound, attributes);
+//			updateVersion(owner, entityId);
+//		} else {
+//			// TODO : Report an exception, impossible to update entity, it
+//			// doesnt exist.
+//			logger.warning("The entity " + entityId + " doesnt exist, can't update ! ");
+//		}
+//
+//	}
 
 	/**
 	 * Generate eTag number from version map.
