@@ -16,7 +16,6 @@ import org.eclipse.emf.ecore.resource.Resource.Factory.Registry;
 import org.eclipse.emf.ecore.resource.ResourceSet;
 import org.eclipse.emf.ecore.util.Diagnostician;
 import org.freedesktop.dbus.UInt32;
-import org.freedesktop.dbus.Variant;
 import org.occiware.clouddesigner.occi.Action;
 import org.occiware.clouddesigner.occi.AttributeState;
 import org.occiware.clouddesigner.occi.Configuration;
@@ -167,7 +166,7 @@ public class ConfigurationManager {
 	 * @return the updated configuration, can't return null
 	 */
 	public static void addResourceToConfiguration(String id, String kind, List<String> mixins,
-			Map<String, Variant> attributes, String owner) {
+			Map<String, String> attributes, String owner) {
 
 		if (owner == null || owner.isEmpty()) {
 			// Assume if owner is not used to a default user uuid "anonymous".
@@ -204,7 +203,7 @@ public class ConfigurationManager {
 			// if occiKind is null, this will give a default kind parent.
 			resource.setKind(occiKind);
 			// occiKind.getEntities().add(resource);
-
+			
 			// Add the attributes...
 			addAttributesToEntity(resource, attributes);
 
@@ -245,7 +244,7 @@ public class ConfigurationManager {
 	 * @return a configuration updated.
 	 */
 	public static void addLinkToConfiguration(String id, String kind, java.util.List<String> mixins, String src,
-			String target, Map<String, Variant> attributes, String owner) {
+			String target, Map<String, String> attributes, String owner) {
 
 		if (owner == null || owner.isEmpty()) {
 			// Assume if owner is not used to a default user uuid "anonymous".
@@ -253,7 +252,18 @@ public class ConfigurationManager {
 		}
 
 		boolean overwrite = false;
-
+		Resource resourceSrc = findResource(owner, src);
+		Resource resourceDest = findResource(owner, target);
+		
+		if (resourceSrc == null) {
+			// TODO : Throw an exception, source must be set.
+			return;
+		}
+		if (resourceDest == null) {
+			// TODO : Throw an exception, target must be set.
+			return;
+		}
+		
 		Link link = findLink(owner, id);
 		if (link == null) {
 
@@ -277,16 +287,44 @@ public class ConfigurationManager {
 			// Add a new kind to resource (title, scheme, term).
 			link.setKind(occiKind);
 			// occiKind.getEntities().add(link);
+//			if (attributes.get("occi.core.source") == null) {
+//				
+//				String sourceId = resourceSrc.getId();
+//				if (!sourceId.startsWith("/")) {
+//					sourceId = "/" + sourceId;
+//				}
+//				attributes.put("occi.core.source", sourceId);
+//			}
+//			if (attributes.get("occi.core.target") == null) {
+//				String targetId = resourceDest.getId();
+//				if (!targetId.startsWith("/")) {
+//					targetId = "/" + targetId;
+//				}
+//				
+//				attributes.put("occi.core.target", targetId);
+//			}
+			
+			// Check if occi.core.source.kind is set.
+//			if (attributes.get("occi.core.source.kind") == null) {
+//				attributes.put("occi.core.source.kind", resourceSrc.getKind().getScheme() + resourceSrc.getKind().getTerm());
+//			}
+			
+			// Check if occi.core.target.kind is set.
+			if (attributes.get("occi.core.target.kind") != null && attributes.get("occi.core.target.kind").equals("undefined")) {
+				// we add it or overwrite the undefined.
+				attributes.remove("occi.core.target.kind");
+				// attributes.put("occi.core.target.kind", resourceDest.getKind().getScheme() + resourceDest.getKind().getTerm());
+			}
 			addAttributesToEntity(link, attributes);
 
 		} else {
 			// Link exist upon our configuration, we update it.
+			
 			updateAttributesToEntity(link, attributes);
 			overwrite = true;
 		}
 
-		Resource resourceSrc = findResource(owner, src);
-		Resource resourceDest = findResource(owner, target);
+		
 
 		link.setSource(resourceSrc);
 		link.setTarget(resourceDest);
@@ -393,9 +431,10 @@ public class ConfigurationManager {
 	 */
 	public static void removeResource(final String owner, final Resource resource) {
 		Configuration config = getConfigurationForOwner(owner);
-
-		if (resource.getLinks() != null) {
-			for (Link link : resource.getLinks()) {
+		EList<Link> resLink = resource.getLinks();
+		if (resLink != null) {
+			
+			for (Link link : resLink) {
 				removeLink(owner, link);
 			}
 		}
@@ -566,11 +605,17 @@ public class ConfigurationManager {
 	 * 
 	 * @param owner
 	 * @param id
-	 *            (entityId)
+	 *            (entityId is unique for all owners)
 	 * @return an OCCI Entity, could be null, if entity has is not found.
 	 */
-	public static Entity findEntity(final String owner, final String id) {
+	public static Entity findEntity(String owner, final String id) {
 		Entity entity = null;
+		
+		if (owner == null) {
+			entity = findEntityAndGetOwner(owner, id);
+			return entity;
+		}
+		
 		Resource resource = findResource(owner, id);
 
 		Link link = null;
@@ -584,6 +629,40 @@ public class ConfigurationManager {
 		}
 		return entity;
 	}
+	
+	/**
+	 * 
+	 * @param owner
+	 * @param id
+	 * @return true if entity exist or false if it doesnt exist.
+	 */
+	public static boolean isEntityExist(final String owner, final String id) {
+		return findEntity(owner, id) != null ? true : false;
+	}
+	
+	
+	/**
+	 * Find entity on all owner,
+	 * @param owner (value on upper)
+	 * @param entityId (unique on all the map)
+	 * @return
+	 */
+	public static Entity findEntityAndGetOwner(String owner, final String entityId) {
+		Entity entity = null;
+		Map<String, Entity> ents = findEntitiesOnAllOwner(entityId);
+		Set<String> owners = ents.keySet();
+		if (owners.size() != 1) {
+			return null;
+		}
+		
+		for (String own : owners) {
+			owner = own;
+		}
+		entity = ents.get(owner);
+		
+		return entity;
+	}
+	
 
 	/**
 	 * Search the first entity found on all owner's configurations.
@@ -964,14 +1043,14 @@ public class ConfigurationManager {
 	 * @param attributes
 	 * @return Be aware the returned list attributes may be null.
 	 */
-	private static void addAttributesToEntity(Entity entity, final Map<String, Variant> attributes) {
+	private static void addAttributesToEntity(Entity entity, final Map<String, String> attributes) {
 
 		if (attributes != null && !attributes.isEmpty()) {
 			String key;
 			String value;
-			Map<String, String> mapAttr = Utils.convertVariantMap(attributes);
+			
 
-			for (Map.Entry<String, String> entry : mapAttr.entrySet()) {
+			for (Map.Entry<String, String> entry : attributes.entrySet()) {
 				key = entry.getKey();
 				value = entry.getValue();
 				// Assign key --< value to attributes list.
@@ -994,18 +1073,16 @@ public class ConfigurationManager {
 	 * @param entity
 	 * @param attributes
 	 */
-	private static void updateAttributesToEntity(Entity entity, final Map<String, Variant> attributes) {
+	private static void updateAttributesToEntity(Entity entity, final Map<String, String> attributes) {
 		if (attributes != null && !attributes.isEmpty()) {
 			String key;
 			String value;
 
-			Map<String, String> mapAttr = Utils.convertVariantMap(attributes);
-
 			EList<AttributeState> attrStates;
-			for (Map.Entry<String, String> entry : mapAttr.entrySet()) {
+			for (Map.Entry<String, String> entry : attributes.entrySet()) {
 				key = entry.getKey();
 				value = entry.getValue();
-				// Check if this attribute already exist.
+				// Check if this attribute already exist and delete if found.
 				attrStates = entity.getAttributes();
 
 				Iterator<AttributeState> it = attrStates.iterator();
@@ -1265,7 +1342,7 @@ public class ConfigurationManager {
 	 * @param entityId , relative path of the entity
 	 * @param attributes , attributes to update
 	 */
-	public static void updateAttributesForEntity(final String entityId, Map<String, Variant> attributes) {
+	public static void updateAttributesForEntity(final String entityId, Map<String, String> attributes) {
 		String ownerFound = null;
 		Entity entity = findEntityOnAllOwner(ownerFound, entityId);
 		
@@ -1281,54 +1358,6 @@ public class ConfigurationManager {
 		 
 	}
 	
-//	/**
-//	 * Update attributes for an entity (resource or link).
-//	 * 
-//	 * @param owner
-//	 * @param entityId
-//	 * @param attributes
-//	 */
-//	public static void updateAttributesForEntity(String owner, String entityId, Map<String, Variant> attributes) {
-//		// Searching on resources, if not found searching on link of each
-//		// resources.
-//		Configuration configuration = getConfigurationForOwner(owner);
-//		EList<Resource> entities = configuration.getResources();
-//		EList<Link> entitiesLnk;
-//		Entity entityFound = null;
-//
-//		for (Resource res : entities) {
-//			if (res.getId().equals(entityId)) {
-//				// Entity found !
-//				entityFound = res;
-//				break;
-//			} else {
-//				// searching on his links.
-//				entitiesLnk = res.getLinks();
-//				if (!entitiesLnk.isEmpty()) {
-//					for (Link link : entitiesLnk) {
-//						if (link.getId().equals(entityId)) {
-//							entityFound = link;
-//							break;
-//						}
-//					}
-//					if (entityFound != null) {
-//						break;
-//					}
-//				}
-//			}
-//		}
-//		if (entityFound != null) {
-//			// update the attributes.
-//			updateAttributesToEntity(entityFound, attributes);
-//			updateVersion(owner, entityId);
-//		} else {
-//			// TODO : Report an exception, impossible to update entity, it
-//			// doesnt exist.
-//			logger.warning("The entity " + entityId + " doesnt exist, can't update ! ");
-//		}
-//
-//	}
-
 	/**
 	 * Generate eTag number from version map.
 	 * 

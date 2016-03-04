@@ -97,6 +97,16 @@
             <arg name="action_id" type="s" direction="in" />
             <arg name="attributes" type="a{sv}" direction="in" />
         </method>
+        
+        <method name="AddMixin">
+            <arg name="id" type="s" direction="in" />
+            <arg name="location" type="s" direction="in" />
+            <arg name="owner" type="s" direction="in" />
+        </method>
+
+        <method name="DelMixin">
+            <arg name="id" type="s" direction="in" />
+        </method>
 		
 	</interface>
 

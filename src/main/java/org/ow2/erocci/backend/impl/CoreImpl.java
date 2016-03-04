@@ -45,24 +45,24 @@ import org.ow2.erocci.model.DefaultActionExecutor;
 /**
  * Implementation of OCCI core.
  * 
- * @author Pierre-Yves Gibello - Linagora 
+ * @author Pierre-Yves Gibello - Linagora
  * @author Christophe Gourdin - Inria
  */
 public class CoreImpl implements core, action, mixin, DBus.Properties {
 
 	public static byte NODE_ENTITY = 0;
 	public static byte NODE_UNBOUNDED_COLLECTION = 1;
-	
+
 	private Logger logger = Logger.getLogger(this.getClass().getName());
 
 	private String schema;
 
 	private Map<String, List<Struct2>> currentListRequests = new HashMap<String, List<Struct2>>();
 	// Delegate to action.
-	private ActionImpl actionImpl = new ActionImpl(); 
+	private ActionImpl actionImpl = new ActionImpl();
 	// Delegate to mixin methods.
 	private MixinImpl mixinImpl = new MixinImpl();
-	
+
 	/**
 	 * Default constructor
 	 */
@@ -157,17 +157,48 @@ public class CoreImpl implements core, action, mixin, DBus.Properties {
 			String owner) {
 		
 		if (id == null || id.isEmpty()) {
-			id = Utils.createUUID();
+			id = "/resource/" + Utils.createUUID();
 		}
 		
-		logger.info("SaveResource invoked with id=" + id + ", kind=" + kind + ", mixins=" + mixins + ", attributes="
-				+ Utils.convertVariantMap(attributes));
+		
+		String relativePath = id;
 
-		ConfigurationManager.addResourceToConfiguration(id, kind, mixins, attributes, owner);
-
+		String identifierUUID;
+		Map<String, String> attr = Utils.convertVariantMap(attributes);
+		// Check if identifier UUID is provided (on occi.core.id or on id).
+		if (Utils.isEntityUUIDProvided(id, attr)) {
+			// the id may have relative path part so we need to get the UUID only.
+			identifierUUID = Utils.getUUIDFromId(id, attr);
+			relativePath = Utils.getRelativePathFromId(id, identifierUUID);
+		} else {
+			identifierUUID = Utils.createUUID();
+		}
+		relativePath = checkRelativePath(relativePath);
+		
+		
+		// Entity unique identifier.
+		String entityId = relativePath + identifierUUID; // as for ex :
+																// /compute/0872c4e0-001a-11e2-b82d-a4b197fffef3
 		DefaultActionExecutor actionExecutor = new DefaultActionExecutor();
-		actionExecutor.occiPostCreate(ConfigurationManager.findResource(owner, id));
-
+		
+		// Check if id is an entity Id or a relative Path only. (for update it
+		// if necessary).
+		if (ConfigurationManager.isEntityExist(owner, entityId)) {
+			logger.info("Overwrite resource invoked with id=" + id + ", kind=" + kind + ", mixins=" + mixins
+					+ ", attributes=" + Utils.convertVariantMap(attributes));
+			ConfigurationManager.addResourceToConfiguration(id, kind, mixins, attr, owner);
+			actionExecutor.occiPostCreate(ConfigurationManager.findResource(owner, id));
+		} else {
+			logger.info("SaveResource invoked with id=" + entityId + ", kind=" + kind + ", mixins=" + mixins
+					+ ", attributes=" + Utils.convertVariantMap(attributes));
+			// attr.put("occi.core.id", "urn:uuid:" + identifierUUID);
+			attr.put("occi.core.id", entityId);
+			ConfigurationManager.addResourceToConfiguration(entityId, kind, mixins, attr, owner);
+			actionExecutor.occiPostCreate(ConfigurationManager.findResource(owner, entityId));
+			// id = entityId;
+			
+		}
+		logger.info("SaveResource done returning relative path : " + id);
 		return id;
 	}
 
@@ -189,33 +220,47 @@ public class CoreImpl implements core, action, mixin, DBus.Properties {
 			Map<String, Variant> attributes, String owner) {
 
 		logger.info("SaveLink invoked");
-		// ATTENTION, ne fonctionne pas avec la requete de test :
-		// backend error:
-		// {'org.freedesktop.DBus.InvalidParameters',<<"ssasssa{sv}s">>}
-		// Essayer de creer d'autre requetes put de type link.
-		// Requete essayée :
-		// curl -s -v -i -X PUT http://localhost:8080/networkinterface/ni1 -H
-		// 'Content-Type: text/occi' -H 'Category: networkinterface;
-		// scheme="http://schemas.ogf.org/occi/infrastructure#"; class="kind",
-		// ipnetworkinterface;
-		// scheme="http://schemas.ogf.org/occi/infrastructure/networkinterface#";
-		// class="mixin";' -H 'X-OCCI-Attribute:
-		// occi.networkinterface.mac="aa:bb:cc:dd:ee:11"' -H 'X-OCCI-Attribute:
-		// occi.networkinterface.interface="eth0"' -H 'X-OCCI-Attribute:
-		// occi.networkinterface.address="10.1.0.100/16"' -H 'X-OCCI-Attribute:
-		// occi.networkinterface.gateway="10.1.255.254"' -H 'X-OCCI-Attribute:
-		// occi.networkinterface.allocation="static"' -H 'X-OCCI-Attribute:
-		// occi.core.source="/compute/vm1",
-		// occi.core.target="/network/network1"'
-
 		if (id == null || id.isEmpty()) {
-			id = Utils.createUUID();
+			id = "/link/" + Utils.createUUID();
 		}
-		
-		ConfigurationManager.addLinkToConfiguration(id, kind, mixins, src, target, attributes, owner);
+		Map<String, String> attr = Utils.convertVariantMap(attributes);
+		String identifierUUID;
+		String relativePath = id;
+		// Check if identifier UUID is provided.
+		if (Utils.isEntityUUIDProvided(id, attr)) {
+			// the id may have relative path part so we need to get the UUID only.
+			identifierUUID = Utils.getUUIDFromId(id, attr);
+			relativePath = Utils.getRelativePathFromId(id, identifierUUID);
+		} else {
+			identifierUUID = Utils.createUUID();
+		}
+		relativePath = checkRelativePath(relativePath);
 
+		// Entity unique identifier.
+		String entityId = relativePath + identifierUUID; // as for ex :
+																// /storagelink/0872c4e0-001a-11e2-b82d-a4b197fffef3
 		DefaultActionExecutor defaultActionExecutor = new DefaultActionExecutor();
-		defaultActionExecutor.occiPostCreate(ConfigurationManager.findLink(owner, id, src));
+		// Check if id is an entity Id or a relative Path only. (for update it
+		// if necessary).
+		if (ConfigurationManager.isEntityExist(owner, entityId)) {
+			logger.info("Overwrite link invoked with id=" + id + ", kind=" + kind + ", mixins=" + mixins
+					+ ", attributes=" + Utils.convertVariantMap(attributes));
+			ConfigurationManager.addLinkToConfiguration(id, kind, mixins, src, target, attr, owner);
+			defaultActionExecutor.occiPostCreate(ConfigurationManager.findLink(owner, id, src));
+
+		} else {
+			logger.info("SaveLink invoked with id=" + entityId + ", kind=" + kind + ", mixins=" + mixins
+					+ ", attributes=" + Utils.convertVariantMap(attributes));
+			
+			// attr.put("occi.core.id", "urn:uuid:" + identifierUUID);
+			if (attr.get("occi.core.id") == null) {
+				attr.put("occi.core.id", entityId);
+			}
+			ConfigurationManager.addLinkToConfiguration(entityId, kind, mixins, src, target, attr, owner);
+			defaultActionExecutor.occiPostCreate(ConfigurationManager.findLink(owner, entityId, src));
+			
+			// id = entityId;
+		}
 
 		return id;
 	}
@@ -223,15 +268,17 @@ public class CoreImpl implements core, action, mixin, DBus.Properties {
 	/**
 	 * Update an entity
 	 * 
-	 * @param id entity path relative url part
-	 * @param attributes  updated entity attributes
+	 * @param id
+	 *            entity path relative url part
+	 * @param attributes
+	 *            updated entity attributes
 	 */
 	@Override
 	public Map<String, Variant> Update(String id, Map<String, Variant> attributes) {
 		logger.info("Update invoked");
-
+		Map<String, String> attr = Utils.convertVariantMap(attributes);
 		// update attributes .
-		ConfigurationManager.updateAttributesForEntity(id, attributes);
+		ConfigurationManager.updateAttributesForEntity(id, attr);
 		return attributes;
 	}
 
@@ -239,16 +286,17 @@ public class CoreImpl implements core, action, mixin, DBus.Properties {
 	 * Associate a list of entities with a mixin, replacing existing list if
 	 * any.
 	 * 
-	 * @param id , mixin category id           
+	 * @param id
+	 *            , mixin category id
 	 * @param entities
 	 *            full collection of array of path relative url part of entities
 	 */
 	@Override
 	public void SaveMixin(String id, java.util.List<String> entities) {
 		logger.info("SaveMixin invoked");
-		
+
 		ConfigurationManager.saveMixinForEntities(id, entities, false);
-	
+
 	}
 
 	/**
@@ -258,13 +306,14 @@ public class CoreImpl implements core, action, mixin, DBus.Properties {
 	public void UpdateMixin(String id, java.util.List<String> entities) {
 		logger.info("UpdateMixin invoked");
 		ConfigurationManager.saveMixinForEntities(id, entities, true);
-		
+
 	}
 
 	/**
 	 * Find an entity by his relative path.
 	 * 
-	 * @param id relative path of the entity.
+	 * @param id
+	 *            relative path of the entity.
 	 */
 	@Override
 	public java.util.List<Struct1> Find(String id) {
@@ -275,32 +324,32 @@ public class CoreImpl implements core, action, mixin, DBus.Properties {
 		Map<String, Entity> entities = ConfigurationManager.findEntitiesOnAllOwner(id);
 		Entity ent;
 		String owner;
-		
+
 		if (!entities.isEmpty()) {
-			
+
 			if (entities.size() == 1) {
-				
+
 				for (Map.Entry<String, Entity> entry : entities.entrySet()) {
 					owner = entry.getKey();
 					ent = entry.getValue();
-					
+
 					ConfigurationManager.printEntity(ent);
-					
-					ret.add(new Struct1(CoreImpl.NODE_ENTITY, new Variant<String>(owner + ";" + ent.getId()), owner,
-						ConfigurationManager.getEtagNumber(owner, id)));
+					logger.info("One entity found ! owner : " + owner);
+					ret.add(new Struct1(CoreImpl.NODE_ENTITY, new Variant<String>(ent.getId()), owner,
+							ConfigurationManager.getEtagNumber(owner, id)));
 				}
 			} else {
 				// Entities found on multiple owners.
 				for (Map.Entry<String, Entity> entry : entities.entrySet()) {
 					owner = entry.getKey();
 					ent = entry.getValue();
-					
+
 					ConfigurationManager.printEntity(ent);
-					ret.add(new Struct1(CoreImpl.NODE_UNBOUNDED_COLLECTION, new Variant<String>(owner + ";" + ent.getId()), owner,
+					ret.add(new Struct1(CoreImpl.NODE_UNBOUNDED_COLLECTION, new Variant<String>(ent.getId()), owner,
 							ConfigurationManager.getEtagNumber(owner, id)));
 				}
 			}
-			
+
 		} else {
 			logger.info("Entity " + id + " --< doesnt exist !");
 		}
@@ -311,36 +360,39 @@ public class CoreImpl implements core, action, mixin, DBus.Properties {
 	/**
 	 * Load entity content.
 	 * 
-	 * @param opaque_id (entityId identified by this backend only).
+	 * @param opaque_id
+	 *            (entityId identified by this backend only).
+	 * 
+	 * @return 
 	 */
 	@Override
 	public Quad<String, String, java.util.List<String>, Map<String, Variant>> Load(Variant opaque_id) {
 		logger.info("Load invoked with opaque_id=" + opaque_id);
 
 		String id = opaque_id.getValue().toString();
+		String owner = null;
 		
-		String owner = id.split(";")[0];
-		String entityId = id.split(";")[1];
+		
 		// Search for entity.
-		Entity entity = ConfigurationManager.findEntity(owner, entityId);
+		Entity entity = ConfigurationManager.findEntity(owner, id);
 		
 		if (entity != null) {
 			ConfigurationManager.printEntity(entity);
 
-			logger.info("Owner : " + owner + "Entity : " + entity.getId() + " loaded with success, transaction with dbus to come...");
+			logger.info("Owner : " + owner + "--< Entity : " + entity.getId()
+					+ " loaded with success, transaction with dbus to come...");
 			return Utils.convertEntityToQuad(entity);
 		} else {
-			logger.info("Entity : " + entityId + " --< entity doesnt exist !");
+			logger.info("Entity : " + opaque_id + " --< entity doesnt exist !");
 
 		}
 
 		List<String> vals = new ArrayList<>();
 		Map<String, Variant> attrDefault = new HashMap<>();
 
-		return new Quad(entityId, "", vals, attrDefault);
+		return new Quad(opaque_id, "", vals, attrDefault);
 	}
 
-	
 	/**
 	 * Get an iterator for a collection: then use Next() to iterate (the List
 	 * call initiates an iterator for subsequent Next() calls).
@@ -354,10 +406,10 @@ public class CoreImpl implements core, action, mixin, DBus.Properties {
 	@Override
 	public Pair<Variant, UInt32> List(String id, Map<String, Variant> filters) {
 		logger.info("List invoked with id=" + id + " and filters=" + filters);
-		
+
 		int collectionNb = Utils.getUniqueInt();
 		String collectionName = "collection" + collectionNb;
-		
+
 		currentListRequests.put(collectionName, listItems(id, filters));
 		return new Pair<Variant, UInt32>(new Variant<String>(collectionName), new UInt32(collectionNb));
 	}
@@ -390,8 +442,9 @@ public class CoreImpl implements core, action, mixin, DBus.Properties {
 	/**
 	 * Remove entity or dissociate mixin from configuration.
 	 * 
-	 * @param id if full url: category id (bounded collection)
-     * if path relative url part: unbounded collection or entity
+	 * @param id
+	 *            if full url: category id (bounded collection) if path relative
+	 *            url part: unbounded collection or entity
 	 */
 	@Override
 	public void Delete(String id) {
@@ -405,29 +458,31 @@ public class CoreImpl implements core, action, mixin, DBus.Properties {
 	}
 
 	/**
-	 * List items from a given collection id. 
+	 * List items from a given collection id.
 	 * 
-	 * @param id category id or path relative url part.
-	 * @param filters (string-variant array): key-value specified
+	 * @param id
+	 *            category id or path relative url part.
+	 * @param filters
+	 *            (string-variant array): key-value specified
 	 * @return A list of entities, as Struct2 containing the path relative url
 	 *         part + owner.
 	 */
 	private List<Struct2> listItems(String id, Map<String, Variant> filters) {
 		// TODO add filter support...
 		List<Struct2> ret = new LinkedList<Struct2>();
-		
+
 		Map<String, List<Entity>> entitiesMap;
 		if (id == null || id.isEmpty()) {
 			return ret;
 		}
-		
+
 		// Check if categoryId or relative path part.
 		if (id.startsWith("http")) {
 			// it's a categoryId...
 			// Search for kind, mixins, actions and get their entities.
 			// the map is by owner.
 			entitiesMap = ConfigurationManager.findAllEntitiesForCategoryId(id);
-			
+
 			List<Entity> entities;
 			String owner;
 			for (Map.Entry<String, List<Entity>> entry : entitiesMap.entrySet()) {
@@ -448,16 +503,15 @@ public class CoreImpl implements core, action, mixin, DBus.Properties {
 				Entity ent = entry.getValue();
 				ret.add(new Struct2(ent.getId(), owner));
 			}
-			
+
 		}
-		
-		
+
 		return ret;
 	}
 
-
 	/**
 	 * Delegate Action method to Action Object method.
+	 * 
 	 * @param id
 	 * @param action_id
 	 * @param attributes
@@ -465,28 +519,49 @@ public class CoreImpl implements core, action, mixin, DBus.Properties {
 	@Override
 	public void Action(String id, String action_id, Map<String, Variant> attributes) {
 		logger.info("---------------------->Action method invoked !!!");
-		
-		actionImpl.Action(id, action_id, attributes);	
+
+		actionImpl.Action(id, action_id, attributes);
 	}
 
 	/**
 	 * Delegate to Mixin Object addMixin method.
+	 * 
 	 * @param id
 	 * @param location
 	 * @param owner
 	 */
 	@Override
 	public void AddMixin(String id, String location, String owner) {
+		logger.info("---------------------->AddMixin method invoked !!!");
 		mixinImpl.AddMixin(id, location, owner);
 	}
 
 	/**
 	 * Delegate to Mixin object delMixin method.
+	 * 
 	 * @param id
 	 */
 	@Override
 	public void DelMixin(String id) {
+		logger.info("---------------------->DelMixin method invoked !!!");
 		mixinImpl.DelMixin(id);
 	}
-	
+
+	/**
+	 * 
+	 * @param relPath
+	 * @return a relative path like "/compute/vm1/" to replace from
+	 *         "/compute/vm1".
+	 */
+	private String checkRelativePath(final String relPath) {
+		String path;
+		if (relPath.endsWith("/")) {
+			path = relPath;
+		} else {
+			path = relPath + "/";
+		}
+
+		return path;
+	}
+
 }
