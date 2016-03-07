@@ -252,10 +252,9 @@ public class CoreImpl implements core, action, mixin, DBus.Properties {
 			logger.info("SaveLink invoked with id=" + entityId + ", kind=" + kind + ", mixins=" + mixins
 					+ ", attributes=" + Utils.convertVariantMap(attributes));
 			
-			// attr.put("occi.core.id", "urn:uuid:" + identifierUUID);
-			if (attr.get("occi.core.id") == null) {
-				attr.put("occi.core.id", entityId);
-			}
+//			if (attr.get("occi.core.id") == null) {
+//				attr.put("occi.core.id", entityId);
+//			}
 			ConfigurationManager.addLinkToConfiguration(entityId, kind, mixins, src, target, attr, owner);
 			defaultActionExecutor.occiPostCreate(ConfigurationManager.findLink(owner, entityId, src));
 			

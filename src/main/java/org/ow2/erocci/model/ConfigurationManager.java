@@ -203,7 +203,7 @@ public class ConfigurationManager {
 			// if occiKind is null, this will give a default kind parent.
 			resource.setKind(occiKind);
 			// occiKind.getEntities().add(resource);
-			
+
 			// Add the attributes...
 			addAttributesToEntity(resource, attributes);
 
@@ -254,7 +254,7 @@ public class ConfigurationManager {
 		boolean overwrite = false;
 		Resource resourceSrc = findResource(owner, src);
 		Resource resourceDest = findResource(owner, target);
-		
+
 		if (resourceSrc == null) {
 			// TODO : Throw an exception, source must be set.
 			return;
@@ -263,7 +263,7 @@ public class ConfigurationManager {
 			// TODO : Throw an exception, target must be set.
 			return;
 		}
-		
+
 		Link link = findLink(owner, id);
 		if (link == null) {
 
@@ -286,45 +286,24 @@ public class ConfigurationManager {
 
 			// Add a new kind to resource (title, scheme, term).
 			link.setKind(occiKind);
-			// occiKind.getEntities().add(link);
-//			if (attributes.get("occi.core.source") == null) {
-//				
-//				String sourceId = resourceSrc.getId();
-//				if (!sourceId.startsWith("/")) {
-//					sourceId = "/" + sourceId;
-//				}
-//				attributes.put("occi.core.source", sourceId);
-//			}
-//			if (attributes.get("occi.core.target") == null) {
-//				String targetId = resourceDest.getId();
-//				if (!targetId.startsWith("/")) {
-//					targetId = "/" + targetId;
-//				}
-//				
-//				attributes.put("occi.core.target", targetId);
-//			}
-			
-			// Check if occi.core.source.kind is set.
-//			if (attributes.get("occi.core.source.kind") == null) {
-//				attributes.put("occi.core.source.kind", resourceSrc.getKind().getScheme() + resourceSrc.getKind().getTerm());
-//			}
-			
+	
 			// Check if occi.core.target.kind is set.
-			if (attributes.get("occi.core.target.kind") != null && attributes.get("occi.core.target.kind").equals("undefined")) {
-				// we add it or overwrite the undefined.
+			if (attributes.get("occi.core.target.kind") != null
+					&& attributes.get("occi.core.target.kind").equals("undefined")) {
 				attributes.remove("occi.core.target.kind");
-				// attributes.put("occi.core.target.kind", resourceDest.getKind().getScheme() + resourceDest.getKind().getTerm());
 			}
 			addAttributesToEntity(link, attributes);
 
 		} else {
 			// Link exist upon our configuration, we update it.
-			
+			// Check if occi.core.target.kind is set.
+			if (attributes.get("occi.core.target.kind") != null
+					&& attributes.get("occi.core.target.kind").equals("undefined")) {
+				attributes.remove("occi.core.target.kind");
+			}
 			updateAttributesToEntity(link, attributes);
 			overwrite = true;
 		}
-
-		
 
 		link.setSource(resourceSrc);
 		link.setTarget(resourceDest);
@@ -346,9 +325,12 @@ public class ConfigurationManager {
 	}
 
 	/**
-	 * Remove an entity (resource or link) from the configuration on overall owners.
-	 * @param id if full url: category id (bounded collection)
-     * if path relative url part: unbounded collection or entity
+	 * Remove an entity (resource or link) from the configuration on overall
+	 * owners.
+	 * 
+	 * @param id
+	 *            if full url: category id (bounded collection) if path relative
+	 *            url part: unbounded collection or entity
 	 */
 	public static void removeOrDissociate(final String id) {
 		// get the owners
@@ -357,7 +339,7 @@ public class ConfigurationManager {
 			removeOrDissociateFromConfiguration(owner, id);
 		}
 	}
-	
+
 	/**
 	 * Remove an entity (resource or link) from the owner's configuration or
 	 * delete all entities from given kind id or disassociate entities from
@@ -433,7 +415,7 @@ public class ConfigurationManager {
 		Configuration config = getConfigurationForOwner(owner);
 		EList<Link> resLink = resource.getLinks();
 		if (resLink != null) {
-			
+
 			for (Link link : resLink) {
 				removeLink(owner, link);
 			}
@@ -490,7 +472,7 @@ public class ConfigurationManager {
 			return;
 		}
 		List<Entity> entities = findAllEntitiesForKind(owner, kind.getScheme() + kind.getTerm());
-		
+
 		for (Entity entity : entities) {
 			if (entity instanceof Resource) {
 				removeResource(owner, (Resource) entity);
@@ -610,12 +592,12 @@ public class ConfigurationManager {
 	 */
 	public static Entity findEntity(String owner, final String id) {
 		Entity entity = null;
-		
+
 		if (owner == null) {
 			entity = findEntityAndGetOwner(owner, id);
 			return entity;
 		}
-		
+
 		Resource resource = findResource(owner, id);
 
 		Link link = null;
@@ -629,7 +611,7 @@ public class ConfigurationManager {
 		}
 		return entity;
 	}
-	
+
 	/**
 	 * 
 	 * @param owner
@@ -639,12 +621,14 @@ public class ConfigurationManager {
 	public static boolean isEntityExist(final String owner, final String id) {
 		return findEntity(owner, id) != null ? true : false;
 	}
-	
-	
+
 	/**
 	 * Find entity on all owner,
-	 * @param owner (value on upper)
-	 * @param entityId (unique on all the map)
+	 * 
+	 * @param owner
+	 *            (value on upper)
+	 * @param entityId
+	 *            (unique on all the map)
 	 * @return
 	 */
 	public static Entity findEntityAndGetOwner(String owner, final String entityId) {
@@ -654,15 +638,14 @@ public class ConfigurationManager {
 		if (owners.size() != 1) {
 			return null;
 		}
-		
+
 		for (String own : owners) {
 			owner = own;
 		}
 		entity = ents.get(owner);
-		
+
 		return entity;
 	}
-	
 
 	/**
 	 * Search the first entity found on all owner's configurations.
@@ -702,7 +685,7 @@ public class ConfigurationManager {
 		Configuration configuration = getConfigurationForOwner(owner);
 		Kind kind = null;
 		EList<Link> links;
-		
+
 		EList<Resource> resources = configuration.getResources();
 		for (Resource resource : resources) {
 			if ((resource.getKind().getScheme() + resource.getKind().getTerm()).equals(id)) {
@@ -772,24 +755,23 @@ public class ConfigurationManager {
 
 		for (String owner : owners) {
 			entities.clear();
-			
+
 			entities.addAll(findAllEntitiesForKind(owner, categoryId));
 			entities.addAll(findAllEntitiesForMixin(owner, categoryId));
 			entities.addAll(findAllEntitiesForAction(owner, categoryId));
-			
-			
+
 			if (entities != null && !entities.isEmpty()) {
 				entitiesMap.put(owner, entities);
 			} else {
 				entities = new ArrayList<>();
 				entitiesMap.put(owner, entities);
 			}
-			
+
 		}
 		return entitiesMap;
 
 	}
-	
+
 	/**
 	 * Search for an action with entityId and a full category scheme.
 	 * 
@@ -799,24 +781,25 @@ public class ConfigurationManager {
 	 *            (like
 	 *            "http://schemas.ogf.org/occi/infrastructure/compute/action#start")
 	 * @param owner
-	 * @return an entity map (key=owner, value=Entity) with this relative path and has this actionId, may return empty map if action not found on
-	 *         entity object, or if entity not found.
+	 * @return an entity map (key=owner, value=Entity) with this relative path
+	 *         and has this actionId, may return empty map if action not found
+	 *         on entity object, or if entity not found.
 	 */
 	public static Map<String, Entity> findEntityAction(final String relativePath, final String actionId) {
-		
+
 		Map<String, Entity> entities = findEntitiesOnAllOwner(relativePath);
-		
+
 		Map<String, Entity> entitiesFound = new HashMap<>();
 		if (entities.isEmpty()) {
 			return entities;
 		}
-		
+
 		Map<String, List<Entity>> entitiesAction = findAllEntitiesForCategoryId(actionId);
 
 		List<Entity> entitiesToCompare;
 		// Search relative path entity.
 		String owner;
-		for (Map.Entry<String, List<Entity>> entry : entitiesAction.entrySet()) { 
+		for (Map.Entry<String, List<Entity>> entry : entitiesAction.entrySet()) {
 			owner = entry.getKey();
 			entitiesToCompare = entry.getValue();
 			for (Entity ent : entitiesToCompare) {
@@ -824,11 +807,12 @@ public class ConfigurationManager {
 					// Entity is found for this action.
 					entitiesFound.put(owner, ent);
 				}
-			}	
+			}
 		}
 		return entitiesFound;
 
 	}
+
 	/**
 	 * Find a list of entity with his relative path.
 	 * 
@@ -846,10 +830,10 @@ public class ConfigurationManager {
 		}
 		return entitiesMap;
 	}
-	
-	
+
 	/**
 	 * Find all entities with that kind. (replace getEntities from kind object).
+	 * 
 	 * @param owner
 	 * @param categoryId
 	 * @return
@@ -865,14 +849,16 @@ public class ConfigurationManager {
 					entities.add(link);
 				}
 			}
-			
+
 		}
 		return entities;
-		
+
 	}
-	
+
 	/**
-	 * Find all entities for a mixin (replace getEntities() method from Mixin object).
+	 * Find all entities for a mixin (replace getEntities() method from Mixin
+	 * object).
+	 * 
 	 * @param owner
 	 * @param categoryId
 	 * @return
@@ -891,19 +877,20 @@ public class ConfigurationManager {
 						entities.add(link);
 					}
 				}
-				
+
 			}
-			
+
 		}
 		return entities;
 	}
-	
+
 	/**
 	 * Find all entities for an action (replace getEntities() method from Mixin
 	 * object).
 	 * 
 	 * @param owner
-	 * @param categoryId (id of kind, mixin or action, composed by scheme+term.
+	 * @param categoryId
+	 *            (id of kind, mixin or action, composed by scheme+term.
 	 * @return
 	 */
 	public static List<Entity> findAllEntitiesForAction(final String owner, final String categoryId) {
@@ -945,7 +932,6 @@ public class ConfigurationManager {
 		}
 		return entities;
 	}
-
 
 	/**
 	 * Return all entity based on a partial Id (like request).
@@ -1048,7 +1034,6 @@ public class ConfigurationManager {
 		if (attributes != null && !attributes.isEmpty()) {
 			String key;
 			String value;
-			
 
 			for (Map.Entry<String, String> entry : attributes.entrySet()) {
 				key = entry.getKey();
@@ -1236,20 +1221,22 @@ public class ConfigurationManager {
 	}
 
 	/**
-	 *  Associate a list of entities with a mixin, replacing existing list if
+	 * Associate a list of entities with a mixin, replacing existing list if
 	 * any. if mixin doest exist, this will create it.
+	 * 
 	 * @param mixinId
 	 * @param entityIds
 	 * @param updateMode
 	 */
-	public static void saveMixinForEntities(final String mixinId, final List<String> entityIds, final boolean updateMode) {
+	public static void saveMixinForEntities(final String mixinId, final List<String> entityIds,
+			final boolean updateMode) {
 		// TODO : Pass owner on coreImpl saveMixin and UpdateMixin method.
 		for (String owner : configurations.keySet()) {
 			saveMixinForEntities(owner, mixinId, entityIds, updateMode);
 		}
-		
+
 	}
-	
+
 	/**
 	 * Associate a list of entities with a mixin, replacing existing list if
 	 * any. if mixin doest exist, this will create it.
@@ -1257,7 +1244,8 @@ public class ConfigurationManager {
 	 * @param mixinId
 	 * @param entityIds
 	 */
-	public static void saveMixinForEntities(final String owner, final String mixinId, final List<String> entityIds, final boolean updateMode) {
+	public static void saveMixinForEntities(final String owner, final String mixinId, final List<String> entityIds,
+			final boolean updateMode) {
 
 		// searching for the mixin to register.
 		Mixin mixin = findMixinOnExtension(owner, mixinId);
@@ -1282,7 +1270,7 @@ public class ConfigurationManager {
 				updateVersion(owner, entityId);
 			}
 		}
-		
+
 		if (!updateMode) {
 			boolean found;
 			// Remove entities those are not in the list.
@@ -1307,8 +1295,6 @@ public class ConfigurationManager {
 
 			}
 		}
-
-		
 
 	}
 
@@ -1339,25 +1325,31 @@ public class ConfigurationManager {
 
 	/**
 	 * Update attributes for all entities that have this path.
-	 * @param entityId , relative path of the entity
-	 * @param attributes , attributes to update
+	 * 
+	 * @param entityId
+	 *            , relative path of the entity
+	 * @param attributes
+	 *            , attributes to update
 	 */
 	public static void updateAttributesForEntity(final String entityId, Map<String, String> attributes) {
 		String ownerFound = null;
 		Entity entity = findEntityOnAllOwner(ownerFound, entityId);
-		
+
 		if (entity != null) {
 			// update the attributes.
 			updateAttributesToEntity(entity, attributes);
+			logger.info("owner : " + ownerFound + " --< entity id : " + entityId);
 			updateVersion(ownerFound, entityId);
+			printEntity(entity);
+			
 		} else {
 			// TODO : Report an exception, impossible to update entity, it
 			// doesnt exist.
 			logger.warning("The entity " + entityId + " doesnt exist, can't update ! ");
 		}
-		 
+
 	}
-	
+
 	/**
 	 * Generate eTag number from version map.
 	 * 
@@ -1407,7 +1399,7 @@ public class ConfigurationManager {
 			builder.append("entity has no action \n ");
 		} else {
 			builder.append("entity has actions available : \n ");
-			for(Action action : entity.getKind().getActions()) {
+			for (Action action : entity.getKind().getActions()) {
 				builder.append(action.getTitle() + "--> " + action.getScheme() + action.getTerm() + " \n ");
 			}
 		}

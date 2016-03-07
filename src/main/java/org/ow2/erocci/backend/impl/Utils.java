@@ -193,12 +193,19 @@ public class Utils {
 		for (Mixin mixin : mixins) {
 			mixinsStr.add(mixin.getScheme() + mixin.getTerm());
 		}
-
+		logger.info("attributes to Variant DBUS FORMAT : ");
 		Map<String, Variant> attribVariant = new HashMap<>();
 		for (AttributeState attrState : attributes) {
-			attribVariant.put(attrState.getName(), new Variant(attrState.getValue()));
+			logger.info("Key: " + attrState.getName() + " --< Value: " + attrState.getValue());
+			// Warning : dont convert undefined Value, this will cause Erocci bug and terminate this application. 
+			if (!attrState.getValue().equals("undefined")) {
+				attribVariant.put(attrState.getName(), new Variant(attrState.getValue()));
+			}
 		}
-
+		logger.info("Id: " + entity.getId());
+		logger.info("Kind: " + kindStr);
+		logger.info("mixinsStr: " + mixinsStr);
+		
 		return new Quad<>(entity.getId(), kindStr, mixinsStr, attribVariant);
 
 	}
