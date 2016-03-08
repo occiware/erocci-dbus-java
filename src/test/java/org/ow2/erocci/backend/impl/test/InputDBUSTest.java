@@ -13,6 +13,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.eclipse.emf.common.util.EList;
 import org.eclipse.emf.ecore.EDataType;
 import org.freedesktop.dbus.UInt32;
 import org.freedesktop.dbus.Variant;
@@ -38,7 +39,7 @@ import org.ow2.erocci.backend.Struct2;
 import org.ow2.erocci.backend.impl.CoreImpl;
 import org.ow2.erocci.model.ConfigurationManager;
 
-public class CoreImplTest {
+public class InputDBUSTest {
 	private CoreImpl core = new CoreImpl();
 
 	/**
@@ -107,9 +108,13 @@ public class CoreImplTest {
 			idReturned = core.SaveResource(container.getId(), container.getKind(), container.getMixins(),
 					container.getAttributes(), container.getOwner());
 			assertNotNull(idReturned);
-			assertEquals(id, idReturned);
+			assertTrue(idReturned.contains(id));
+			List<Entity> entities = ConfigurationManager.findAllEntitiesLikePartialId(container.getOwner(), container.getId());
+			assertTrue(!entities.isEmpty());
+			idReturned = entities.get(0).getId();
+			
 			// Check if resources are here.
-			lstStruct = core.Find(id);
+			lstStruct = core.Find(idReturned);
 			assertTrue(!lstStruct.isEmpty());
 			for (Struct1 struct : lstStruct) {
 				idReturned = (String) struct.b.getValue();
@@ -121,8 +126,9 @@ public class CoreImplTest {
 				assertNotNull(owner);
 				assertFalse(owner.isEmpty());
 			}
+			container.setId(idReturned);
 		}
-
+		
 		testSaveLink();
 
 	}
@@ -152,12 +158,22 @@ public class CoreImplTest {
 		for (String id : linkIds) {
 
 			InputContainer container = containers.get(id);
+			
+			Entity resSrc = ConfigurationManager.findAllEntitiesLikePartialId(container.getOwner(), container.getResSrc()).get(0);
+			Entity resTarget = ConfigurationManager.findAllEntitiesLikePartialId(container.getOwner(), container.getResTarget()).get(0);
+			
 			idReturned = core.SaveLink(container.getId(), container.getKind(), container.getMixins(),
-					container.getResSrc(), container.getResTarget(), container.getAttributes(), container.getOwner());
+					resSrc.getId(), resTarget.getId(), container.getAttributes(), container.getOwner());
+			
 			assertNotNull(idReturned);
-			assertEquals(id, idReturned);
+			assertTrue(idReturned.startsWith(id));
+			List<Entity> entities = ConfigurationManager.findAllEntitiesLikePartialId(container.getOwner(), container.getId());
+			assertTrue(!entities.isEmpty());
+			idReturned = entities.get(0).getId();
+			container.setId(idReturned);
+			
 			// Check if links are here.
-			lstStruct = core.Find(id);
+			lstStruct = core.Find(idReturned);
 			assertTrue(!lstStruct.isEmpty());
 			for (Struct1 struct : lstStruct) {
 				idReturned = (String) struct.b.getValue();
@@ -193,7 +209,7 @@ public class CoreImplTest {
 			assertEquals("os_tpl", mixin.getTerm());
 			// Search resource update via configuration and check if mixin is
 			// referenced.
-			Resource updComputeRes = ConfigurationManager.findResource(container.getOwner(), "compute/vm1");
+			Resource updComputeRes = ConfigurationManager.findResource(container.getOwner(), container.getId());
 			assertNotNull(updComputeRes);
 			List<Mixin> mixins = updComputeRes.getMixins();
 			assertTrue(mixins.contains(mixin));
@@ -201,7 +217,10 @@ public class CoreImplTest {
 			mixin = ConfigurationManager.findMixinOnExtension(container.getOwner(), MIXIN_OS_GENERIC_ID);
 			assertNotNull(mixin);
 			// assertTrue(mixin.getEntities().contains(updComputeRes));
-
+			// 2 links must be found on this resource.
+			assertEquals(updComputeRes.getLinks().size(), 2);
+			
+			
 		}
 
 	}
@@ -211,6 +230,7 @@ public class CoreImplTest {
 	 */
 	@Test
 	public void testUpdate() {
+		
 		// build or rebuild infra test.
 		buildInfraTest();
 
@@ -239,7 +259,10 @@ public class CoreImplTest {
 		res = ConfigurationManager.findResource(container.getOwner(), container.getId());
 		assertFalse(res.getAttributes().isEmpty());
 		ConfigurationManager.printEntity(res);
-
+		EList<Link> links = res.getLinks();
+		for (Link link : links) {
+			ConfigurationManager.printEntity(link);
+		}
 	}
 
 	@Test
@@ -256,7 +279,7 @@ public class CoreImplTest {
 		for (String partialId : resourcePartialIds) {
 			for (String key : containers.keySet()) {
 				if (key.contains(partialId)) {
-					resourceIds.add(key);
+					resourceIds.add(containers.get(key).getId());
 				}
 			}
 		}
@@ -305,7 +328,7 @@ public class CoreImplTest {
 		for (String partialId : resourcePartialIds) {
 			for (String key : containers.keySet()) {
 				if (key.contains(partialId)) {
-					resourceIds.add(key);
+					resourceIds.add(containers.get(key).getId());
 				}
 			}
 		}
@@ -321,7 +344,7 @@ public class CoreImplTest {
 		for (String partialId : resourcePartialIds) {
 			for (String key : containers.keySet()) {
 				if (key.contains(partialId)) {
-					resourceIds.add(key);
+					resourceIds.add(containers.get(key).getId());
 				}
 			}
 		}
@@ -332,6 +355,7 @@ public class CoreImplTest {
 		boolean mixinFound = false;
 		for (String id : resourceIds) {
 			mixinFound = false;
+			
 			// get resource.
 			entity = ConfigurationManager.findEntity(DEFAULT_OWNER, id);
 
@@ -346,13 +370,16 @@ public class CoreImplTest {
 			assertTrue(mixinFound);
 			// print resource.
 			ConfigurationManager.printEntity(entity);
-
+			Resource res = (Resource) entity;
+			EList<Link> resLink = res.getLinks();
+			assertEquals(resLink.size(), 2);
 		}
 
 	}
 
 	@Test
 	public void testFind() {
+		// ConfigurationManager.resetAll();
 		buildInfraTest();
 		testSaveResourceAndLinks();
 
@@ -360,20 +387,22 @@ public class CoreImplTest {
 		String idLink = "storagelink/sl1";
 
 		// search a resource via core.find(id).
-		List<Struct1> structRes = core.Find(id);
+				
+		List<Struct1> structRes = core.Find(containers.get(id).getId());
 		assertNotNull(structRes);
 		assertFalse(structRes.isEmpty());
 		for (Struct1 structRes1 : structRes) {
-			assertEquals(id, structRes1.b.getValue());
+			// structRes1.b.value is the opaqueId (generated id by this backend with format : owner + ";" + relativePath).
+			assertTrue(structRes1.b.getValue().toString().startsWith(id));
 			assertNotNull(structRes1.d);
 		}
 
 		// search a link via core.find(idlink).
-		List<Struct1> structLink = core.Find(idLink);
+		List<Struct1> structLink = core.Find(containers.get(idLink).getId());
 		assertNotNull(structLink);
 		assertFalse(structLink.isEmpty());
 		for (Struct1 structLink1 : structLink) {
-			assertEquals(idLink, structLink1.b.getValue());
+			assertTrue(structLink1.b.getValue().toString().startsWith(idLink));
 			assertNotNull(structLink1.d);
 		}
 
@@ -382,15 +411,15 @@ public class CoreImplTest {
 		assertNotNull(structEmpty);
 		assertTrue(structEmpty.isEmpty());
 
-		// Check if partial id.
-		id = "compute";
-		List<Struct1> structP = core.Find(id);
-		assertNotNull(structP);
-		assertFalse(structP.isEmpty());
-		for (Struct1 structPls : structP) {
-			assertNotNull(structPls.d);
-			assertNotNull(structPls.b);
-		}
+//		// Check if partial id.
+//		id = "compute";
+//		List<Struct1> structP = core.Find(id);
+//		assertNotNull(structP);
+//		assertFalse(structP.isEmpty());
+//		for (Struct1 structPls : structP) {
+//			assertNotNull(structPls.d);
+//			assertNotNull(structPls.b);
+//		}
 	}
 
 	@Test
@@ -399,10 +428,16 @@ public class CoreImplTest {
 		testSaveResourceAndLinks();
 
 		// Get entity occi object for loading.
-		String id = "networkinterface/ni1";
+		// Erocci will give opaqueId as parameter on load method.
+		
+		List<Entity> ents = ConfigurationManager.findAllEntitiesLikePartialId(DEFAULT_OWNER, "networkinterface/ni1");
+		
+		
+		String opaqueId = ents.get(0).getId();
+		
 
 		// Load the content of an entity via the core module.
-		Quad<String, String, List<String>, Map<String, Variant>> quad = core.Load(new Variant(id));
+		Quad<String, String, List<String>, Map<String, Variant>> quad = core.Load(new Variant(opaqueId));
 		// Check the result.
 		assertNotNull(quad);
 		// Quad<>(entityId, kind, mixins, attribVariant);
@@ -430,7 +465,15 @@ public class CoreImplTest {
 		testSaveResourceAndLinks();
 		Map<String, Variant> filters = new HashMap<>();
 		String id = STORAGE_LINK_KIND;
-		Pair<Variant, UInt32> pair = core.List(id, filters);
+		list(id, filters);
+		
+		id = "http://schemas.ogf.org/occi/infrastructure/compute/action#start";
+		list(id, filters);
+
+	}
+	
+	private void list(String catId, Map<String, Variant> filters) {
+		Pair<Variant, UInt32> pair = core.List(catId, filters);
 		assertNotNull(pair);
 		assertNotNull(pair.a);
 		assertTrue(pair.a.toString().contains("collection"));
@@ -448,29 +491,43 @@ public class CoreImplTest {
 			assertNotNull(struct.b);
 		}
 
-		pair = core.List(id, filters);
+		pair = core.List(catId, filters);
 
 		// Test du renvoi d'un seul item.
 		structLst = core.Next((new Variant((String) pair.a.getValue())), new UInt32(0), new UInt32(1));
 		assertNotNull(structLst);
 		assertTrue(structLst.size() == 1);
-
 	}
 
 	@Test
 	public void testDelete() {
+		
 		buildInfraTest();
 		overwriteTestCount = 1;
 		testSaveResourceAndLinks();
 
 		// Test remove entity.
 		String id = "compute/vm2";
-		Entity entity = ConfigurationManager.findEntity(DEFAULT_OWNER, id);
+		
+		List<Entity> ents = ConfigurationManager.findAllEntitiesLikePartialId(DEFAULT_OWNER, id);
+		
+		
+		Entity entity = ConfigurationManager.findEntity(DEFAULT_OWNER, ents.get(0).getId());
 		assertNotNull(entity);
+		
+		String entityId = entity.getId();
 
-		core.Delete(id);
+		Resource res = (Resource) entity;
+		
+		EList<Link> links = res.getLinks();
+		assertEquals(links.size(), 2);
+		for (Link link : links) {
+			ConfigurationManager.printEntity(link);
+		}
+		
+		core.Delete(entityId);
 
-		entity = ConfigurationManager.findEntity(DEFAULT_OWNER, id);
+		entity = ConfigurationManager.findEntity(DEFAULT_OWNER, entityId);
 		assertNull(entity);
 
 		// test dissociate mixin.
@@ -487,6 +544,22 @@ public class CoreImplTest {
 		
 	}
 
+	@Test
+	public void testAction() {
+		buildInfraTest();
+		testSaveResourceAndLinks();
+		String relativeEntityPath = "compute/vm1";
+		String actionFullPath = "http://schemas.ogf.org/occi/infrastructure/compute/action#start"; 
+		Map<String, Variant> attributes = new HashMap<>();
+		attributes.put("method", new Variant("start"));
+		
+		core.Action(relativeEntityPath, actionFullPath, attributes);
+		
+		relativeEntityPath = "test/doesntexist";
+		actionFullPath = "noAction";
+		attributes.clear();
+		core.Action(relativeEntityPath, actionFullPath, attributes);
+	}
 	
 	public void validateModel() {
 
@@ -515,6 +588,7 @@ public class CoreImplTest {
 	}
 
 	private void buildInfraTest() {
+		ConfigurationManager.resetAll();
 		containers = new LinkedHashMap<String, InputContainer>();
 		List<String> mixinsEmpty = new ArrayList<String>();
 		List<String> mixinsToUse = new ArrayList<String>();

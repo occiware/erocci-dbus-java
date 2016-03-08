@@ -123,15 +123,6 @@
 
 	</dependencies>
 
-	<repositories>
-		<repository>
-			<id>erocci-dbus-local-libs</id>
-			<name>Erroci DBUS local project libraries</name>
-			<url>file://${project.basedir}/lib</url>
-			<layout>default</layout>
-		</repository>
-	</repositories>
-
 	<build>
 		<plugins>
 			<plugin>

@@ -27,4 +27,9 @@ mvn install:install-file -Dfile=/usr/share/java/hexdump-0.2.jar -DgroupId=net.wi
 mvn install:install-file -Dfile=/usr/share/java/unix-0.5.jar -DgroupId=net.windwards.3rdparty -DartifactId=matthew-unix -Dversion=0.5 -Dpackaging=jar
 
 mvn install:install-file -Dfile=/usr/share/java/debug-enable-1.1.jar -DgroupId=net.windwards.3rdparty -DartifactId=matthew-debug -Dversion=1.1 -Dpackaging=jar
+# Install Eclipse OCL jars into the local repo.
+mvn install:install-file -Dfile="./lib/org.eclipse.ocl.pivot-1.0.1.v20150908-1239.jar" -DpomFile="./lib/org.eclipse.ocl.pivot-1.0.1.v20150908-1239.pom"
+mvn install:install-file -Dfile="./lib/org.eclipse.ocl.common-1.3.0.v20150519-0914.jar" -DpomFile="./lib/org.eclipse.ocl.common-1.3.0.v20150519-0914.pom"
+mvn install:install-file -Dfile="./lib/org.occiware.clouddesigner.parent-0.1.0-SNAPSHOT.pom" -DgroupId=Clouddesigner -DartifactId=org.occiware.clouddesigner.parent -Dversion=0.1.0-SNAPSHOT -Dpackaging=pom
+mvn install:install-file -Dfile="./lib/org.occiware.clouddesigner.occi-0.1.0-SNAPSHOT.jar" -DpomFile="./lib/org.occiware.clouddesigner.occi-0.1.0-SNAPSHOT.pom"
 

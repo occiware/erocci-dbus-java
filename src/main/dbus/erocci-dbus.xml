@@ -91,6 +91,7 @@
 
 		<property name="schema" type="s" access="read">
 		</property>
+		
 	</interface>
 
 	<interface name="org.ow2.erocci.backend.mixin">

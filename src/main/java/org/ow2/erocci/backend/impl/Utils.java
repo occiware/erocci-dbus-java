@@ -53,6 +53,7 @@ import org.ow2.erocci.backend.Quad;
 public class Utils {
 
 	private static Logger logger = Logger.getLogger("Utils");
+	public static final String REGEX_CONTROL_UUID = "[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}";
 
 	// Conventional name ASCII type-code Encoding
 	// BYTE y (121) Unsigned 8-bit integer
@@ -159,53 +160,61 @@ public class Utils {
 		}
 		return map;
 	}
-	
+
 	/**
-	 * Convert an OCCI Entity to Quad object, this is for dialog with dbus protocol.
+	 * Convert an OCCI Entity to Quad object, this is for dialog with dbus
+	 * protocol.
+	 * 
 	 * @param entity
 	 * @return
 	 */
-	public static Quad<String, String,List<String>,Map<String, Variant>> convertEntityToQuad(Entity entity) {
+	public static Quad<String, String, List<String>, Map<String, Variant>> convertEntityToQuad(Entity entity) {
 		if (entity == null) {
 			return null;
 		}
-		
+
 		// to cast to String
 		Kind kind = entity.getKind();
-		
+
 		// to cast to List<String>
 		EList<Mixin> mixins = entity.getMixins();
-		
+
 		// to cast to Map<String, Variant>.
 		EList<AttributeState> attributes = entity.getAttributes();
-		
+
 		if (kind == null) {
 			logger.warning("No kind on this entity !!!");
 			// malformed entity. normally this never happen.
 			return null;
 		}
-		
+
 		String kindStr = kind.getScheme() + kind.getTerm();
 		List<String> mixinsStr = new ArrayList<>();
 		for (Mixin mixin : mixins) {
 			mixinsStr.add(mixin.getScheme() + mixin.getTerm());
 		}
-		
+		logger.info("attributes to Variant DBUS FORMAT : ");
 		Map<String, Variant> attribVariant = new HashMap<>();
 		for (AttributeState attrState : attributes) {
-			attribVariant.put(attrState.getName(), new Variant(attrState.getValue()));
+			logger.info("Key: " + attrState.getName() + " --< Value: " + attrState.getValue());
+			// Warning : dont convert undefined Value, this will cause Erocci bug and terminate this application. 
+			if (!attrState.getValue().equals("undefined")) {
+				attribVariant.put(attrState.getName(), new Variant(attrState.getValue()));
+			}
 		}
+		logger.info("Id: " + entity.getId());
+		logger.info("Kind: " + kindStr);
+		logger.info("mixinsStr: " + mixinsStr);
 		
 		return new Quad<>(entity.getId(), kindStr, mixinsStr, attribVariant);
-		
-	}
-	
-	public static String createUUID() {
-		return UUID.randomUUID().toString();
-		
+
 	}
 
-	
+	public static String createUUID() {
+		return UUID.randomUUID().toString();
+
+	}
+
 	/**
 	 * Simple copy a stream with a buffer of 1024 bytes into an outputstream.
 	 * 
@@ -250,7 +259,8 @@ public class Utils {
 	}
 
 	/**
-	 * Serialize an object to make an MD5 hash after call getMd5Digest Method. 
+	 * Serialize an object to make an MD5 hash after call getMd5Digest Method.
+	 * 
 	 * @param obj
 	 * @return
 	 * @throws IOException
@@ -275,7 +285,9 @@ public class Utils {
 
 	/**
 	 * Create a MD5 hash.
-	 * @param bytes (array of bytes).
+	 * 
+	 * @param bytes
+	 *            (array of bytes).
 	 * @return
 	 */
 	public static String getMd5Digest(byte[] bytes) {
@@ -294,10 +306,12 @@ public class Utils {
 		sb.append(number.toString(16));
 		return sb.toString();
 	}
-	
+
 	/**
 	 * Create an eTag (Serial number, serialize an object) for dbus interaction.
-	 * @param an object.
+	 * 
+	 * @param an
+	 *            object.
 	 * @return an eTag number.
 	 */
 	public static UInt32 createEtagNumber(Object obj) {
@@ -308,20 +322,23 @@ public class Utils {
 			logger.warning("IOException thrown : " + ioe.getMessage());
 			eTag = "1";
 		}
-		
+
 		StringBuilder sb = new StringBuilder();
-	    for (char c : eTag.toCharArray()) {
-	    	sb.append((int)c);
-	    }
-	    return new UInt32(sb.toString());
-		
+		for (char c : eTag.toCharArray()) {
+			sb.append((int) c);
+		}
+		return new UInt32(sb.toString());
+
 	}
-	
+
 	/**
 	 * Serialize a string (entity id for example with an owner)
+	 * 
 	 * @param id
 	 * @param owner
-	 * @param version (version number, will increment with each update on this object).
+	 * @param version
+	 *            (version number, will increment with each update on this
+	 *            object).
 	 * @return
 	 */
 	public static UInt32 createEtagNumber(final String id, final String owner, final int version) {
@@ -337,20 +354,113 @@ public class Utils {
 			}
 		}
 		StringBuilder sb = new StringBuilder();
-	    
+
 		int nb = 1;
 		for (char c : eTag.toCharArray()) {
-			sb.append((int)c);
-	    	nb++;
-	    	if (nb == 3) {
-	    		break;
-	    	}
-	    	
-	    }
-	    return new UInt32(sb.toString());
+			sb.append((int) c);
+			nb++;
+			if (nb == 3) {
+				break;
+			}
+
+		}
+		return new UInt32(sb.toString());
 	}
-	
-	
+
+	/**
+	 * Check if an UUID is provided on a String or attribute occi.core.id.
+	 * 
+	 * @param id
+	 * @param attr
+	 * @return true if provided or false if not provided
+	 */
+	public static boolean isEntityUUIDProvided(final String id, final Map<String, String> attr) {
+		String[] uuids = id.split("/");
+		boolean match = false;
+
+		for (String uuid : uuids) {
+			if (uuid.matches(REGEX_CONTROL_UUID)) {
+				match = true;
+				break;
+			}
+		}
+		String occiCoreId = attr.get("occi.core.id");
+		if (!match && occiCoreId != null && !occiCoreId.isEmpty()) {
+			String[] spls = { "/", ":" };
+			for (String spl : spls) {
+				uuids = occiCoreId.split(spl);
+				for (String uuid : uuids) {
+					if (uuid.matches(REGEX_CONTROL_UUID)) {
+						match = true;
+						break;
+					}
+				}
+				if (match) {
+					break;
+				}
+			}
+
+		}
+
+		return match;
+	}
+
+	/**
+	 * Search for UUID on a String or attribute occi.core.id.
+	 * 
+	 * @param id
+	 * @param attr
+	 * @return the UUID provided may return null if uuid not found.
+	 */
+	public static String getUUIDFromId(final String id, final Map<String, String> attr) {
+		String[] uuids = id.split("/");
+		String uuidToReturn = null;
+		boolean match = false;
+
+		for (String uuid : uuids) {
+			if (uuid.matches(REGEX_CONTROL_UUID)) {
+				uuidToReturn = uuid;
+				break;
+			}
+		}
+		String occiCoreId = attr.get("occi.core.id");
+		if (!match && occiCoreId != null && !occiCoreId.isEmpty()) {
+			String[] spls = { "/", ":" };
+			for (String spl : spls) {
+				uuids = occiCoreId.split(spl);
+				for (String uuid : uuids) {
+					if (uuid.matches(REGEX_CONTROL_UUID)) {
+						uuidToReturn = uuid;
+						break;
+					}
+				}
+				if (match) {
+					break;
+				}
+			}
+
+		}
+		
+		return uuidToReturn;
+	}
+	/**
+	 * Return a relative path from an full entityId with uuid provided.
+	 * @param id
+	 * @return
+	 */
+	public static String getRelativePathFromId(final String id, final String uuid) {
+		
+		String relativePathPart = "";
+		
+		
+		
+		relativePathPart = id.replace(uuid, "");		
+		if (relativePathPart.endsWith("/")) {
+			relativePathPart = relativePathPart.substring(0, relativePathPart.length() - 1);
+		}
+		
+		return relativePathPart;
+	}
 
 	private static int uniqueInt = 1;
 

@@ -16,6 +16,8 @@
 
 package org.ow2.erocci.backend.impl;
 
+import java.util.logging.Logger;
+
 import org.ow2.erocci.backend.mixin;
 
 /**
@@ -25,21 +27,43 @@ import org.ow2.erocci.backend.mixin;
  */
 public class MixinImpl implements mixin {
 
+	private Logger logger = Logger.getLogger(this.getClass().getName());
+	
 	@Override
 	public boolean isRemote() {
-		// TODO Auto-generated method stub
+		
 		return false;
 	}
 
+	/**
+	 * Register a user mixin
+	 * @param id , user mixin category if
+	 * @param location, relative path url part
+	 * @param user mixin owner (opaque)
+	 * 
+	 */
 	@Override
 	public void AddMixin(String id, String location, String owner) {
-		// TODO : Add a mixin.
+		logger.info("add mixin with id: " + id + " --< location : " + location + " --< owner : " + owner);
+		// TODO : Implementation.
+		// Ex : POST /.well-knwown/org/ogf/occi/
+		//      Content-Type: text/occi
+		//		Category: my_tag; scheme="http://example.com/tag"; location="/tag/"
+		// Update Tag collection :
+		//  PUT /tag/
+		//  Content-Type: text/occi
+		//  X-OCCI-Location: /storage/abc, /network/123.
+		
 	}
 
+	/**
+	 * Delete user mixin
+	 * @param id, user mixin category id
+	 */
 	@Override
 	public void DelMixin(String id) {
-		// TODO : delete a mixin.
-
+		logger.info("delete mixin with category id : " + id);
+		// TODO : Implementation.
 	}
 
 }
