@@ -79,6 +79,8 @@ $ export DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus
 ```sh
 DBUS_SESSION_BUS_ADDRESS=$(printenv DBUS_SESSION_BUS_ADDRESS | sed -e 's/kernel:.*;//' ).
 ```
+## Progress dashboard
+<a href="http://github.com/erocci/occiware/erocci-dbus-java/blob/master/doc/devstatus.md" class="module">Development status</a>
 
 ## Installation from scratch
 ### On Ubuntu 15.10

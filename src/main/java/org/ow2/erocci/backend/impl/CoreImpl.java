@@ -122,7 +122,7 @@ public class CoreImpl implements core, action, mixin, DBus.Properties {
 
 	@Override
 	public void Init(Map<String, Variant> opts) {
-		logger.info("Init method invoked");
+		logger.info("Init method invoked with opts : " + Utils.convertVariantMap(opts));
 		// It may be here for using a new extension schema, to check.
 
 	}

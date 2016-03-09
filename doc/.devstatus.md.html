@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-<title>/home/christophe/workspace/erocci-dbus-java/.README.md.html</title>
+<title>/home/christophe/workspace/erocci-dbus-java/doc/.devstatus.md.html</title>
 
 
 <style type="text/css">
@@ -639,75 +639,125 @@ function setDocumentScrollTop(ypos)
 
 </head>
 <body class="markdown-body">
-<h1> <a id="user-content-erocci-java-dbus-integration" class="anchor" href="#erocci-java-dbus-integration" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Erocci java-dbus integration</h1> 
-<h2> <a id="user-content-prerequisite" class="anchor" href="#prerequisite" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Prerequisite</h2> 
+<h1> <a id="user-content-development-status" class="anchor" href="#development-status" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Development status</h1> 
+<p>Development Status values :</p> 
 <ul> 
- <li>JDK</li> 
- <li>Maven</li> 
- <li>java D-Bus implementation. It can be installed with:</li> 
+ <li>TODO (Nothing has been done but will be done in near future)</li> 
+ <li>In progress (in devlopment progress)</li> 
+ <li>Done (works and tested)</li> 
+ <li>Problem (done but not tested or have bugs)</li> 
 </ul> 
-<div class="highlight highlight-source-shell">
- <pre>$ make deps</pre>
-</div> 
-<p>See &quot;troubleshooting&quot; part below in case of error.</p> 
-<h2> <a id="user-content-quickstart" class="anchor" href="#quickstart" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Quickstart</h2> 
-<div class="highlight highlight-source-shell">
- <pre>$ make run</pre>
-</div> 
-<h2> <a id="user-content-project-format" class="anchor" href="#project-format" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Project format</h2> 
-<p><code>src/main/dbus/</code> contains the XML file describing the erocci DBus interface.</p> 
-<p>pom.xml imports the maven-dbus-plugin (to generate a java interface) and specifies dependencies (to compile).</p> 
-<p>Note: the maven-dbus-plugin version is the one available online at maven central (0.1). To compile locally your own version from sources, set version to 0.2-SNAPSHOT in pom.xml.</p> 
-<h2> <a id="user-content-code-generation" class="anchor" href="#code-generation" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Code generation</h2> 
-<div class="highlight highlight-source-shell">
- <pre>$ mvn clean install</pre>
-</div> 
-<p>The java interface is generated in src/generated/java, then compiled in target/classes .</p> 
-<h2> <a id="user-content-launch-as-standalone-service-outside-eclipseide" class="anchor" href="#launch-as-standalone-service-outside-eclipseide" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Launch as standalone service (outside Eclipse/IDE)</h2> 
-<div class="highlight highlight-source-shell">
- <pre>$ mvn <span class="pl-c1">exec</span>:java -Dexec.mainClass=<span class="pl-s"><span class="pl-pds">&quot;</span>org.ow2.erocci.backend.BackendDBusService<span class="pl-pds">&quot;</span></span></pre>
-</div> 
-<p>The dbus service is called &quot;org.ow2.erocci.backend&quot;.</p> 
-<p>See &quot;troubleshooting&quot; part below in case of error.</p> 
-<h2> <a id="user-content-interface-with-erocci" class="anchor" href="#interface-with-erocci" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Interface with erocci</h2> 
-<p>An erocci-dbus-java.config file is provided (in the project's home directory). Launch erocci with this file used as configuration; for example, in the erocci directory:</p> 
-<div class="highlight highlight-source-shell">
- <pre>./start.sh -c ../erocci-dbus-java/erocci-dbus-java.config</pre>
-</div> 
-<h2> <a id="user-content-troubleshooting" class="anchor" href="#troubleshooting" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Troubleshooting</h2> 
-<ul> 
- <li><p>&quot;no unix-java in java.library.path&quot; Generally occurs when you do not use your system's default JDK. To fix it: Copy libunix-java.so in your JDK's jre/lib/ directory, eg. sudo cp /usr/lib/jni/libunix-java.so /usr/lib/jvm/jdk1.8.0_45/jre/lib/amd64/</p></li> 
- <li><p>&quot;Failed to connect to bus unknown address type kernel&quot;</p></li> 
-</ul> 
-<p>Check the DBUS_SESSION_BUS_ADDRESS environment variable. It is a list of one or more items (separated by semicolons). The 1st item should start with &quot;unix:&quot;. If its starts with &quot;kernel:&quot;, remove the 1st item from the list. Example:</p> 
-<div class="highlight highlight-source-shell">
- <pre>$ printenv DBUS_SESSION_BUS_ADDRESS
-kernel:path=/sys/fs/kdbus/1000-user/bus<span class="pl-k">;</span>unix:path=/run/user/1000/bus
-$ <span class="pl-k">export</span> DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus</pre>
-</div> 
-<p>(can also be done using a sed command:</p> 
-<div class="highlight highlight-source-shell">
- <pre>DBUS_SESSION_BUS_ADDRESS=<span class="pl-s"><span class="pl-pds">$(</span>printenv DBUS_SESSION_BUS_ADDRESS <span class="pl-k">|</span> sed -e <span class="pl-s"><span class="pl-pds">'</span>s/kernel:.*;//<span class="pl-pds">'</span></span> <span class="pl-pds">)</span></span>.</pre>
-</div> 
-<h2> <a id="user-content-development-current-status" class="anchor" href="#development-current-status" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Development current status</h2> 
-<p><a href="http://github.com/erocci/occiware/erocci-dbus-java/blob/master/doc/devstatus.md">Development in progress</a></p> 
-<h2> <a id="user-content-installation-from-scratch" class="anchor" href="#installation-from-scratch" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Installation from scratch</h2> 
-<h3> <a id="user-content-on-ubuntu-1510" class="anchor" href="#on-ubuntu-1510" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>On Ubuntu 15.10</h3> 
-<ul> 
- <li>Install openjdk 8 : <code>sudo apt-get install openjdk-8-jdk</code> </li> 
- <li>Download Erlang 1.8.x for Ubuntu on the website editor (<a href="https://www.erlang-solutions.com/resources/download.html">https://www.erlang-solutions.com/resources/download.html</a>) or use : <code>sudo apt-get install erlang</code> </li> 
- <li>Git Clone the Erocci project</li> 
- <li>Git Clone the Erocci-dbus-java project</li> 
- <li>Install maven3 using <code>sudo apt-get install maven</code> </li> 
- <li>Install dbus binaries for java : sudo apt-get install dbus-java-bin</li> 
- <li>Copy jni file like this : <code>cp /usr/lib/jni/libunix-java.so /usr/lib/jvm/java-1.8.0-openjdk-amd64/lib/amd64/</code> </li> 
- <li>Go to erocci-dbus-java root directory</li> 
- <li><code>make deps</code></li> 
- <li><code>make</code></li> 
- <li>Go to Erocci root directory</li> 
- <li>launch <code>./bootstrap</code> and then <code>make</code> after the message &quot;release successfully created&quot; will display if all ok.</li> 
- <li>Launch erocci-dbus-java on first place before Erocci</li> 
- <li>Launch Erocci as describe upper.</li> 
-</ul>
+<h2> <a id="user-content-tasks" class="anchor" href="#tasks" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Tasks</h2> 
+<table> 
+ <tbody>
+  <tr>
+   <th>task name</th> 
+   <th>comment (and related issues)</th> 
+   <th>progress status</th> 
+  </tr>
+  <tr> 
+   <td>Init(opts)</td> 
+   <td>Called when erocci start, feature#3</td> 
+   <td>Done</td> 
+  </tr> 
+  <tr> 
+   <td>Terminate()</td> 
+   <td>Exit the application, feature#4</td> 
+   <td>Done</td> 
+  </tr> 
+  <tr> 
+   <td>SaveResource(id, ...)</td> 
+   <td>Save a resource and add it to Configuration model, feature#5</td> 
+   <td>Done</td> 
+  </tr> 
+  <tr> 
+   <td>SaveLink(id, ...)</td> 
+   <td>Save a link and add it to Configuration model, feature #6</td> 
+   <td>Done</td> 
+  </tr> 
+  <tr>
+   <td>Update(id, ...)</td> 
+   <td>Update attributes of an entity, feature #7</td> 
+   <td>Done</td> 
+  </tr>
+  <tr> 
+  </tr> 
+  <tr>
+   <td>SaveMixin(id, entities)</td> 
+   <td>Associate a list of entities with a mixin, replacing existing list if any previously given, feature #8</td> 
+   <td>Problem</td> 
+  </tr>
+  <tr> 
+   <td>UpdateMixin(id, entities)</td> 
+   <td>Associate a list of entities with a mixin, replacing existing list if any previously given, feature #9</td> 
+   <td>Problem</td> 
+  </tr> 
+  <tr> 
+   <td>Find(id)</td> 
+   <td>Find an entity by his relative path, feature #10</td> 
+   <td>Done</td> 
+  </tr> 
+  <tr> 
+   <td>Load(id)</td> 
+   <td>Describe an entity contents, feature #11</td> 
+   <td>Done</td> 
+  </tr> 
+  <tr> 
+   <td>List(id, filters)</td> 
+   <td>Get an iterator for a collection: then use Next() to iterate, feature #12</td> 
+   <td>Done</td> 
+  </tr> 
+  <tr> 
+   <td>Next(opaque_id, start, items)</td> 
+   <td>Retrieve items for a collection, from start(int) with number items, feature #13</td> 
+   <td>Done</td> 
+  </tr> 
+  <tr> 
+   <td>Delete(id)</td> 
+   <td>Remove entity or dissociate mixin from configuration, feature #14</td> 
+   <td>Done</td> 
+  </tr> 
+  <tr> 
+   <td>property schema (core interface)</td> 
+   <td>Assign an OCCI extension xml, on load, for now, extension are loaded via ConfigurationManager , for an owner and a Configuration Object, feature #15</td> 
+   <td>TODO</td> 
+  </tr> 
+  <tr> 
+   <td>AddMixin(id, location, owner)</td> 
+   <td>Add a user mixin, act as a user tag, feature #16</td> 
+   <td>TODO</td> 
+  </tr> 
+  <tr> 
+   <td>DelMixin(id, location, owner)</td> 
+   <td>Delete a user mixin, feature #17</td> 
+   <td>TODO</td> 
+  </tr> 
+  <tr> 
+   <td>Action(id, action_id, attributes)</td> 
+   <td>Execute Action command for real interaction, action is call properly, while action has no connector, it does nothing, feature #18</td> 
+   <td>TODO</td> 
+  </tr> 
+  <tr> 
+   <td>Cloud connector</td> 
+   <td>Connector based on CloudDesigner implementation, for multi cloud purpose</td> 
+   <td>TODO</td> 
+  </tr> 
+  <tr> 
+   <td>Docker connector</td> 
+   <td>onnector based on CloudDesigner implementation, for Docker container purpose</td> 
+   <td>TODO</td> 
+  </tr> 
+  <tr> 
+   <td>Hypervisor connector</td> 
+   <td>Connector based on CloudDesigner implementation, for Hypervisor (like xen, vmware etc.) purpose</td> 
+   <td>TODO</td> 
+  </tr> 
+  <tr> 
+   <td>Simulator connector</td> 
+   <td>Connector based on CloudDesigner implementation, for Simulator purpose</td> 
+   <td>TODO</td> 
+  </tr> 
+ </tbody>
+</table>
 </body>
 </html>
