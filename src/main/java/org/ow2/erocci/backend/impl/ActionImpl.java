@@ -62,9 +62,38 @@ public class ActionImpl implements action {
 		if (!entities.isEmpty()) {
 			// Launch action.
 			logger.info("Launching the action... " + action_id + " on entity " + id);
-			// TODO : Cloudesigner Connector to the real infra and command pattern linked to this action.
-			// ConnectorDelegate.launchAction(entities, action_id).
-			logger.info("Action " + action_id + " launched !");
+			
+			// Validation check before executing any actions.
+			
+			boolean result = false;
+			if (entities.size() > 1) {
+				logger.warning("cant execute action : " + action_id + ", cause : multiple entities with this id with different owners");
+				return;
+			}
+			String owner;
+			String msgError;
+			for (Map.Entry<String, Entity> entry : entities.entrySet()) {
+				owner = entry.getKey();
+				// Get configuration object and validate it.
+				result = ConfigurationManager.validateConfiguration(owner);
+				if (!result) {
+					// TODO : Exception to throw Configuration is not valid.
+					msgError = "Configuration is not valid, please make ajustment, check the logs !";
+					logger.info(msgError);
+					break;
+				}
+				// Launch the action effectively.
+				// TODO : Cloudesigner Connector to the real infra and command pattern linked to this action.
+				// IConnectorFactory.getConnector(ConfigurationManager.getConfigurationFromOwner(owner));
+				// IConnector.launchAction(entities, action_id).
+				
+			}
+			if (!result) {
+				logger.info("Cant execute the action, cause : ");
+				
+			} else {
+				logger.info("Action " + action_id + " launched !");
+			}
 			// return success; (or state)
 		} else {
 			logger.info("Action : " + action_id + " doesnt exist for entity : " + id);

@@ -1,6 +1,7 @@
 package org.ow2.erocci.model;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -40,6 +41,15 @@ import org.ow2.erocci.backend.impl.Utils;
  */
 public class ConfigurationManager {
 
+	private static final String EXT_OCCI_REL_PATH = "model/";
+	private static final String EXT_OCCI_CORE_REL_PATH = EXT_OCCI_REL_PATH + "core.occie";
+	private static final String EXT_OCCI_INFRASTRUCTURE_REL_PATH = EXT_OCCI_REL_PATH + "infrastructure.occie";
+	private static final String EXT_OCCI_CLOUD_REL_PATH = EXT_OCCI_REL_PATH + "Cloud.occie";
+	private static final String EXT_OCCI_DOCKER_REL_PATH = EXT_OCCI_REL_PATH + "Docker.occie";
+	private static final String EXT_OCCI_HYPERVISOR_REL_PATH = EXT_OCCI_REL_PATH + "Hypervisor.occie";
+	private static final String EXT_OCCI_SIMULATION_REL_PATH = EXT_OCCI_REL_PATH + "simulation.occie";
+	
+	
 	static {
 		// Init EMF to dealt with OCCI files.
 		Registry.INSTANCE.getExtensionToFactoryMap().put("occie", new OCCIResourceFactoryImpl());
@@ -50,19 +60,25 @@ public class ConfigurationManager {
 		OCCIPackage.eINSTANCE.toString();
 
 		// Register OCCI extensions.
-		OCCIRegistry.getInstance().registerExtension("http://schemas.ogf.org/occi/core#", "model/core.occie");
+		OCCIRegistry.getInstance().registerExtension("http://schemas.ogf.org/occi/core#", EXT_OCCI_CORE_REL_PATH);
 		OCCIRegistry.getInstance().registerExtension("http://schemas.ogf.org/occi/infrastructure#",
-				"model/infrastructure.occie");
-		// TODO : Register other extensions on demand.
-
+				EXT_OCCI_INFRASTRUCTURE_REL_PATH);
+		
+		// Register other extensions.
+		// TODO : Add user custom extension support.
+		// TODO : Add external link load support (like https://github.com/occiware/occi-schemas/clouddesigner/extensions/docker.occie ).
+		OCCIRegistry.getInstance().registerExtension("http://occiware.org/cloud#", EXT_OCCI_CLOUD_REL_PATH);
+		OCCIRegistry.getInstance().registerExtension("http://occiware.org/docker#", EXT_OCCI_DOCKER_REL_PATH);
+		OCCIRegistry.getInstance().registerExtension("http://occiware.org/hypervisor#", EXT_OCCI_HYPERVISOR_REL_PATH);
+		OCCIRegistry.getInstance().registerExtension("simulation#", EXT_OCCI_SIMULATION_REL_PATH);
+		// OCCIRegistry.getInstance().registerExtension("", "model/");
+		
+		
 	}
 
 	private static Logger logger = Logger.getLogger("ConfigurationManager");
-
-	private static Extension extensionOcciCore;
-	private static Extension extensionOcciInfra;
-	// Others extensions...
-
+	
+	
 	/**
 	 * Used for now when no owner defined (on dbus methods find for example or
 	 * no owner defined). Will be removed when the owner parameter will be
@@ -111,9 +127,8 @@ public class ConfigurationManager {
 		// Create an empty OCCI configuration.
 		Configuration configuration = occiFactory.createConfiguration();
 
-		extensionOcciCore = loadExtension("model/core.occie");
-		extensionOcciInfra = loadExtension("model/infrastructure.occie");
-		// TODO : For other extensions, precise full path as argument.
+		Extension extensionOcciCore = loadExtension(EXT_OCCI_CORE_REL_PATH);
+		Extension extensionOcciInfra = loadExtension(EXT_OCCI_INFRASTRUCTURE_REL_PATH);
 
 		configuration.getUse().add(extensionOcciInfra);
 		configuration.getUse().add(extensionOcciCore);
@@ -174,7 +189,7 @@ public class ConfigurationManager {
 		}
 
 		Configuration configuration = getConfigurationForOwner(owner);
-
+		
 		// Assign a new resource to configuration, if configuration has resource
 		// existed, inform by logger but overwrite existing one.
 		boolean resourceOverwrite = false;
@@ -194,12 +209,9 @@ public class ConfigurationManager {
 			if (occiKind == null) {
 				// Kind not found on extension, searching on entities.
 				occiKind = findKindFromEntities(owner, kind);
-
-				// We create a new kind.
-				// occiKind = createKindWithValues(id, kind);
 			}
+			
 			// Add a new kind to resource (title, scheme, term).
-
 			// if occiKind is null, this will give a default kind parent.
 			resource.setKind(occiKind);
 			// occiKind.getEntities().add(resource);
@@ -721,6 +733,7 @@ public class ConfigurationManager {
 		Configuration config = getConfigurationForOwner(owner);
 		Kind kindToReturn = null;
 		EList<Kind> kinds;
+		List<String> extUsed = new ArrayList<>();
 		for (Extension ext : config.getUse()) {
 			kinds = ext.getKinds();
 			for (Kind kind : kinds) {
@@ -731,6 +744,32 @@ public class ConfigurationManager {
 			}
 			if (kindToReturn != null) {
 				break;
+			}
+			
+			extUsed.add(ext.getScheme());
+		}
+		
+		if (kindToReturn == null) {
+			
+			// Search kind in unreferenced extensions, if found reference the new extension to this configuration.
+			Collection<String> extReg = OCCIRegistry.getInstance().getRegisteredExtensions();
+			
+			extReg.removeAll(extUsed);
+			Extension ext;
+			for (String extScheme : extReg) {
+				ext = loadExtension(OCCIRegistry.getInstance().getExtensionURI(extScheme));
+				kinds = ext.getKinds();
+				for (Kind kind : kinds) {
+					if (((kind.getScheme() + kind.getTerm()).equals(kindId))) {
+						kindToReturn = kind;
+						config.getUse().add(ext);
+						logger.info("New extension: " + ext.getName() +  " --< added to configuration owner: " + owner);
+						break;
+					}
+				}
+				if (kindToReturn != null) {
+					break;
+				}
 			}
 		}
 
@@ -984,40 +1023,6 @@ public class ConfigurationManager {
 		configurations.clear();
 		versionObjectMap.clear();
 
-	}
-
-	/**
-	 * Create a new OCCI Kind with default values (title, term and scheme).
-	 * 
-	 * @param id
-	 *            (entity id)
-	 * @param kindTerm
-	 *            (scheme#term)
-	 * @return a new OCCI Kind with values
-	 */
-	private static Kind createKindWithValues(final String id, final String kindTerm) {
-		Kind occiKind = occiFactory.createKind();
-
-		String[] schemeArr = kindTerm.split("#");
-
-		String scheme = schemeArr[0] + "#";
-		String term = schemeArr[1];
-		// TODO : how to get title ?
-		// String title = id.split("/")[1];
-		occiKind.setScheme(scheme);
-		occiKind.setTerm(term);
-		// occiKind.setTitle(title);
-		logger.info("Kind --> Term : " + term + " --< Scheme : " + scheme);
-		// Pour debug.
-		logger.info("      - actions:");
-		for (Action action : occiKind.getActions()) {
-			logger.info("        * Action");
-			logger.info("          - term: " + action.getTerm());
-			logger.info("          - scheme: " + action.getScheme());
-			logger.info("          - title: " + action.getTitle());
-		}
-
-		return occiKind;
 	}
 
 	/**
@@ -1469,6 +1474,16 @@ public class ConfigurationManager {
 	}
 
 	/**
+	 * Validate a configuration's owner.
+	 * @param owner
+	 * @return
+	 */
+	public static boolean validateConfiguration(final String owner) {
+		Configuration configuration = getConfigurationForOwner(owner);
+		return validate(configuration);
+	}
+	
+	/**
 	 * Load an OCCI object.
 	 * 
 	 * @param uri
@@ -1483,5 +1498,7 @@ public class ConfigurationManager {
 		// Return the first element.
 		return resource.getContents().get(0);
 	}
+	
+	
 
 }
