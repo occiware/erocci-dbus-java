@@ -1,0 +1,12 @@
+branches:
+  only:
+    - master
+
+language: java
+
+install:
+  - "make deps"
+  - "make"
+
+script:
+  - "make"
