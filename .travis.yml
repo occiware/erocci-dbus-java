@@ -4,8 +4,15 @@ branches:
 
 language: java
 
+sudo: false
+
+addons:
+  apt:
+    packages:
+      - dbus-java-bin
+
 install:
-  - "make deps"
+  - "./dbus-java-install-script.sh"
   - "make"
 
 script:

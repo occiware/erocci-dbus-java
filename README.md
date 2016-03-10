@@ -101,4 +101,7 @@ DBUS_SESSION_BUS_ADDRESS=$(printenv DBUS_SESSION_BUS_ADDRESS | sed -e 's/kernel:
 * Launch erocci-dbus-java on first place before Erocci
 * Launch Erocci as describe upper.
 
+## CI
+
+Visit CI results on http://travis-ci.org/occiware/erocci-dbus-java
 
