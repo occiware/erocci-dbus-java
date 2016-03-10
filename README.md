@@ -1,5 +1,7 @@
 # Erocci java-dbus integration
 
+[![Build Status](https://travis-ci.org/occiware/erocci-dbus-java.svg?branch=master)](https://travis-ci.org/occiware/erocci-dbus-java)
+
 ## Progress dashboard
 [Progress development dashboard](doc/devstatus.md)
 

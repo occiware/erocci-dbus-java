@@ -4,17 +4,12 @@ branches:
 
 language: java
 
-sudo: required
-
-addons:
-  apt:
-    packages:
-      - dbus-java-bin
+sudo: false
 
 install:
-  - "make deps"
-  - "make"
+  - "./travis_install.sh"
+  - "mvn test"
 
 script:
-  - "make deps"
-  - "make"
+  - jdk_switcher use oraclejdk8
+  - "mvn test"
