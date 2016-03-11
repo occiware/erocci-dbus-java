@@ -355,16 +355,12 @@ public class Utils {
 		}
 		StringBuilder sb = new StringBuilder();
 
-		int nb = 1;
 		for (char c : eTag.toCharArray()) {
 			sb.append((int) c);
-			nb++;
-			if (nb == 3) {
-				break;
-			}
-
 		}
-		return new UInt32(sb.toString());
+		String result = sb.toString().substring(0, 7);
+		
+		return new UInt32(result);
 	}
 
 	/**

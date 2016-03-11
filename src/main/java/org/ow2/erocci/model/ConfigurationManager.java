@@ -810,6 +810,54 @@ public class ConfigurationManager {
 		return entitiesMap;
 
 	}
+	/**
+	 * Get all the entities for all owner.
+	 * @return an hmap (key: owner, value : List of entities.
+	 */
+	public static Map<String, List<Entity>> getAllEntities() {
+		Map<String, List<Entity>> entitiesMap = new HashMap<>();
+		Set<String> owners = configurations.keySet();
+		if (configurations.isEmpty()) {
+			return entitiesMap;
+		}
+		List<Entity> entities = new ArrayList<>();
+		for (String owner : owners) {
+			entities.clear();
+			entities.addAll(findAllEntitiesOwner(owner));
+			
+			if (entities != null && !entities.isEmpty()) {
+				entitiesMap.put(owner, entities);
+			} else {
+				entities = new ArrayList<>();
+				entitiesMap.put(owner, entities);
+			}
+		}
+		return entitiesMap;
+	}
+	/**
+	 * Find all entities referenced for an owner.
+	 * @param owner
+	 * @return
+	 */
+	public static List<Entity> findAllEntitiesOwner(final String owner) {
+		List<Entity> entities = new ArrayList<>();
+		Configuration configuration = getConfigurationForOwner(owner);
+		EList<Resource> resources = configuration.getResources();
+		EList<Link> links;
+		for (Resource resource : resources) {
+			entities.add(resource);
+			links = resource.getLinks();
+			if (!links.isEmpty()) {
+				for (Link link : links) {
+					if (!entities.contains(link)) {
+						entities.add(link);
+					}
+				}
+			}
+		}
+		
+		return entities;
+	}
 
 	/**
 	 * Search for an action with entityId and a full category scheme.

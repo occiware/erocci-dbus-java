@@ -14,7 +14,7 @@ Development Status values :
     <tr>
         <td>Init(opts)</td>
         <td>Called when erocci start, <a href="https://github.com/occiware/erocci-dbus-java/issues/3">feature #3</a></td>
-        <td>Done</td>
+        <td>[Done](inria_done.png)</td>
     </tr>
     <tr>
         <td>Terminate()</td>

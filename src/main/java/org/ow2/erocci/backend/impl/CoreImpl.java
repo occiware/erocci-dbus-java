@@ -349,6 +349,10 @@ public class CoreImpl implements core, action, mixin, DBus.Properties {
 				}
 			}
 
+		} else if (id == null || id.equals("/") || id.isEmpty()) {
+			logger.info("it's an unbounded collection (generic)");
+			ret.add(new Struct1(CoreImpl.NODE_UNBOUNDED_COLLECTION, new Variant<String>(""), "", new UInt32(1)));
+			
 		} else {
 			logger.info("Entity " + id + " --< doesnt exist !");
 		}
@@ -471,17 +475,17 @@ public class CoreImpl implements core, action, mixin, DBus.Properties {
 		List<Struct2> ret = new LinkedList<Struct2>();
 
 		Map<String, List<Entity>> entitiesMap;
-		if (id == null || id.isEmpty()) {
-			return ret;
-		}
-
+		
 		// Check if categoryId or relative path part.
-		if (id.startsWith("http")) {
+		if (id.startsWith("http") || (id == null || id.isEmpty()) ) {
 			// it's a categoryId...
 			// Search for kind, mixins, actions and get their entities.
 			// the map is by owner.
-			entitiesMap = ConfigurationManager.findAllEntitiesForCategoryId(id);
-
+			if (id.startsWith("http")) { 
+				entitiesMap = ConfigurationManager.findAllEntitiesForCategoryId(id);
+			} else {
+				entitiesMap = ConfigurationManager.getAllEntities();
+			}
 			List<Entity> entities;
 			String owner;
 			for (Map.Entry<String, List<Entity>> entry : entitiesMap.entrySet()) {
