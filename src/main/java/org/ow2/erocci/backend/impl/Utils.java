@@ -113,7 +113,7 @@ public class Utils {
 
 					break;
 				case "u": // unsigned integer 32
-					logger.info("Convert unsigned integer 32 to String value");
+					// logger.info("Convert unsigned integer 32 to String value");
 					UInt32 uint32Val = (UInt32) variant.getValue();
 					map.put(e.getKey(), uint32Val.toString());
 
@@ -133,7 +133,7 @@ public class Utils {
 					map.put(e.getKey(), douVal.toString());
 					break;
 				case "s":
-					logger.info("String value on input => variant of type string");
+					// logger.info("String value on input => variant of type string");
 					String valStr = (String) variant.getValue();
 					map.put(e.getKey(), valStr);
 					break;

@@ -810,6 +810,55 @@ public class ConfigurationManager {
 		return entitiesMap;
 
 	}
+	
+	/**
+	 * Get all used collection types (like : collections/compute)
+	 * @return
+	 */
+	public static List<String> getUsedCollectionTypes() {
+		List<String> collectionTypes = new ArrayList<>();
+		Map<String, List<Entity>> entitiesMap = getAllEntities();
+		String collection = "collections/";
+		List<Entity> entities;
+		String result;
+		for (Map.Entry<String, List<Entity>> entry : entitiesMap.entrySet()) {
+			entities = entry.getValue();
+			for (Entity entity : entities) {
+				String kindTerm = entity.getKind().getTerm();
+				result = collection + kindTerm;
+				if (!collectionTypes.contains(result)) {
+					collectionTypes.add(collection + kindTerm);
+				}
+			}
+		}
+		
+		return collectionTypes;
+	}
+	/**
+	 * Get all used kinds (scheme + term) like http://schemas.ogf.org/occi/infrastructure#network.
+	 * @return
+	 */
+	public static List<String> getAllUsedKind() {
+		List<String> usedKinds = new ArrayList<>();
+		Map<String, List<Entity>> entitiesMap = getAllEntities();
+		List<Entity> entities;
+		String result;
+		
+		for (Map.Entry<String, List<Entity>> entry : entitiesMap.entrySet()) {
+			entities = entry.getValue();
+			for (Entity entity : entities) {
+				String kindTerm = entity.getKind().getTerm();
+				String scheme = entity.getKind().getScheme();
+				
+				result = scheme + kindTerm;
+				if (!usedKinds.contains(result)) {
+					usedKinds.add(result);
+				}
+			}
+		}
+		return usedKinds;
+	}
+	
 	/**
 	 * Get all the entities for all owner.
 	 * @return an hmap (key: owner, value : List of entities.

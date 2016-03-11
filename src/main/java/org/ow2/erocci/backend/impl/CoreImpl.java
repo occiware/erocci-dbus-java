@@ -155,6 +155,8 @@ public class CoreImpl implements core, action, mixin, DBus.Properties {
 	@Override
 	public String SaveResource(String id, String kind, java.util.List<String> mixins, Map<String, Variant> attributes,
 			String owner) {
+		logger.info("Save resource input with id=" + id + ", kind=" + kind + ", mixins=" + mixins
+				+ ", attributes=" + Utils.convertVariantMap(attributes));
 		
 		if (id == null || id.isEmpty()) {
 			id = "/resource/" + Utils.createUUID();
@@ -252,9 +254,8 @@ public class CoreImpl implements core, action, mixin, DBus.Properties {
 			logger.info("SaveLink invoked with id=" + entityId + ", kind=" + kind + ", mixins=" + mixins
 					+ ", attributes=" + Utils.convertVariantMap(attributes));
 			
-//			if (attr.get("occi.core.id") == null) {
-//				attr.put("occi.core.id", entityId);
-//			}
+			attr.put("occi.core.id", entityId);
+			
 			ConfigurationManager.addLinkToConfiguration(entityId, kind, mixins, src, target, attr, owner);
 			defaultActionExecutor.occiPostCreate(ConfigurationManager.findLink(owner, entityId, src));
 			
@@ -477,15 +478,12 @@ public class CoreImpl implements core, action, mixin, DBus.Properties {
 		Map<String, List<Entity>> entitiesMap;
 		
 		// Check if categoryId or relative path part.
-		if (id.startsWith("http") || (id == null || id.isEmpty()) ) {
+		if (id.startsWith("http")) {
 			// it's a categoryId...
 			// Search for kind, mixins, actions and get their entities.
 			// the map is by owner.
-			if (id.startsWith("http")) { 
-				entitiesMap = ConfigurationManager.findAllEntitiesForCategoryId(id);
-			} else {
-				entitiesMap = ConfigurationManager.getAllEntities();
-			}
+			entitiesMap = ConfigurationManager.findAllEntitiesForCategoryId(id);
+			
 			List<Entity> entities;
 			String owner;
 			for (Map.Entry<String, List<Entity>> entry : entitiesMap.entrySet()) {
@@ -496,7 +494,18 @@ public class CoreImpl implements core, action, mixin, DBus.Properties {
 				}
 
 			}
-
+			
+		} else if (id == null || id.isEmpty()) {
+			// id is null, we return all used used kinds. (scheme + term). 
+			// key : owner, value : list of collection types for all owner.
+			List<String> usedKinds = ConfigurationManager.getAllUsedKind();
+			String owner;
+			
+			for (String usedKind : usedKinds) {
+				ret.add(new Struct2(usedKind, ""));
+			}
+			
+			
 		} else {
 			// it's a relative path url part.
 			Map<String, Entity> entityMap = ConfigurationManager.findEntitiesOnAllOwner(id);
