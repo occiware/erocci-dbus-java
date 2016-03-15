@@ -1,3 +1,18 @@
+/**
+ * Copyright (c) 2015-2017 Inria - Linagora
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.ow2.erocci.backend.impl.test;
 
 import static org.junit.Assert.*;
@@ -103,6 +118,30 @@ public class UtilsTest {
 		}
 		
 		
+	}
+	@Test
+	public void testConvertStringToGenericType() {
+		String test = "123";
+		String type = "int";
+		Object result = Utils.convertStringToGenericType(test, type);
+		assertTrue(result instanceof Integer);
+		test = "1.6";
+		type = "float";
+		result = Utils.convertStringToGenericType(test, type);
+		assertTrue(result instanceof Float);
+		test = "x64";
+		type = "org.occiware.clouddesigner.occi.infrastructure.Architecture";
+		result = Utils.convertStringToGenericType(test, type);
+		assertTrue(result instanceof org.occiware.clouddesigner.occi.infrastructure.Architecture);
+		type = "String";
+		test = "Test13.4T5";
+		result = Utils.convertStringToGenericType(test, type);
+		assertTrue(result instanceof String);
+		type = "boolean";
+		test = "true";
+		result = Utils.convertStringToGenericType(test, type);
+		assertTrue(result instanceof Boolean);
+		assertTrue(((Boolean)result));
 	}
 	
 	private Map<String, Map<String, String>> buildIds() {

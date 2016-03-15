@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2015-2017 Linagora
+ * Copyright (c) 2015-2017 Inria - Linagora
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,9 @@ import java.util.Map;
 import java.util.logging.Logger;
 
 import org.freedesktop.dbus.Variant;
+import org.occiware.clouddesigner.occi.AttributeState;
 import org.occiware.clouddesigner.occi.Entity;
+import org.occiware.clouddesigner.occi.infrastructure.Compute;
 import org.ow2.erocci.backend.action;
 import org.ow2.erocci.model.ConfigurationManager;
 
@@ -48,15 +50,13 @@ public class ActionImpl implements action {
 	@Override
 	public void Action(String id, String action_id, Map<String, Variant> attributes) {
 		
-		// TODO : Warning, this is vital to have owner in parameter, elsewere, an action will be executed on all relative path (id) referenced on all owners.
-		
 		logger.info("id " + id + " >-- action_id: " + action_id + " --< attributes=" + Utils.convertVariantMap(attributes));
 		
 		if (action_id == null) {
 			// TODO : return fail or no state.
 			return;
 		}
-		
+		Map<String, String> actionAttributes = Utils.convertVariantMap(attributes);
 		// Launch the action if found on kind.
 		Map<String, Entity> entities = ConfigurationManager.findEntityAction(id, action_id); 
 		if (!entities.isEmpty()) {
@@ -83,9 +83,8 @@ public class ActionImpl implements action {
 					break;
 				}
 				// Launch the action effectively.
-				// TODO : Cloudesigner Connector to the real infra and command pattern linked to this action.
-				// IConnectorFactory.getConnector(ConfigurationManager.getConfigurationFromOwner(owner));
-				// IConnector.launchAction(entities, action_id).
+				
+				
 				
 			}
 			if (!result) {

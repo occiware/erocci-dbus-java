@@ -53,6 +53,28 @@
 			<version>0.1.0-SNAPSHOT</version>
 			<scope>compile</scope>
 		</dependency>
+		<dependency>
+           <!--  OCCI Infrastructure Generic Model implementation. -->
+            <groupId>Clouddesigner</groupId>
+            <artifactId>org.occiware.clouddesigner.occi.infrastructure</artifactId>
+            <version>0.1.0.201602051536</version>
+            <scope>compile</scope>
+        </dependency>
+         <dependency>
+            <!--  OCCI Docker Model implementation -->
+            <groupId>Clouddesigner</groupId>
+            <artifactId>org.occiware.clouddesigner.occi.docker</artifactId>
+            <version>0.1.0.201602051536</version>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <!--  OCCI Docker connector -->
+            <groupId>Clouddesigner</groupId>
+            <artifactId>org.occiware.clouddesigner.occi.docker.connector</artifactId>
+            <version>0.1.0.201602051536</version>
+            <scope>compile</scope>
+        </dependency>
+		
 		<!-- Requires Eclipse Modeling Framework. -->
 		<dependency>
 			<groupId>org.eclipse.emf</groupId>

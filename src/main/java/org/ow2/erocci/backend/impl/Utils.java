@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2015-2017 Linagora
+ * Copyright (c) 2015-2017 Inria - Linagora
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,6 +42,10 @@ import org.occiware.clouddesigner.occi.AttributeState;
 import org.occiware.clouddesigner.occi.Entity;
 import org.occiware.clouddesigner.occi.Kind;
 import org.occiware.clouddesigner.occi.Mixin;
+import org.occiware.clouddesigner.occi.infrastructure.Architecture;
+import org.occiware.clouddesigner.occi.infrastructure.ComputeStatus;
+import org.occiware.clouddesigner.occi.infrastructure.NetworkInterfaceStatus;
+import org.occiware.clouddesigner.occi.infrastructure.StorageLinkStatus;
 import org.ow2.erocci.backend.Quad;
 
 /**
@@ -113,7 +117,8 @@ public class Utils {
 
 					break;
 				case "u": // unsigned integer 32
-					// logger.info("Convert unsigned integer 32 to String value");
+					// logger.info("Convert unsigned integer 32 to String
+					// value");
 					UInt32 uint32Val = (UInt32) variant.getValue();
 					map.put(e.getKey(), uint32Val.toString());
 
@@ -133,7 +138,8 @@ public class Utils {
 					map.put(e.getKey(), douVal.toString());
 					break;
 				case "s":
-					// logger.info("String value on input => variant of type string");
+					// logger.info("String value on input => variant of type
+					// string");
 					String valStr = (String) variant.getValue();
 					map.put(e.getKey(), valStr);
 					break;
@@ -197,7 +203,8 @@ public class Utils {
 		Map<String, Variant> attribVariant = new HashMap<>();
 		for (AttributeState attrState : attributes) {
 			logger.info("Key: " + attrState.getName() + " --< Value: " + attrState.getValue());
-			// Warning : dont convert undefined Value, this will cause Erocci bug and terminate this application. 
+			// Warning : dont convert undefined Value, this will cause Erocci
+			// bug and terminate this application.
 			if (!attrState.getValue().equals("undefined")) {
 				attribVariant.put(attrState.getName(), new Variant(attrState.getValue()));
 			}
@@ -205,7 +212,7 @@ public class Utils {
 		logger.info("Id: " + entity.getId());
 		logger.info("Kind: " + kindStr);
 		logger.info("mixinsStr: " + mixinsStr);
-		
+
 		return new Quad<>(entity.getId(), kindStr, mixinsStr, attribVariant);
 
 	}
@@ -359,7 +366,7 @@ public class Utils {
 			sb.append((int) c);
 		}
 		String result = sb.toString().substring(0, 7);
-		
+
 		return new UInt32(result);
 	}
 
@@ -436,26 +443,105 @@ public class Utils {
 			}
 
 		}
-		
+
 		return uuidToReturn;
 	}
+
 	/**
 	 * Return a relative path from an full entityId with uuid provided.
+	 * 
 	 * @param id
 	 * @return
 	 */
 	public static String getRelativePathFromId(final String id, final String uuid) {
-		
+
 		String relativePathPart = "";
-		
-		
-		
-		relativePathPart = id.replace(uuid, "");		
+
+		relativePathPart = id.replace(uuid, "");
 		if (relativePathPart.endsWith("/")) {
 			relativePathPart = relativePathPart.substring(0, relativePathPart.length() - 1);
 		}
-		
+
 		return relativePathPart;
+	}
+
+	/**
+	 * Convert a String to Object corresponding type as : "1.5" is a Float
+	 * Object, "5" is an Integer, "test" is a String.
+	 * 
+	 * @param value
+	 * @param type
+	 *            (instanceClassName)
+	 * @return
+	 */
+	public static Object convertStringToGenericType(final String value, final String type) {
+		Object result = null;
+		String typeToTest = type.toLowerCase();
+		
+		switch (typeToTest) {
+		case "float":
+			try {
+				result = new Float(value);
+
+			} catch (NumberFormatException ex) {
+				result = value;
+			}
+			break;
+		case "integer":
+		case "int":
+			try {
+				result = new Integer(value);
+			} catch (NumberFormatException ex) {
+				result = value;
+			}
+			break;
+		case "boolean":
+			String tmp = null;
+			if (value.equals("0")) {
+				tmp = "false";
+			}
+			if (value.equals("1")) {
+				tmp = "true";
+			}
+			if (tmp == null) {
+				tmp = value;
+			}
+			result = new Boolean(tmp);
+			break;
+		case "org.occiware.clouddesigner.occi.infrastructure.architecture":
+			if (value.contains("64")) {
+				result = org.occiware.clouddesigner.occi.infrastructure.Architecture.X64;
+			} else if (value.contains("86") || value.contains("32")) {
+				result = org.occiware.clouddesigner.occi.infrastructure.Architecture.X86;
+			} else {
+				// Default to X86 if no arch specified correctly.
+				result = org.occiware.clouddesigner.occi.infrastructure.Architecture.X86;
+			}
+			break;
+		case "org.occiware.clouddesigner.occi.infrastructure.computestatus":
+			result = ComputeStatus.get(value);
+			if (result == null) {
+				// Undefined in realm.
+				result = ComputeStatus.INACTIVE;
+			}
+			break;
+		case "org.occiware.clouddesigner.occi.infrastructure.networkinterfacestatus" :
+			result = NetworkInterfaceStatus.get(value);
+			if (result == null) {
+				result = NetworkInterfaceStatus.INACTIVE;
+			}
+			
+			break;
+		case "org.occiware.clouddesigner.occi.infrastructure.storagelinkstatus" :
+			result = StorageLinkStatus.get(value);
+			
+			break;
+		default:
+			result = value;
+		}
+
+		return result;
+
 	}
 
 	private static int uniqueInt = 1;

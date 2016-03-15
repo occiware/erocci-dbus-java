@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2015-2017 Linagora
+ * Copyright (c) 2015-2017 Inria - Linagora
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -181,7 +181,7 @@ public class CoreImpl implements core, action, mixin, DBus.Properties {
 		// Entity unique identifier.
 		String entityId = relativePath + identifierUUID; // as for ex :
 																// /compute/0872c4e0-001a-11e2-b82d-a4b197fffef3
-		DefaultActionExecutor actionExecutor = new DefaultActionExecutor();
+		//DefaultActionExecutor actionExecutor = new DefaultActionExecutor();
 		
 		// Check if id is an entity Id or a relative Path only. (for update it
 		// if necessary).
@@ -189,14 +189,14 @@ public class CoreImpl implements core, action, mixin, DBus.Properties {
 			logger.info("Overwrite resource invoked with id=" + id + ", kind=" + kind + ", mixins=" + mixins
 					+ ", attributes=" + Utils.convertVariantMap(attributes));
 			ConfigurationManager.addResourceToConfiguration(id, kind, mixins, attr, owner);
-			actionExecutor.occiPostCreate(ConfigurationManager.findResource(owner, id));
+			// actionExecutor.occiPostCreate(ConfigurationManager.findResource(owner, id));
 		} else {
 			logger.info("SaveResource invoked with id=" + entityId + ", kind=" + kind + ", mixins=" + mixins
 					+ ", attributes=" + Utils.convertVariantMap(attributes));
 			// attr.put("occi.core.id", "urn:uuid:" + identifierUUID);
 			attr.put("occi.core.id", entityId);
 			ConfigurationManager.addResourceToConfiguration(entityId, kind, mixins, attr, owner);
-			actionExecutor.occiPostCreate(ConfigurationManager.findResource(owner, entityId));
+			//actionExecutor.occiPostCreate(ConfigurationManager.findResource(owner, entityId));
 			// id = entityId;
 			
 		}
@@ -241,14 +241,14 @@ public class CoreImpl implements core, action, mixin, DBus.Properties {
 		// Entity unique identifier.
 		String entityId = relativePath + identifierUUID; // as for ex :
 																// /storagelink/0872c4e0-001a-11e2-b82d-a4b197fffef3
-		DefaultActionExecutor defaultActionExecutor = new DefaultActionExecutor();
+		//DefaultActionExecutor defaultActionExecutor = new DefaultActionExecutor();
 		// Check if id is an entity Id or a relative Path only. (for update it
 		// if necessary).
 		if (ConfigurationManager.isEntityExist(owner, entityId)) {
 			logger.info("Overwrite link invoked with id=" + id + ", kind=" + kind + ", mixins=" + mixins
 					+ ", attributes=" + Utils.convertVariantMap(attributes));
 			ConfigurationManager.addLinkToConfiguration(id, kind, mixins, src, target, attr, owner);
-			defaultActionExecutor.occiPostCreate(ConfigurationManager.findLink(owner, id, src));
+			//defaultActionExecutor.occiPostCreate(ConfigurationManager.findLink(owner, id, src));
 
 		} else {
 			logger.info("SaveLink invoked with id=" + entityId + ", kind=" + kind + ", mixins=" + mixins
@@ -257,7 +257,7 @@ public class CoreImpl implements core, action, mixin, DBus.Properties {
 			attr.put("occi.core.id", entityId);
 			
 			ConfigurationManager.addLinkToConfiguration(entityId, kind, mixins, src, target, attr, owner);
-			defaultActionExecutor.occiPostCreate(ConfigurationManager.findLink(owner, entityId, src));
+			//defaultActionExecutor.occiPostCreate(ConfigurationManager.findLink(owner, entityId, src));
 			
 			// id = entityId;
 		}
@@ -454,11 +454,19 @@ public class CoreImpl implements core, action, mixin, DBus.Properties {
 	public void Delete(String id) {
 
 		logger.info("Delete invoked with id : " + id);
-		// TODO : ask for adding owner parameter
-		ConfigurationManager.removeOrDissociate(id);
-		DefaultActionExecutor defaultActionExecutor = new DefaultActionExecutor();
-		defaultActionExecutor.occiPreDelete(); // TODO : What to do here ?
-
+		
+		//DefaultActionExecutor defaultActionExecutor = new DefaultActionExecutor();
+		
+		// TODO : Default owner to all owners ? Or owner in parameter.
+		List<Entity> entities = ConfigurationManager.findAllEntitiesLikePartialId(ConfigurationManager.DEFAULT_OWNER, id);
+		for (Entity entity : entities) {
+			//defaultActionExecutor.occiPreDelete(entity);
+			// TODO : If delete success, remove from configuration object.
+			ConfigurationManager.removeOrDissociate(id);
+		}
+		if (entities.isEmpty()) {
+			ConfigurationManager.removeOrDissociate(id);
+		}
 	}
 
 	/**

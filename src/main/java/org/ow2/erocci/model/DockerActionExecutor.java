@@ -20,14 +20,15 @@ import java.util.Map;
 import org.occiware.clouddesigner.occi.Entity;
 import org.occiware.clouddesigner.occi.Extension;
 import org.ow2.erocci.model.exception.ExecuteActionException;
+
 /**
- * This action is used when no extension has been declared or using core extension only.
+ * This executor is specialized to DockerConnector.
  * @author christophe
  *
  */
-public class DefaultActionExecutor extends AbstractActionExecutor implements IActionExecutor {
+public class DockerActionExecutor extends AbstractActionExecutor implements IActionExecutor {
 
-	public DefaultActionExecutor(Extension extension) {
+	public DockerActionExecutor(Extension extension) {
 		super(extension);
 		// TODO Auto-generated constructor stub
 	}
@@ -35,27 +36,28 @@ public class DefaultActionExecutor extends AbstractActionExecutor implements IAc
 	@Override
 	public void occiPostCreate(Entity entity) throws ExecuteActionException {
 		// TODO Auto-generated method stub
-		
+
 	}
 
 	@Override
 	public void occiPreDelete(Entity entity) throws ExecuteActionException {
 		// TODO Auto-generated method stub
-		
+
 	}
 
 	@Override
-	public void occiPostUpdate(Entity entity, Map<String, String> attributes) throws ExecuteActionException{
+	public void occiPostUpdate(Entity entity, Map<String, String> attributes) throws ExecuteActionException {
 		// TODO Auto-generated method stub
-		
+
 	}
 
 	@Override
 	public void occiMixinAdded(Entity entity, String mixinId) throws ExecuteActionException {
-		// TODO Auto-generated method stub 
-		
+		// TODO Auto-generated method stub
+
 	}
 
+	
 	@Override
 	public void occiMixinDeleted(Entity entity, String mixinId) throws ExecuteActionException {
 		// TODO Auto-generated method stub
@@ -74,5 +76,5 @@ public class DefaultActionExecutor extends AbstractActionExecutor implements IAc
 		// TODO Auto-generated method stub
 		
 	}
-	
+
 }
