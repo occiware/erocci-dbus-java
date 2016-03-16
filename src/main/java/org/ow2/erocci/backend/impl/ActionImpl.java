@@ -25,7 +25,10 @@ import org.occiware.clouddesigner.occi.AttributeState;
 import org.occiware.clouddesigner.occi.Entity;
 import org.occiware.clouddesigner.occi.infrastructure.Compute;
 import org.ow2.erocci.backend.action;
+import org.ow2.erocci.model.ActionExecutorFactory;
 import org.ow2.erocci.model.ConfigurationManager;
+import org.ow2.erocci.model.IActionExecutor;
+import org.ow2.erocci.model.exception.ExecuteActionException;
 
 /**
  * Implementation of OCCI action
@@ -72,8 +75,10 @@ public class ActionImpl implements action {
 			}
 			String owner;
 			String msgError;
+			Entity entity;
 			for (Map.Entry<String, Entity> entry : entities.entrySet()) {
 				owner = entry.getKey();
+				entity = entry.getValue();
 				// Get configuration object and validate it.
 				result = ConfigurationManager.validateConfiguration(owner);
 				if (!result) {
@@ -82,16 +87,18 @@ public class ActionImpl implements action {
 					logger.info(msgError);
 					break;
 				}
+				
 				// Launch the action effectively.
-				
-				
+				IActionExecutor actExecutor = ActionExecutorFactory.build(ConfigurationManager.getExtensionForAction(owner, action_id)); 
+				try {
+					actExecutor.execute(action_id, actionAttributes, entity, IActionExecutor.FROM_ACTION);
+				} catch (ExecuteActionException ex) {
+					logger.warning("Action launch error : " + ex.getMessage());
+				}
 				
 			}
-			if (!result) {
-				logger.info("Cant execute the action, cause : ");
-				
-			} else {
-				logger.info("Action " + action_id + " launched !");
+			if (result) {
+				logger.info("Action " + action_id + " executed !");
 			}
 			// return success; (or state)
 		} else {

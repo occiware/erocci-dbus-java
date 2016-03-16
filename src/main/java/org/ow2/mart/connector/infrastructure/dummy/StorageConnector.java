@@ -15,31 +15,31 @@
  *******************************************************************************/
 package org.ow2.mart.connector.infrastructure.dummy;
 
+import java.util.logging.Logger;
+
 import org.occiware.clouddesigner.occi.infrastructure.StorageStatus;
 
 /**
  * This class is a dummy implementation of the OCCI Infrastructure Storage kind.
  *
- * A skeleton of this class can be generated automatically.
- * See issue https://github.com/occiware/ecore/issues/54.
+ * A skeleton of this class can be generated automatically. See issue
+ * https://github.com/occiware/ecore/issues/54.
  *
  * @author philippe.merle@inria.fr
  */
-public class StorageConnector 
-     extends org.occiware.clouddesigner.occi.infrastructure.impl.StorageImpl
-{
+public class StorageConnector extends org.occiware.clouddesigner.occi.infrastructure.impl.StorageImpl {
+	private Logger logger = Logger.getLogger(this.getClass().getName());
+	
 	/**
 	 * Constructs a storage connector.
 	 */
-	StorageConnector()
-	{
-		System.err.println("DEBUG constructor " + this);		
+	StorageConnector() {
+		// System.err.println("DEBUG constructor " + this);
 	}
 
 	@Override
-    public void online()
-	{
-		System.err.println("DEBUG online " + this);
+	public void online() {
+		logger.info("DEBUG online " + this);
 
 		// TODO: Implement how to online this storage.
 
@@ -47,9 +47,8 @@ public class StorageConnector
 	}
 
 	@Override
-	public void offline()
-	{
-		System.err.println("DEBUG offline " + this);
+	public void offline() {
+		logger.info("DEBUG offline " + this);
 
 		// TODO: Implement how to offline this storage.
 
@@ -57,9 +56,8 @@ public class StorageConnector
 	}
 
 	@Override
-	public void backup()
-	{
-		System.err.println("DEBUG backup " + this);
+	public void backup() {
+		logger.info("DEBUG backup " + this);
 
 		// TODO: Implement how to backup this storage.
 
@@ -67,9 +65,8 @@ public class StorageConnector
 	}
 
 	@Override
-	public void snapshot()
-	{
-		System.err.println("DEBUG snapshot " + this);
+	public void snapshot() {
+		logger.info("DEBUG snapshot " + this);
 
 		// TODO: Implement how to snapshot this storage.
 
@@ -77,9 +74,8 @@ public class StorageConnector
 	}
 
 	@Override
-	public void resize(final float size)
-	{
-		System.err.println("DEBUG resize " + this + " with size=" + size);
+	public void resize(final float size) {
+		logger.info("DEBUG resize " + this + " with size=" + size);
 
 		// TODO: Implement how to resize this storage.
 

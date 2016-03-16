@@ -26,12 +26,18 @@ import org.ow2.erocci.model.exception.ExecuteActionException;
  *
  */
 public interface IActionExecutor {
+	public static final String FROM_CREATE = "create";
+	public static final String FROM_DELETE = "delete";
+	public static final String FROM_UPDATE = "update";
+	public static final String FROM_USER_MIXIN_ADDED = "mixinAdded";
+	public static final String FROM_USER_MIXIN_DELETED = "mixinDeleted";
+	public static final String FROM_ACTION = "action";
 	
 	public void occiPostCreate(Entity entity) throws ExecuteActionException;
 
 	public void occiPreDelete(Entity entity) throws ExecuteActionException; 
 		
-	public void occiPostUpdate(Entity entity, final Map<String, String> attributes) throws ExecuteActionException;
+	public void occiPostUpdate(Entity entity) throws ExecuteActionException;
 
 	public void occiMixinAdded(Entity entity, final String mixinId) throws ExecuteActionException;
 	

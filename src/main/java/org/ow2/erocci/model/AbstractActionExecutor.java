@@ -28,13 +28,6 @@ import org.ow2.erocci.model.exception.ExecuteActionException;
  *
  */
 public abstract class AbstractActionExecutor implements IActionExecutor {
-
-	public static final String FROM_CREATE = "create";
-	public static final String FROM_DELETE = "delete";
-	public static final String FROM_UPDATE = "update";
-	public static final String FROM_USER_MIXIN_ADDED = "mixinAdded";
-	public static final String FROM_USER_MIXIN_DELETED = "mixinDeleted";
-	public static final String FROM_ACTION = "action";
 	
 	private Logger logger = Logger.getLogger(this.getClass().getName());
 	
@@ -52,7 +45,7 @@ public abstract class AbstractActionExecutor implements IActionExecutor {
 	public abstract void occiPreDelete(Entity entity) throws ExecuteActionException;
 
 	@Override
-	public abstract void occiPostUpdate(Entity entity, Map<String, String> attributes) throws ExecuteActionException;
+	public abstract void occiPostUpdate(Entity entity) throws ExecuteActionException;
 
 	@Override
 	public abstract void occiMixinAdded(Entity entity, String mixinId) throws ExecuteActionException;

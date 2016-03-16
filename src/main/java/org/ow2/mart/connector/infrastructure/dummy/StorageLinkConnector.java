@@ -15,22 +15,24 @@
  *******************************************************************************/
 package org.ow2.mart.connector.infrastructure.dummy;
 
+import java.util.logging.Logger;
+
 /**
- * This class is a dummy implementation of the OCCI Infrastructure StorageLink kind.
+ * This class is a dummy implementation of the OCCI Infrastructure StorageLink
+ * kind.
  *
- * A skeleton of this class can be generated automatically.
- * See issue https://github.com/occiware/ecore/issues/54.
+ * A skeleton of this class can be generated automatically. See issue
+ * https://github.com/occiware/ecore/issues/54.
  *
  * @author philippe.merle@inria.fr
  */
-public class StorageLinkConnector 
-     extends org.occiware.clouddesigner.occi.infrastructure.impl.StoragelinkImpl
-{
+public class StorageLinkConnector extends org.occiware.clouddesigner.occi.infrastructure.impl.StoragelinkImpl {
+	private Logger logger = Logger.getLogger(this.getClass().getName());
+
 	/**
 	 * Constructs a storage link connector.
 	 */
-	StorageLinkConnector()
-	{
-		System.err.println("DEBUG constructor " + this);		
+	StorageLinkConnector() {
+		logger.info("DEBUG constructor " + this);
 	}
 }

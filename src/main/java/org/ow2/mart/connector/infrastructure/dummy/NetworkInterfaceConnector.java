@@ -15,22 +15,25 @@
  *******************************************************************************/
 package org.ow2.mart.connector.infrastructure.dummy;
 
+import java.util.logging.Logger;
+
 /**
- * This class is a dummy implementation of the OCCI Infrastructure NetworkInterface kind.
+ * This class is a dummy implementation of the OCCI Infrastructure
+ * NetworkInterface kind.
  *
- * A skeleton of this class can be generated automatically.
- * See issue https://github.com/occiware/ecore/issues/54.
+ * A skeleton of this class can be generated automatically. See issue
+ * https://github.com/occiware/ecore/issues/54.
  *
  * @author philippe.merle@inria.fr
  */
-public class NetworkInterfaceConnector 
-     extends org.occiware.clouddesigner.occi.infrastructure.impl.NetworkinterfaceImpl
-{
+public class NetworkInterfaceConnector
+		extends org.occiware.clouddesigner.occi.infrastructure.impl.NetworkinterfaceImpl {
+	private Logger logger = Logger.getLogger(this.getClass().getName());
+
 	/**
 	 * Constructs a network interface connector.
 	 */
-	NetworkInterfaceConnector()
-	{
-		System.err.println("DEBUG constructor " + this);		
+	NetworkInterfaceConnector() {
+		logger.info("DEBUG constructor " + this);
 	}
 }

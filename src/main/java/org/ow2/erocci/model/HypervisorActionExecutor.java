@@ -47,7 +47,7 @@ public class HypervisorActionExecutor extends AbstractActionExecutor implements 
 	}
 
 	@Override
-	public void occiPostUpdate(Entity entity, Map<String, String> attributes) throws ExecuteActionException {
+	public void occiPostUpdate(Entity entity) throws ExecuteActionException {
 		// TODO Auto-generated method stub
 		
 	}

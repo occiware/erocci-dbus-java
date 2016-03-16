@@ -41,7 +41,7 @@ public class CloudActionExecutor extends AbstractActionExecutor implements IActi
 	}
 
 	@Override
-	public void occiPostUpdate(Entity entity, Map<String, String> attributes) throws ExecuteActionException {
+	public void occiPostUpdate(Entity entity) throws ExecuteActionException {
 		// TODO Auto-generated method stub
 
 	}

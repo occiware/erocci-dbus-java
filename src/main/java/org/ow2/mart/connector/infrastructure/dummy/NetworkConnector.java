@@ -15,6 +15,8 @@
  *******************************************************************************/
 package org.ow2.mart.connector.infrastructure.dummy;
 
+import java.util.logging.Logger;
+
 // TODO: Uncomment following line related to issue https://github.com/occiware/ecore/issues/26
 // import org.occiware.clouddesigner.occi.infrastructure.NetworkStatus;
 import org.occiware.clouddesigner.occi.infrastructure.ComputeStatus;
@@ -30,19 +32,19 @@ import org.occiware.clouddesigner.occi.infrastructure.ComputeStatus;
 public class NetworkConnector 
      extends org.occiware.clouddesigner.occi.infrastructure.impl.NetworkImpl
 {
+	private Logger logger = Logger.getLogger(this.getClass().getName());
 	/**
 	 * Constructs a network connector.
 	 */
 	NetworkConnector()
 	{
-		System.err.println("DEBUG constructor " + this);
+		// System.err.println("DEBUG constructor " + this);
 	}
 
 	@Override
     public void up()
 	{
-		System.err.println("DEBUG up " + this);
-
+		logger.info("network up() on infrastructure connector called.");
 		// TODO: Implement how to up this network.
 
 // TODO: Uncomment following line related to issue https://github.com/occiware/ecore/issues/26
@@ -53,8 +55,8 @@ public class NetworkConnector
 	@Override
     public void down()
 	{
-		System.err.println("DEBUG down " + this);
-
+		
+		logger.info("network down() on infrastructure connector called.");
 		// TODO: Implement how to down this network.
 
 // TODO: Uncomment following line  related to issue https://github.com/occiware/ecore/issues/26

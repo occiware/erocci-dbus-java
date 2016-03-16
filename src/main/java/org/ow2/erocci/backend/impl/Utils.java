@@ -189,6 +189,7 @@ public class Utils {
 		EList<AttributeState> attributes = entity.getAttributes();
 
 		if (kind == null) {
+			// TODO : throw exception.
 			logger.warning("No kind on this entity !!!");
 			// malformed entity. normally this never happen.
 			return null;
@@ -199,19 +200,19 @@ public class Utils {
 		for (Mixin mixin : mixins) {
 			mixinsStr.add(mixin.getScheme() + mixin.getTerm());
 		}
-		logger.info("attributes to Variant DBUS FORMAT : ");
+		// logger.info("attributes to Variant DBUS FORMAT : ");
 		Map<String, Variant> attribVariant = new HashMap<>();
 		for (AttributeState attrState : attributes) {
-			logger.info("Key: " + attrState.getName() + " --< Value: " + attrState.getValue());
+			// logger.info("Key: " + attrState.getName() + " --< Value: " + attrState.getValue());
 			// Warning : dont convert undefined Value, this will cause Erocci
 			// bug and terminate this application.
 			if (!attrState.getValue().equals("undefined")) {
 				attribVariant.put(attrState.getName(), new Variant(attrState.getValue()));
 			}
 		}
-		logger.info("Id: " + entity.getId());
-		logger.info("Kind: " + kindStr);
-		logger.info("mixinsStr: " + mixinsStr);
+		// logger.info("Id: " + entity.getId());
+		// logger.info("Kind: " + kindStr);
+		// logger.info("mixinsStr: " + mixinsStr);
 
 		return new Quad<>(entity.getId(), kindStr, mixinsStr, attribVariant);
 
@@ -476,9 +477,9 @@ public class Utils {
 	 */
 	public static Object convertStringToGenericType(final String value, final String type) {
 		Object result = null;
-		String typeToTest = type.toLowerCase();
+	//	String typeToTest = type.toLowerCase();
 		
-		switch (typeToTest) {
+		switch (type) {
 		case "float":
 			try {
 				result = new Float(value);
@@ -508,7 +509,7 @@ public class Utils {
 			}
 			result = new Boolean(tmp);
 			break;
-		case "org.occiware.clouddesigner.occi.infrastructure.architecture":
+		case "org.occiware.clouddesigner.occi.infrastructure.Architecture":
 			if (value.contains("64")) {
 				result = org.occiware.clouddesigner.occi.infrastructure.Architecture.X64;
 			} else if (value.contains("86") || value.contains("32")) {
@@ -518,21 +519,21 @@ public class Utils {
 				result = org.occiware.clouddesigner.occi.infrastructure.Architecture.X86;
 			}
 			break;
-		case "org.occiware.clouddesigner.occi.infrastructure.computestatus":
+		case "org.occiware.clouddesigner.occi.infrastructure.ComputeStatus":
 			result = ComputeStatus.get(value);
 			if (result == null) {
 				// Undefined in realm.
 				result = ComputeStatus.INACTIVE;
 			}
 			break;
-		case "org.occiware.clouddesigner.occi.infrastructure.networkinterfacestatus" :
+		case "org.occiware.clouddesigner.occi.infrastructure.NetworkInterfaceStatus" :
 			result = NetworkInterfaceStatus.get(value);
 			if (result == null) {
 				result = NetworkInterfaceStatus.INACTIVE;
 			}
 			
 			break;
-		case "org.occiware.clouddesigner.occi.infrastructure.storagelinkstatus" :
+		case "org.occiware.clouddesigner.occi.infrastructure.StorageLinkStatus" :
 			result = StorageLinkStatus.get(value);
 			
 			break;

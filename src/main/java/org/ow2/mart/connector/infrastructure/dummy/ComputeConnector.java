@@ -15,6 +15,8 @@
  *******************************************************************************/
 package org.ow2.mart.connector.infrastructure.dummy;
 
+import java.util.logging.Logger;
+
 import org.occiware.clouddesigner.occi.infrastructure.ComputeStatus;
 import org.occiware.clouddesigner.occi.infrastructure.RestartMethod;
 import org.occiware.clouddesigner.occi.infrastructure.StopMethod;
@@ -23,59 +25,55 @@ import org.occiware.clouddesigner.occi.infrastructure.SuspendMethod;
 /**
  * This class is a dummy implementation of the OCCI Infrastructure Compute kind.
  *
- * A skeleton of this class can be generated automatically.
- * See issue https://github.com/occiware/ecore/issues/54.
+ * A skeleton of this class can be generated automatically. See issue
+ * https://github.com/occiware/ecore/issues/54.
  *
  * @author philippe.merle@inria.fr
  */
-public class ComputeConnector 
-     extends org.occiware.clouddesigner.occi.infrastructure.impl.ComputeImpl
-{
+public class ComputeConnector extends org.occiware.clouddesigner.occi.infrastructure.impl.ComputeImpl {
+	
+	private Logger logger = Logger.getLogger(this.getClass().getName());
+	
 	/**
 	 * Constructs a compute connector.
 	 */
-	ComputeConnector()
-	{
-		System.err.println("DEBUG constructor " + this);
+	ComputeConnector() {
+		// System.err.println("DEBUG constructor " + this);
+		
 	}
 
 	@Override
-    public void start()
-	{
-		System.err.println("DEBUG start " + this);
-
+	public void start() {
+		// System.err.println("DEBUG start " + this);
+		logger.info("start() on infrastructure connector called.");
+		
 		// TODO: Implement how to start this compute.
 
 		setState(ComputeStatus.ACTIVE);
 	}
 
 	@Override
-	public void stop(final StopMethod method)
-	{
-		System.err.println("DEBUG stop " + this + " with method=" + method);
-
+	public void stop(final StopMethod method) {
+		// System.err.println("DEBUG stop " + this + " with method=" + method);
+		logger.info("stop(" + method.getLiteral() + ") on infrastructure connector called.");
 		// TODO: Implement how to stop this compute.
 
 		setState(ComputeStatus.INACTIVE);
 	}
 
 	@Override
-	public void restart(final RestartMethod method)
-	{
-		System.err.println("DEBUG restart " + this + " with method=" + method);
-
+	public void restart(final RestartMethod method) {
+		logger.info("restart(" + method.getLiteral() + ") on infrastructure connector called.");
 		// TODO: Implement how to restart this compute.
 
 		setState(ComputeStatus.ACTIVE);
 	}
 
 	@Override
-	public void suspend(final SuspendMethod method)
-	{
-		System.err.println("DEBUG suspend " + this + " with method=" + method);
-
+	public void suspend(final SuspendMethod method) {
 		// TODO: Implement how to suspend this compute.
-
+		logger.info("suspend(" + method.getLiteral() + ") on infrastructure connector called.");
+		
 		setState(ComputeStatus.SUSPENDED);
 	}
 }

@@ -22,6 +22,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
+import java.awt.event.ContainerAdapter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -262,22 +263,18 @@ public class InputDBUSTest {
 		assertNotNull(attributesReturned);
 		assertTrue(attributesReturned.isEmpty());
 
-		// Check if all attributes has been deleted.
-		Resource res = ConfigurationManager.findResource(container.getOwner(), container.getId());
-		assertNotNull(res);
-		assertTrue(res.getAttributes().isEmpty());
+		// Check if all attributes has been updated.
+		// Resource res = ConfigurationManager.findResource(container.getOwner(), container.getId());
+		Entity entity = ConfigurationManager.findEntity(container.getOwner(), container.getId());
+		assertNotNull(entity);
+		
 		// ConfigurationManager.printEntity(res);
 		// relaunch update with better attributes.
 		attributesReturned = core.Update(container.getId(), container.getAttributes());
 		assertNotNull(attributesReturned);
 		assertFalse(attributesReturned.isEmpty());
-		res = ConfigurationManager.findResource(container.getOwner(), container.getId());
+		Resource res = ConfigurationManager.findResource(container.getOwner(), container.getId());
 		assertFalse(res.getAttributes().isEmpty());
-		ConfigurationManager.printEntity(res);
-		EList<Link> links = res.getLinks();
-		for (Link link : links) {
-			ConfigurationManager.printEntity(link);
-		}
 	}
 
 	@Test
@@ -564,16 +561,48 @@ public class InputDBUSTest {
 		buildInfraTest();
 		testSaveResourceAndLinks();
 		String relativeEntityPath = "compute/vm1";
+		String entityId = containers.get(relativeEntityPath).getId();
+		
 		String actionFullPath = "http://schemas.ogf.org/occi/infrastructure/compute/action#start"; 
 		Map<String, Variant> attributes = new HashMap<>();
-		attributes.put("method", new Variant("start"));
+		// attributes.put("method", new Variant("start")); used only with method parameters.
 		
-		core.Action(relativeEntityPath, actionFullPath, attributes);
+		core.Action(entityId, actionFullPath, attributes);
 		
 		relativeEntityPath = "test/doesntexist";
 		actionFullPath = "noAction";
 		attributes.clear();
 		core.Action(relativeEntityPath, actionFullPath, attributes);
+		
+		// Action stop on compute infrastructure extension with a parameter.
+		relativeEntityPath = "compute/vm2";
+		actionFullPath = "http://schemas.ogf.org/occi/infrastructure/compute/action#stop"; 
+		entityId = containers.get(relativeEntityPath).getId();
+		attributes.put("method", new Variant<String>("graceful"));
+		
+		core.Action(entityId, actionFullPath, attributes);
+		
+		attributes.clear();
+		
+		// Action on Storage.
+		relativeEntityPath = "storage/storage1";
+		actionFullPath = "http://schemas.ogf.org/occi/infrastructure/storage/action#online";
+		entityId = containers.get(relativeEntityPath).getId();
+		
+		core.Action(entityId, actionFullPath, attributes);
+		actionFullPath = "http://schemas.ogf.org/occi/infrastructure/storage/action#resize";
+		attributes.put("size", new Variant<String>("123.0"));
+		
+		core.Action(entityId, actionFullPath, attributes);	
+		attributes.clear();
+		
+		// Action on network.
+		relativeEntityPath = "network/network1";
+		actionFullPath = "http://schemas.ogf.org/occi/infrastructure/network/action#up";
+		entityId = containers.get(relativeEntityPath).getId();
+		core.Action(entityId, actionFullPath, attributes);
+		
+		
 	}
 	
 	public void validateModel() {
@@ -591,7 +620,7 @@ public class InputDBUSTest {
 			result = ConfigurationManager.validate(extension); // Validate
 																// extension.
 			assertTrue(result);
-			print(extension);
+			// print(extension);
 
 		}
 

@@ -25,6 +25,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.eclipse.emf.common.util.EList;
+import org.occiware.clouddesigner.occi.Action;
 import org.occiware.clouddesigner.occi.Entity;
 import org.occiware.clouddesigner.occi.Extension;
 import org.occiware.clouddesigner.occi.Kind;
@@ -59,9 +60,9 @@ public class InfrastructureActionExecutor extends AbstractActionExecutor impleme
 	}
 
 	@Override
-	public void occiPostUpdate(Entity entity, Map<String, String> attributes) throws ExecuteActionException {
+	public void occiPostUpdate(Entity entity) throws ExecuteActionException {
 
-		this.execute(null, attributes, entity, FROM_UPDATE);
+		this.execute(null, entity, FROM_UPDATE);
 
 	}
 
@@ -167,14 +168,7 @@ public class InfrastructureActionExecutor extends AbstractActionExecutor impleme
 			break;
 
 		case FROM_ACTION:
-			EList<Kind> kinds = extension.getKinds();
-			Kind actionKind = null;
-			for (Kind actKind : kinds) {
-				if ((actKind.getScheme() + actKind.getTerm()).equals(actionId)) {
-					actionKind = actKind;
-					break;
-				}
-			}
+			Action actionKind = ConfigurationManager.getActionKindFromExtension(extension, actionId);
 			if (actionKind == null) {
 				throw new ExecuteActionException(
 						"Action : " + actionId + " doesnt exist on extension : " + extension.getName());
@@ -232,7 +226,7 @@ public class InfrastructureActionExecutor extends AbstractActionExecutor impleme
 	 * @param compute
 	 * @throws ExecuteActionException
 	 */
-	private void executeComputeActionMethod(Kind actionKind, Map<String, String> actionAttributes,
+	private void executeComputeActionMethod(Action actionKind, Map<String, String> actionAttributes,
 			ComputeConnector compute) throws ExecuteActionException {
 		Method method = getMethod(compute.getClass(), actionKind.getTerm());
 		if (method == null) {
@@ -253,55 +247,55 @@ public class InfrastructureActionExecutor extends AbstractActionExecutor impleme
 			}
 			// Invoke method with parameters.
 			Class<?>[] paramTypes = method.getParameterTypes();
-			Parameter[] parameters = method.getParameters();
+			// Parameter[] parameters = method.getParameters();
 			List<Object> params = new LinkedList<>();
-			int index = 0;
-			String paramName;
+//			int index = 0;
+//			String paramName;
 			String value;
-			Class<?> paramType;
-			for (Parameter parameter : parameters) {
-				paramName = parameter.getName();
-				paramType = paramTypes[index];
+			
+			String key = "method";
+			for (Class<?> paramType : paramTypes) {
+				
 				// search the value in action attributes with the name as key.
-				value = actionAttributes.get(paramName);
+				value = actionAttributes.get(key);
 				if (value == null) {
 					throw new ExecuteActionException("Attribute not found for action " + actionKind.getScheme()
-							+ actionKind.getTerm() + " , method: " + method.getName() + " , parameter : " + paramName);
+							+ actionKind.getTerm() + " , method: " + method.getName() + " , parameter : " + key);
 				}
 
 				switch (paramType.getName()) {
 
-				case "SuspendMethod":
+				case "org.occiware.clouddesigner.occi.infrastructure.SuspendMethod":
 
-					SuspendMethod suspendMethod = SuspendMethod.get(paramName);
+					SuspendMethod suspendMethod = SuspendMethod.get(value);
 					if (suspendMethod == null) {
-						throw new ExecuteActionException("parameter : " + paramName + " doesnt exist for action : "
+						throw new ExecuteActionException("parameter : " + key + "of type" + paramType + " with value: " + value + " doesnt exist for action : "
 								+ actionKind.getScheme() + actionKind.getTerm());
 					}
 					params.add(suspendMethod);
 					break;
 
-				case "StopMethod":
-					StopMethod stopMethod = StopMethod.get(paramName);
+				case "org.occiware.clouddesigner.occi.infrastructure.StopMethod":
+					StopMethod stopMethod = StopMethod.get(value);
 					if (stopMethod == null) {
-						throw new ExecuteActionException("parameter : " + paramName + " doesnt exist for action : "
+						throw new ExecuteActionException("parameter : " + key + "of type" + paramType + " with value: " + value + " doesnt exist for action : "
 								+ actionKind.getScheme() + actionKind.getTerm());
 					}
 					params.add(stopMethod);
 					break;
-				case "RestartMethod":
-					RestartMethod restartMethod = RestartMethod.get(paramName);
+				case "org.occiware.clouddesigner.occi.infrastructure.RestartMethod":
+					RestartMethod restartMethod = RestartMethod.get(value);
 					if (restartMethod == null) {
-						throw new ExecuteActionException("parameter : " + paramName + " doesnt exist for action : "
+						throw new ExecuteActionException("parameter : " + key + "of type" + paramType + " with value: " + value + " doesnt exist for action : "
 								+ actionKind.getScheme() + actionKind.getTerm());
 					}
 					params.add(restartMethod);
 					break;
 				default:
-					throw new ExecuteActionException("the parameter : " + paramName
+					throw new ExecuteActionException("the parameter : " + key + " of type : " + paramType  + " with value: " + value
 							+ " is not managed currently, please report a bug on github issues of the project page.");
 				}
-				index++;
+				// index++;
 			}
 			// Invoke the method.
 			try {
@@ -322,7 +316,7 @@ public class InfrastructureActionExecutor extends AbstractActionExecutor impleme
 	 * @param storage
 	 * @throws ExecuteActionException
 	 */
-	private void executeStorageActionMethod(Kind actionKind, Map<String, String> actionAttributes,
+	private void executeStorageActionMethod(Action actionKind, Map<String, String> actionAttributes,
 			StorageConnector storage) throws ExecuteActionException {
 		Method method = getMethod(storage.getClass(), actionKind.getTerm());
 		if (method == null) {
@@ -341,28 +335,17 @@ public class InfrastructureActionExecutor extends AbstractActionExecutor impleme
 				throw new ExecuteActionException("Action : " + actionKind.getTerm()
 						+ " must have attributes to call this action, method: " + method.getName());
 			}
-			Parameter[] parameters = method.getParameters();
-			List<Object> params = new LinkedList<>();
-			String paramName = parameters[0].getName();
+			
 			// Only one method has a parameter (resize(float size)).
 			// Find the attribute.
-			String value = actionAttributes.get(paramName);
+			String value = actionAttributes.get("size");
 			if (value == null) {
 				throw new ExecuteActionException("Attribute not found for action " + actionKind.getScheme()
-						+ actionKind.getTerm() + " , method: " + method.getName() + " , parameter : " + paramName);
+						+ actionKind.getTerm() + " , method: " + method.getName() + " , parameter : size");
 			}
-
-			Object size = Utils.convertStringToGenericType(value, "float");
-			params.add(size);
-			// Invoke the method.
-			try {
-				method.invoke(storage, params.toArray());
-			} catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
-				throw new ExecuteActionException(e);
-			}
-
+			Float size = (Float)Utils.convertStringToGenericType(value, "float");
+			storage.resize(size);
 		}
-
 	}
 	/**
 	 * Call corresponding method of an action for Network kind only.
@@ -372,7 +355,7 @@ public class InfrastructureActionExecutor extends AbstractActionExecutor impleme
 	 * @param network
 	 * @throws ExecuteActionException
 	 */
-	private void executeNetworkActionMethod(Kind actionKind, Map<String, String> actionAttributes,
+	private void executeNetworkActionMethod(Action actionKind, Map<String, String> actionAttributes,
 			NetworkConnector network) throws ExecuteActionException {
 		Method method = getMethod(network.getClass(), actionKind.getTerm());
 		if (method == null) {

@@ -106,7 +106,6 @@ public class ConfigurationManager {
 		OCCIRegistry.getInstance().registerExtension("http://occiware.org/hypervisor#", EXT_OCCI_HYPERVISOR_REL_PATH);
 		OCCIRegistry.getInstance().registerExtension("http://proactive.ow2.org#", EXT_OCCI_CLOUD_AUTOMATION_REL_PATH);
 		// OCCIRegistry.getInstance().registerExtension("", "model/");
-		
 
 	}
 
@@ -655,6 +654,14 @@ public class ConfigurationManager {
 		return entity;
 	}
 
+	/**
+	 * Get all declared owner.
+	 * @return
+	 */
+	public static Set<String> getAllOwner() {
+		return configurations.keySet();
+	}
+	
 	/**
 	 * 
 	 * @param owner
@@ -1206,8 +1213,9 @@ public class ConfigurationManager {
 
 				entity.getAttributes().add(attrState);
 
-				logger.info("Attributes added to entity --> " + entity.getId() + " --> " + attrState.getName() + " <-- "
-						+ attrState.getValue());
+				// logger.info("Attributes added to entity --> " +
+				// entity.getId() + " --> " + attrState.getName() + " <-- "
+				// + attrState.getValue());
 
 				// Assign attribute to concrete class (setter).
 				// Before search feature object.
@@ -1228,7 +1236,8 @@ public class ConfigurationManager {
 					// Setter on the concrete attribute.
 					Object val = Utils.convertStringToGenericType(value, type);
 					entity.eSet(eFeat, val);
-					logger.info("Attribute : " + value + " assigned to concrete Entity : " + entity.getId());
+					// logger.info("Attribute : " + value + " assigned to
+					// concrete Entity : " + entity.getId());
 
 				}
 			}
@@ -1243,7 +1252,7 @@ public class ConfigurationManager {
 	 * @param entity
 	 * @param attributes
 	 */
-	private static void updateAttributesToEntity(Entity entity, final Map<String, String> attributes) {
+	public static Entity updateAttributesToEntity(Entity entity, Map<String, String> attributes) {
 		EClass e = entity.eClass();
 		EList<EAttribute> atts = e.getEAllAttributes();
 		EStructuralFeature eFeat;
@@ -1295,28 +1304,31 @@ public class ConfigurationManager {
 					// Setter on the concrete attribute.
 					Object val = Utils.convertStringToGenericType(value, type);
 					entity.eSet(eFeat, val);
-					logger.info("Attribute : " + value + " assigned to concrete Entity : " + entity.getId());
+					// logger.info("Attribute : " + value + " assigned to
+					// concrete Entity : " + entity.getId());
 
 				}
 
 			}
 
 		} else if (attributes != null && attributes.isEmpty()) {
-			
+
 			for (EAttribute eatt : atts) {
 				if (eatt.eContainingFeature() != null) {
 					if (!eatt.getName().equals("id")) {
 						// unset the concrete attributes.
 						entity.eUnset(eatt);
 					}
-					
+
 				}
-				
+
 			}
-			
+
 			// Remove all attributes on entity.
 			entity.getAttributes().clear();
 		}
+		
+		return entity;
 
 	}
 
@@ -1576,6 +1588,8 @@ public class ConfigurationManager {
 			logger.warning("The entity " + entityId + " doesnt exist, can't update ! ");
 		}
 
+		// return entity;
+
 	}
 
 	/**
@@ -1813,6 +1827,144 @@ public class ConfigurationManager {
 		org.eclipse.emf.ecore.resource.Resource resource = resourceSet.getResource(URI.createURI(uri), true);
 		// Return the first element.
 		return resource.getContents().get(0);
+	}
+
+	/**
+	 * Find a used extension for an action Kind.
+	 * 
+	 * @param owner
+	 *            (owner of the configuration).
+	 * @param action_id
+	 *            (kind : scheme+term)
+	 * @return extension found, may return null if no extension found with this
+	 *         configuration.
+	 */
+	public static Extension getExtensionForAction(String owner, String action_id) {
+		Configuration config = getConfigurationForOwner(owner);
+		EList<Extension> exts = config.getUse();
+		Extension extRet = null;
+		// Ext kinds.
+		EList<Kind> kinds;
+		EList<Action> actionKinds;
+		for (Extension ext : exts) {
+			kinds = ext.getKinds();
+			for (Kind kind : kinds) {
+				actionKinds = kind.getActions();
+				for (Action action : actionKinds) {
+					if ((action.getScheme() + action.getTerm()).equals(action_id)) {
+						extRet = ext;
+						break;
+					}
+				}
+				if (extRet != null) {
+					break;
+				}
+
+			}
+			if (extRet != null) {
+				break;
+			}
+		}
+
+		return extRet;
+	}
+
+	/**
+	 * 
+	 * @param ext
+	 * @param actionId
+	 *            (action scheme+term)
+	 * @return Action, may return null if not found on extension.
+	 */
+	public static Action getActionKindFromExtension(final Extension ext, final String actionId) {
+		EList<Kind> kinds = ext.getKinds();
+		EList<Action> actionKinds;
+		Action actionKind = null;
+		for (Kind kind : kinds) {
+			actionKinds = kind.getActions();
+			for (Action action : actionKinds) {
+				if ((action.getScheme() + action.getTerm()).equals(actionId)) {
+					actionKind = action;
+					break;
+				}
+			}
+			if (actionKind != null) {
+				break;
+			}
+		}
+
+		return actionKind;
+	}
+
+	/**
+	 * Get used extension with this kind.
+	 * 
+	 * @param owner
+	 *            owner of the configuration
+	 * @param kind
+	 *            (represent a Kind Scheme+term)
+	 * @return
+	 */
+	public static Extension getExtensionForKind(String owner, String kind) {
+		Extension extRet = null;
+		Configuration configuration = getConfigurationForOwner(owner);
+		EList<Extension> exts = configuration.getUse();
+		EList<Kind> kinds;
+		for (Extension ext : exts) {
+			kinds = ext.getKinds();
+			for (Kind kindObj : kinds) {
+				if ((kindObj.getScheme() + kindObj.getTerm()).equals(kind)) {
+					extRet = ext;
+					break;
+				}
+			}
+			if (extRet != null) {
+				break;
+			}
+		}
+
+		return extRet;
+	}
+
+	/**
+	 * Find extension used with this entity.
+	 * 
+	 * @param entity
+	 * @return an extension or null if not found
+	 */
+	public static Extension getExtensionFromEntity(Entity entity) {
+		Extension extRet = null;
+		// Search owner of the entity.
+		Set<String> owners = configurations.keySet();
+		Configuration configuration;
+		EList<Resource> resources;
+		EList<Extension> exts;
+		for (String owner : owners) {
+			configuration = configurations.get(owner);
+			resources = configuration.getResources();
+			for (Resource resource : resources) {
+				if (resource.getId().equals(entity.getId())) {
+					// We found the configuration and owner of the entity.
+					// Now we get the extension from entity kind.
+					Kind entityKind = entity.getKind();
+					exts = configuration.getUse();
+					for (Extension ext : exts) {
+						if (ext.getKinds().contains(entityKind)) {
+							extRet = ext;
+							break;
+						}
+					}	
+				}
+				if (extRet != null) {
+					break;
+				}
+			}
+			if (extRet != null) {
+				break;
+			}
+		}
+
+		return extRet;
 	}
 
 	/**

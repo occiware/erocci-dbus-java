@@ -45,7 +45,7 @@ public class DefaultActionExecutor extends AbstractActionExecutor implements IAc
 	}
 
 	@Override
-	public void occiPostUpdate(Entity entity, Map<String, String> attributes) throws ExecuteActionException{
+	public void occiPostUpdate(Entity entity) throws ExecuteActionException{
 		// TODO Auto-generated method stub
 		
 	}

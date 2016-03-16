@@ -19,6 +19,10 @@ package org.ow2.erocci.backend.impl;
 import java.util.logging.Logger;
 
 import org.ow2.erocci.backend.mixin;
+import org.ow2.erocci.model.ActionExecutorFactory;
+import org.ow2.erocci.model.ConfigurationManager;
+import org.ow2.erocci.model.IActionExecutor;
+import org.ow2.erocci.model.exception.ExecuteActionException;
 
 /**
  * Implementation of OCCI mixin.
@@ -45,6 +49,13 @@ public class MixinImpl implements mixin {
 	@Override
 	public void AddMixin(String id, String location, String owner) {
 		logger.info("add mixin with id: " + id + " --< location : " + location + " --< owner : " + owner);
+//		try {
+//			IActionExecutor actExecutor = ActionExecutorFactory.build(ConfigurationManager.getExtensionFromEntity(entityUpd)); 
+//			actExecutor.occiAddedMixin(entityUpd);
+//		} catch (ExecuteActionException ex) {
+//			logger.warning("Action launch error : " + ex.getMessage());
+//		}
+		
 		// TODO : Implementation.
 		// Ex : POST /.well-knwown/org/ogf/occi/
 		//      Content-Type: text/occi
@@ -63,6 +74,12 @@ public class MixinImpl implements mixin {
 	@Override
 	public void DelMixin(String id) {
 		logger.info("delete mixin with category id : " + id);
+//		try {
+//			IActionExecutor actExecutor = ActionExecutorFactory.build(ConfigurationManager.getExtensionFromEntity(entityUpd)); 
+//			actExecutor.occiDelMixin(entityUpd);
+//		} catch (ExecuteActionException ex) {
+//			logger.warning("Action launch error : " + ex.getMessage());
+//		}
 		// TODO : Implementation.
 	}
 
