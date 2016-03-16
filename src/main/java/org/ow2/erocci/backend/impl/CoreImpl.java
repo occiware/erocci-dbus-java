@@ -333,7 +333,7 @@ public class CoreImpl implements core, action, mixin, DBus.Properties {
 					owner = entry.getKey();
 					ent = entry.getValue();
 
-					ConfigurationManager.printEntity(ent);
+					// ConfigurationManager.printEntity(ent);
 					logger.info("One entity found ! owner : " + owner);
 					ret.add(new Struct1(CoreImpl.NODE_ENTITY, new Variant<String>(ent.getId()), owner,
 							ConfigurationManager.getEtagNumber(owner, id)));
@@ -344,7 +344,7 @@ public class CoreImpl implements core, action, mixin, DBus.Properties {
 					owner = entry.getKey();
 					ent = entry.getValue();
 
-					ConfigurationManager.printEntity(ent);
+					// ConfigurationManager.printEntity(ent);
 					ret.add(new Struct1(CoreImpl.NODE_UNBOUNDED_COLLECTION, new Variant<String>(ent.getId()), owner,
 							ConfigurationManager.getEtagNumber(owner, id)));
 				}
@@ -381,7 +381,7 @@ public class CoreImpl implements core, action, mixin, DBus.Properties {
 		Entity entity = ConfigurationManager.findEntity(owner, id);
 		
 		if (entity != null) {
-			ConfigurationManager.printEntity(entity);
+			// ConfigurationManager.printEntity(entity);
 
 			logger.info("Owner : " + owner + "--< Entity : " + entity.getId()
 					+ " loaded with success, transaction with dbus to come...");

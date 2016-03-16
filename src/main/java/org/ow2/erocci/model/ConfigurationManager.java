@@ -1568,7 +1568,7 @@ public class ConfigurationManager {
 			updateAttributesToEntity(entity, attributes);
 			logger.info("owner : " + ownerFound + " --< entity id : " + entityId);
 			updateVersion(ownerFound, entityId);
-			printEntity(entity);
+			// printEntity(entity);
 
 		} else {
 			// TODO : Report an exception, impossible to update entity, it

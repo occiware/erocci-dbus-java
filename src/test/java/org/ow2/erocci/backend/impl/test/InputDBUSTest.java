@@ -266,7 +266,7 @@ public class InputDBUSTest {
 		Resource res = ConfigurationManager.findResource(container.getOwner(), container.getId());
 		assertNotNull(res);
 		assertTrue(res.getAttributes().isEmpty());
-		ConfigurationManager.printEntity(res);
+		// ConfigurationManager.printEntity(res);
 		// relaunch update with better attributes.
 		attributesReturned = core.Update(container.getId(), container.getAttributes());
 		assertNotNull(attributesReturned);
@@ -317,7 +317,7 @@ public class InputDBUSTest {
 			}
 			assertTrue(mixinFound);
 			// print resource.
-			ConfigurationManager.printEntity(resource);
+			// ConfigurationManager.printEntity(resource);
 
 		}
 
@@ -384,7 +384,7 @@ public class InputDBUSTest {
 			}
 			assertTrue(mixinFound);
 			// print resource.
-			ConfigurationManager.printEntity(entity);
+			// ConfigurationManager.printEntity(entity);
 			Resource res = (Resource) entity;
 			EList<Link> resLink = res.getLinks();
 			assertEquals(resLink.size(), 2);
@@ -537,7 +537,7 @@ public class InputDBUSTest {
 		EList<Link> links = res.getLinks();
 		assertEquals(links.size(), 2);
 		for (Link link : links) {
-			ConfigurationManager.printEntity(link);
+			// ConfigurationManager.printEntity(link);
 		}
 		
 		core.Delete(entityId);
