@@ -105,7 +105,7 @@ Development Status values :
     <tr>
         <td align="center">Docker connector</td>
         <td align="center">Connector based on CloudDesigner implementation, for Docker container purpose</td>
-        <td align="center"><img src="https://raw.github.com/occiware/erocci-dbus-java/master/doc/todo.png" alt="TODO" height="40" width="auto" /></td>
+        <td align="center"><img src="https://raw.github.com/occiware/erocci-dbus-java/master/doc/inprogress.png" alt="In progress" height="40" width="auto" /></td>
     </tr>
     <tr>
         <td align="center">Hypervisor connector</td>

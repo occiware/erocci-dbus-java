@@ -17,6 +17,7 @@ package org.ow2.erocci.model;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.lang.reflect.Parameter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -30,6 +31,7 @@ import org.occiware.clouddesigner.occi.Kind;
 import org.occiware.clouddesigner.occi.infrastructure.RestartMethod;
 import org.occiware.clouddesigner.occi.infrastructure.StopMethod;
 import org.occiware.clouddesigner.occi.infrastructure.SuspendMethod;
+import org.ow2.erocci.backend.impl.Utils;
 import org.ow2.erocci.model.exception.ExecuteActionException;
 import org.ow2.mart.connector.infrastructure.dummy.ComputeConnector;
 import org.ow2.mart.connector.infrastructure.dummy.NetworkConnector;
@@ -37,33 +39,30 @@ import org.ow2.mart.connector.infrastructure.dummy.StorageConnector;
 
 public class InfrastructureActionExecutor extends AbstractActionExecutor implements IActionExecutor {
 
-	
-	
 	public InfrastructureActionExecutor(Extension extension) {
 		super(extension);
 	}
 
 	@Override
 	public void occiPostCreate(Entity entity) throws ExecuteActionException {
-		
-		
+
 		// actionId represents scheme + term of an action method.
 		this.execute(null, entity, FROM_CREATE);
-		
+
 	}
 
 	@Override
 	public void occiPreDelete(Entity entity) throws ExecuteActionException {
-		
+
 		this.execute(null, entity, FROM_DELETE);
 
 	}
 
 	@Override
 	public void occiPostUpdate(Entity entity, Map<String, String> attributes) throws ExecuteActionException {
-		
+
 		this.execute(null, attributes, entity, FROM_UPDATE);
-		
+
 	}
 
 	@Override
@@ -71,28 +70,28 @@ public class InfrastructureActionExecutor extends AbstractActionExecutor impleme
 		this.execute(null, entity, FROM_USER_MIXIN_ADDED);
 
 	}
+
 	@Override
 	public void occiMixinDeleted(Entity entity, String mixinId) throws ExecuteActionException {
 		this.execute(null, entity, FROM_USER_MIXIN_DELETED);
-		
-	}
-	
 
-	
+	}
+
 	@Override
-	public void execute(String actionId, Map<String, String> actionAttributes, Entity entity, final String fromMethod) throws ExecuteActionException {
+	public void execute(String actionId, Map<String, String> actionAttributes, Entity entity, final String fromMethod)
+			throws ExecuteActionException {
 		boolean entityCompute = false;
 		boolean entityNetwork = false;
 		boolean entityStorage = false;
 		// Networklink and storage link have no actions on infrastructure model.
-		
+
 		if (fromMethod.equals(FROM_ACTION)) {
 			// Called from ActionImpl interface DBUS Object.
 			if (actionId == null) {
 				throw new ExecuteActionException("You must provide an action kind for entity : " + entity.getId());
-			}	
+			}
 		}
-		
+
 		if (entity == null) {
 			throw new ExecuteActionException("You must provide an entity to execute this action : " + actionId);
 		}
@@ -109,129 +108,104 @@ public class InfrastructureActionExecutor extends AbstractActionExecutor impleme
 		ComputeConnector compute;
 		NetworkConnector network;
 		StorageConnector storage;
-		// Find which method to execute.
-		switch(fromMethod) {
-				case FROM_CREATE:
-					// compute : start
-					// storage : online
-					// network : up
-					// networklink: none
-					// storagelink: none
-					if (entityCompute) {
-						compute = (ComputeConnector)entity;
-						compute.start();
-					}
-					if (entityNetwork) {
-						network = (NetworkConnector)entity;
-						network.up();
-					}
-					if (entityStorage) {
-						storage = (StorageConnector)entity;
-						storage.online();
-					}
-					
-					break;
-				case FROM_DELETE:
-					if (entityCompute) {
-						compute = (ComputeConnector)entity;
-						compute.stop(StopMethod.GRACEFUL);
-					}
-					if (entityNetwork) {
-						network = (NetworkConnector)entity;
-						network.down();
-					}
-					if (entityStorage) {
-						storage = (StorageConnector)entity;
-						storage.offline();
-					}
-					break;
-				case FROM_UPDATE:
-					if (entityCompute) {
-						compute = (ComputeConnector)entity;
-						compute.restart(RestartMethod.WARM);
-					}
-					if (entityNetwork) {
-						network = (NetworkConnector)entity;
-						network.down();
-						network.up();
-					}
-					if (entityStorage) {
-						storage = (StorageConnector)entity;
-						storage.offline();
-						storage.online();
-					}
-					
-					break;
-
-				case FROM_ACTION:
-					EList<Kind> kinds = extension.getKinds();
-					Kind actionKind = null;
-					for (Kind actKind : kinds) {
-						if ((actKind.getScheme() + actKind.getTerm()).equals(actionId)) {
-							actionKind = actKind;
-							break;
-						}
-					}
-					if (actionKind == null) {
-						throw new ExecuteActionException("Action : " + actionId + " doesnt exist on extension : " + extension.getName());
-					}
-					
-					if (entityCompute) {
-						compute = (ComputeConnector) entity;
-						Method method = getMethod(compute.getClass(), actionKind.getTerm());
-						if (method == null) {
-							throw new ExecuteActionException("Action : " + actionId + "  has no method declared in corresponding connector.");
-						}
-						if (method.getParameterTypes().length == 0) {
-							// No parameters.
-							try {
-								method.invoke(compute, new Object[] {});
-							} catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
-								throw new ExecuteActionException(e);
-							}
-						} else {
-							// Invoke method with parameters.
-							Class<?>[] paramTypes = method.getParameterTypes();
-							List<Class> params = new LinkedList<>();
-							
-							
-							for (Class<?> paramType : paramTypes) {
-								switch(paramType.getName()) {
-								
-								case "SuspendMethod" :
-									
-									
-									break;
-								
-								case "StopMethod" :
-									
-									break;
-								
-								}
-								
-								
-							}
-							
-							// Search on attributes :
-							
-						}
-						
-						
-					}
-					
-					break;
-			}
-			
+		if (!entityCompute && !entityNetwork && !entityStorage) {
+			throw new ExecuteActionException("Only compute, network and storage kind have actions.");
 		}
 		
-	
+		// Find which method to execute.
+		switch (fromMethod) {
+		case FROM_CREATE:
+			// compute : start
+			// storage : online
+			// network : up
+			// networklink: none
+			// storagelink: none
+			if (entityCompute) {
+				compute = (ComputeConnector) entity;
+				compute.start();
+			}
+			if (entityNetwork) {
+				network = (NetworkConnector) entity;
+				network.up();
+			}
+			if (entityStorage) {
+				storage = (StorageConnector) entity;
+				storage.online();
+			}
+
+			break;
+		case FROM_DELETE:
+			if (entityCompute) {
+				compute = (ComputeConnector) entity;
+				compute.stop(StopMethod.GRACEFUL);
+			}
+			if (entityNetwork) {
+				network = (NetworkConnector) entity;
+				network.down();
+			}
+			if (entityStorage) {
+				storage = (StorageConnector) entity;
+				storage.offline();
+			}
+			break;
+		case FROM_UPDATE:
+			if (entityCompute) {
+				compute = (ComputeConnector) entity;
+				compute.restart(RestartMethod.WARM);
+			}
+			if (entityNetwork) {
+				network = (NetworkConnector) entity;
+				network.down();
+				network.up();
+			}
+			if (entityStorage) {
+				storage = (StorageConnector) entity;
+				storage.offline();
+				storage.online();
+			}
+
+			break;
+
+		case FROM_ACTION:
+			EList<Kind> kinds = extension.getKinds();
+			Kind actionKind = null;
+			for (Kind actKind : kinds) {
+				if ((actKind.getScheme() + actKind.getTerm()).equals(actionId)) {
+					actionKind = actKind;
+					break;
+				}
+			}
+			if (actionKind == null) {
+				throw new ExecuteActionException(
+						"Action : " + actionId + " doesnt exist on extension : " + extension.getName());
+			}
+
+			if (entityCompute) {
+				compute = (ComputeConnector) entity;
+				executeComputeActionMethod(actionKind, actionAttributes, compute);
+			}
+			if (entityStorage) {
+				storage = (StorageConnector) entity;
+				executeStorageActionMethod(actionKind, actionAttributes, storage);
+			}
+			if (entityNetwork) {
+				network = (NetworkConnector) entity;
+				executeNetworkActionMethod(actionKind, actionAttributes, network);
+			}
+
+			break;
+		}
+
+	}
+
 	@Override
 	public void execute(String actionId, Entity entity, String fromMethod) throws ExecuteActionException {
 		execute(actionId, new HashMap<String, String>(), entity, fromMethod);
 	}
-	
+
 	/**
-	 * Get a method action object from object parameter. 
+	 * Get a method action object from object parameter.
+	 * 
 	 * @param <T>
 	 * @param object
 	 * @param actionKind
@@ -249,13 +223,174 @@ public class InfrastructureActionExecutor extends AbstractActionExecutor impleme
 		}
 		return method;
 	}
-	
-//	public Action getActionExtensionKind(final String actionTerm) {
-//		EList<Kind> kinds = extension.getKinds();
-//		
-//		
-//		
-//	}
-	
+
+	/**
+	 * Call corresponding method of an action for Compute only.
+	 * 
+	 * @param actionKind
+	 * @param actionAttributes
+	 * @param compute
+	 * @throws ExecuteActionException
+	 */
+	private void executeComputeActionMethod(Kind actionKind, Map<String, String> actionAttributes,
+			ComputeConnector compute) throws ExecuteActionException {
+		Method method = getMethod(compute.getClass(), actionKind.getTerm());
+		if (method == null) {
+			throw new ExecuteActionException(
+					"Action : " + actionKind.getTerm() + "  has no method declared in corresponding connector.");
+		}
+		if (method.getParameterTypes().length == 0) {
+			// No parameters.
+			try {
+				method.invoke(compute, new Object[] {});
+			} catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
+				throw new ExecuteActionException(e);
+			}
+		} else {
+			if (actionAttributes.isEmpty()) {
+				throw new ExecuteActionException("Action : " + actionKind.getTerm()
+						+ " must have attributes to call this action, method: " + method.getName());
+			}
+			// Invoke method with parameters.
+			Class<?>[] paramTypes = method.getParameterTypes();
+			Parameter[] parameters = method.getParameters();
+			List<Object> params = new LinkedList<>();
+			int index = 0;
+			String paramName;
+			String value;
+			Class<?> paramType;
+			for (Parameter parameter : parameters) {
+				paramName = parameter.getName();
+				paramType = paramTypes[index];
+				// search the value in action attributes with the name as key.
+				value = actionAttributes.get(paramName);
+				if (value == null) {
+					throw new ExecuteActionException("Attribute not found for action " + actionKind.getScheme()
+							+ actionKind.getTerm() + " , method: " + method.getName() + " , parameter : " + paramName);
+				}
+
+				switch (paramType.getName()) {
+
+				case "SuspendMethod":
+
+					SuspendMethod suspendMethod = SuspendMethod.get(paramName);
+					if (suspendMethod == null) {
+						throw new ExecuteActionException("parameter : " + paramName + " doesnt exist for action : "
+								+ actionKind.getScheme() + actionKind.getTerm());
+					}
+					params.add(suspendMethod);
+					break;
+
+				case "StopMethod":
+					StopMethod stopMethod = StopMethod.get(paramName);
+					if (stopMethod == null) {
+						throw new ExecuteActionException("parameter : " + paramName + " doesnt exist for action : "
+								+ actionKind.getScheme() + actionKind.getTerm());
+					}
+					params.add(stopMethod);
+					break;
+				case "RestartMethod":
+					RestartMethod restartMethod = RestartMethod.get(paramName);
+					if (restartMethod == null) {
+						throw new ExecuteActionException("parameter : " + paramName + " doesnt exist for action : "
+								+ actionKind.getScheme() + actionKind.getTerm());
+					}
+					params.add(restartMethod);
+					break;
+				default:
+					throw new ExecuteActionException("the parameter : " + paramName
+							+ " is not managed currently, please report a bug on github issues of the project page.");
+				}
+				index++;
+			}
+			// Invoke the method.
+			try {
+				method.invoke(compute, params.toArray());
+			} catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
+				throw new ExecuteActionException(e);
+			}
+
+		}
+
+	}
+
+	/**
+	 * Call corresponding method of an action for Storage only.
+	 * 
+	 * @param actionKind
+	 * @param actionAttributes
+	 * @param storage
+	 * @throws ExecuteActionException
+	 */
+	private void executeStorageActionMethod(Kind actionKind, Map<String, String> actionAttributes,
+			StorageConnector storage) throws ExecuteActionException {
+		Method method = getMethod(storage.getClass(), actionKind.getTerm());
+		if (method == null) {
+			throw new ExecuteActionException(
+					"Action : " + actionKind.getTerm() + "  has no method declared in corresponding connector.");
+		}
+		if (method.getParameterTypes().length == 0) {
+			// No parameters.
+			try {
+				method.invoke(storage, new Object[] {});
+			} catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
+				throw new ExecuteActionException(e);
+			}
+		} else {
+			if (actionAttributes.isEmpty()) {
+				throw new ExecuteActionException("Action : " + actionKind.getTerm()
+						+ " must have attributes to call this action, method: " + method.getName());
+			}
+			Parameter[] parameters = method.getParameters();
+			List<Object> params = new LinkedList<>();
+			String paramName = parameters[0].getName();
+			// Only one method has a parameter (resize(float size)).
+			// Find the attribute.
+			String value = actionAttributes.get(paramName);
+			if (value == null) {
+				throw new ExecuteActionException("Attribute not found for action " + actionKind.getScheme()
+						+ actionKind.getTerm() + " , method: " + method.getName() + " , parameter : " + paramName);
+			}
+
+			Object size = Utils.convertStringToGenericType(value, "float");
+			params.add(size);
+			// Invoke the method.
+			try {
+				method.invoke(storage, params.toArray());
+			} catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
+				throw new ExecuteActionException(e);
+			}
+
+		}
+
+	}
+	/**
+	 * Call corresponding method of an action for Network kind only.
+	 * 
+	 * @param actionKind
+	 * @param actionAttributes
+	 * @param network
+	 * @throws ExecuteActionException
+	 */
+	private void executeNetworkActionMethod(Kind actionKind, Map<String, String> actionAttributes,
+			NetworkConnector network) throws ExecuteActionException {
+		Method method = getMethod(network.getClass(), actionKind.getTerm());
+		if (method == null) {
+			throw new ExecuteActionException(
+					"Action : " + actionKind.getTerm() + "  has no method declared in corresponding connector.");
+		}
+		if (method.getParameterTypes().length == 0) {
+			// No parameters.
+			try {
+				method.invoke(network, new Object[] {});
+			} catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
+				throw new ExecuteActionException(e);
+			}
+		} else {
+			// on network kind, infrastructure, there is no action with attributes.
+			throw new ExecuteActionException("There's no attributes on action method of the network Kind.");
+		}
+
+	}
 
 }
