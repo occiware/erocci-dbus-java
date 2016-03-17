@@ -1987,7 +1987,7 @@ public class ConfigurationManager {
 		case EXT_DOCKER_NAME:
 			// Assign Docker connector factory (ExecutableDockerFactory).
 			// this will set DockerPackage.eInstance.setEFactoryInstance(new
-			// ExecutableockerFactory());
+			// ExecutableDockerFactory());
 			ExecutableDockerFactory.init();
 			break;
 		case EXT_CLOUD_NAME:

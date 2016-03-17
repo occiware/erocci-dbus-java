@@ -39,11 +39,11 @@ import org.ow2.erocci.backend.Struct2;
 import org.ow2.erocci.backend.action;
 import org.ow2.erocci.backend.core;
 import org.ow2.erocci.backend.mixin;
-import org.ow2.erocci.model.ActionExecutorFactory;
 import org.ow2.erocci.model.ConfigurationManager;
-import org.ow2.erocci.model.DefaultActionExecutor;
-import org.ow2.erocci.model.IActionExecutor;
 import org.ow2.erocci.model.exception.ExecuteActionException;
+import org.ow2.erocci.runtime.ActionExecutorFactory;
+import org.ow2.erocci.runtime.DefaultActionExecutor;
+import org.ow2.erocci.runtime.IActionExecutor;
 
 /**
  * Implementation of OCCI core.

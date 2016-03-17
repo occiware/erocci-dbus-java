@@ -25,10 +25,10 @@ import org.occiware.clouddesigner.occi.AttributeState;
 import org.occiware.clouddesigner.occi.Entity;
 import org.occiware.clouddesigner.occi.infrastructure.Compute;
 import org.ow2.erocci.backend.action;
-import org.ow2.erocci.model.ActionExecutorFactory;
 import org.ow2.erocci.model.ConfigurationManager;
-import org.ow2.erocci.model.IActionExecutor;
 import org.ow2.erocci.model.exception.ExecuteActionException;
+import org.ow2.erocci.runtime.ActionExecutorFactory;
+import org.ow2.erocci.runtime.IActionExecutor;
 
 /**
  * Implementation of OCCI action

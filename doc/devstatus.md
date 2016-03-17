@@ -95,7 +95,7 @@ Development Status values :
     <tr>
         <td align="center">Dummy connector</td>
         <td align="center">Connector attach to default infrastructure model, <a href="https://github.com/occiware/erocci-dbus-java/issues/21">feature #21</a></td>
-        <td align="center"><img src="https://raw.github.com/occiware/erocci-dbus-java/master/doc/inprogress.png" alt="In progress" height="40" width="auto" /></td>
+        <td align="center"><img src="https://raw.github.com/occiware/erocci-dbus-java/master/doc/done.png" alt="Done" height="40" width="auto" /></td>
     </tr>
     <tr>
         <td align="center">Cloud connector</td>
