@@ -113,7 +113,7 @@ public class InfrastructureActionExecutor extends AbstractActionExecutor impleme
 		if (!entityCompute && !entityNetwork && !entityStorage) {
 			throw new ExecuteActionException("Only compute, network and storage kind have actions.");
 		}
-		
+
 		// Find which method to execute.
 		switch (fromMethod) {
 		case FROM_CREATE:
@@ -250,13 +250,13 @@ public class InfrastructureActionExecutor extends AbstractActionExecutor impleme
 			Class<?>[] paramTypes = method.getParameterTypes();
 			// Parameter[] parameters = method.getParameters();
 			List<Object> params = new LinkedList<>();
-//			int index = 0;
-//			String paramName;
+			// int index = 0;
+			// String paramName;
 			String value;
-			
+
 			String key = "method";
 			for (Class<?> paramType : paramTypes) {
-				
+
 				// search the value in action attributes with the name as key.
 				value = actionAttributes.get(key);
 				if (value == null) {
@@ -270,8 +270,9 @@ public class InfrastructureActionExecutor extends AbstractActionExecutor impleme
 
 					SuspendMethod suspendMethod = SuspendMethod.get(value);
 					if (suspendMethod == null) {
-						throw new ExecuteActionException("parameter : " + key + "of type" + paramType + " with value: " + value + " doesnt exist for action : "
-								+ actionKind.getScheme() + actionKind.getTerm());
+						throw new ExecuteActionException("parameter : " + key + "of type" + paramType + " with value: "
+								+ value + " doesnt exist for action : " + actionKind.getScheme()
+								+ actionKind.getTerm());
 					}
 					params.add(suspendMethod);
 					break;
@@ -279,21 +280,24 @@ public class InfrastructureActionExecutor extends AbstractActionExecutor impleme
 				case "org.occiware.clouddesigner.occi.infrastructure.StopMethod":
 					StopMethod stopMethod = StopMethod.get(value);
 					if (stopMethod == null) {
-						throw new ExecuteActionException("parameter : " + key + "of type" + paramType + " with value: " + value + " doesnt exist for action : "
-								+ actionKind.getScheme() + actionKind.getTerm());
+						throw new ExecuteActionException("parameter : " + key + "of type" + paramType + " with value: "
+								+ value + " doesnt exist for action : " + actionKind.getScheme()
+								+ actionKind.getTerm());
 					}
 					params.add(stopMethod);
 					break;
 				case "org.occiware.clouddesigner.occi.infrastructure.RestartMethod":
 					RestartMethod restartMethod = RestartMethod.get(value);
 					if (restartMethod == null) {
-						throw new ExecuteActionException("parameter : " + key + "of type" + paramType + " with value: " + value + " doesnt exist for action : "
-								+ actionKind.getScheme() + actionKind.getTerm());
+						throw new ExecuteActionException("parameter : " + key + "of type" + paramType + " with value: "
+								+ value + " doesnt exist for action : " + actionKind.getScheme()
+								+ actionKind.getTerm());
 					}
 					params.add(restartMethod);
 					break;
 				default:
-					throw new ExecuteActionException("the parameter : " + key + " of type : " + paramType  + " with value: " + value
+					throw new ExecuteActionException("the parameter : " + key + " of type : " + paramType
+							+ " with value: " + value
 							+ " is not managed currently, please report a bug on github issues of the project page.");
 				}
 				// index++;
@@ -336,7 +340,7 @@ public class InfrastructureActionExecutor extends AbstractActionExecutor impleme
 				throw new ExecuteActionException("Action : " + actionKind.getTerm()
 						+ " must have attributes to call this action, method: " + method.getName());
 			}
-			
+
 			// Only one method has a parameter (resize(float size)).
 			// Find the attribute.
 			String value = actionAttributes.get("size");
@@ -344,10 +348,11 @@ public class InfrastructureActionExecutor extends AbstractActionExecutor impleme
 				throw new ExecuteActionException("Attribute not found for action " + actionKind.getScheme()
 						+ actionKind.getTerm() + " , method: " + method.getName() + " , parameter : size");
 			}
-			Float size = (Float)Utils.convertStringToGenericType(value, "float");
+			Float size = (Float) Utils.convertStringToGenericType(value, "float");
 			storage.resize(size);
 		}
 	}
+
 	/**
 	 * Call corresponding method of an action for Network kind only.
 	 * 
@@ -371,7 +376,8 @@ public class InfrastructureActionExecutor extends AbstractActionExecutor impleme
 				throw new ExecuteActionException(e);
 			}
 		} else {
-			// on network kind, infrastructure, there is no action with attributes.
+			// on network kind, infrastructure, there is no action with
+			// attributes.
 			throw new ExecuteActionException("There's no attributes on action method of the network Kind.");
 		}
 
