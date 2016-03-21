@@ -18,15 +18,15 @@
 
 # sudo apt-get install dbus-java-bin
 
-mvn install:install-file -Dfile=/usr/share/java/dbus-2.8.jar -DgroupId=net.windwards.3rdparty -DartifactId=dbus -Dversion=2.8 -Dpackaging=jar
+mvn install:install-file -Dfile="./lib/dbus-2.8.jar" -DgroupId=net.windwards.3rdparty -DartifactId=dbus -Dversion=2.8 -Dpackaging=jar
 
-mvn install:install-file -Dfile=/usr/share/java/dbus-bin-2.8.jar -DgroupId=net.windwards.3rdparty -DartifactId=dbus-bin -Dversion=2.8 -Dpackaging=jar
+mvn install:install-file -Dfile="./lib/dbus-bin-2.8.jar" -DgroupId=net.windwards.3rdparty -DartifactId=dbus-bin -Dversion=2.8 -Dpackaging=jar
 
-mvn install:install-file -Dfile=/usr/share/java/hexdump-0.2.jar -DgroupId=net.windwards.3rdparty -DartifactId=matthew-hexdump -Dversion=0.2 -Dpackaging=jar
+mvn install:install-file -Dfile="./lib/hexdump-0.2.jar" -DgroupId=net.windwards.3rdparty -DartifactId=matthew-hexdump -Dversion=0.2 -Dpackaging=jar
 
-mvn install:install-file -Dfile=/usr/share/java/unix-0.5.jar -DgroupId=net.windwards.3rdparty -DartifactId=matthew-unix -Dversion=0.5 -Dpackaging=jar
+mvn install:install-file -Dfile="./lib/unix-0.5.jar" -DgroupId=net.windwards.3rdparty -DartifactId=matthew-unix -Dversion=0.5 -Dpackaging=jar
 
-mvn install:install-file -Dfile=/usr/share/java/debug-enable-1.1.jar -DgroupId=net.windwards.3rdparty -DartifactId=matthew-debug -Dversion=1.1 -Dpackaging=jar
+mvn install:install-file -Dfile="./lib/debug-enable-1.1.jar" -DgroupId=net.windwards.3rdparty -DartifactId=matthew-debug -Dversion=1.1 -Dpackaging=jar
 # Install Eclipse OCL jars into the local repo.
 mvn install:install-file -Dfile="./lib/org.eclipse.ocl.pivot-1.0.1.v20150908-1239.jar" -DpomFile="./lib/org.eclipse.ocl.pivot-1.0.1.v20150908-1239.pom"
 mvn install:install-file -Dfile="./lib/org.eclipse.ocl.common-1.3.0.v20150519-0914.jar" -DpomFile="./lib/org.eclipse.ocl.common-1.3.0.v20150519-0914.pom"

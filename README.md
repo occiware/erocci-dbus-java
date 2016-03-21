@@ -93,7 +93,7 @@ DBUS_SESSION_BUS_ADDRESS=$(printenv DBUS_SESSION_BUS_ADDRESS | sed -e 's/kernel:
 * Git Clone the Erocci project
 * Git Clone the Erocci-dbus-java project
 * Install maven3 using  ```sudo apt-get install maven```
-* Install dbus binaries for java : sudo apt-get install dbus-java-bin
+* Install dbus binaries for java : ```sudo apt-get install dbus-java-bin```
 * Copy jni file like this : ```cp /usr/lib/jni/libunix-java.so /usr/lib/jvm/java-1.8.0-openjdk-amd64/lib/amd64/```
 * Go to erocci-dbus-java root directory
 * ```make deps```
@@ -102,6 +102,37 @@ DBUS_SESSION_BUS_ADDRESS=$(printenv DBUS_SESSION_BUS_ADDRESS | sed -e 's/kernel:
 * launch ```./bootstrap``` and then ```make``` after the message "release successfully created" will display if all ok.
 * Launch erocci-dbus-java on first place before Erocci
 * Launch Erocci as describe upper.
+
+### On Mac OSX platform (El capitan) 
+* Install XCode, java jdk 8 and set env variable JAVA_HOME
+* Install D-BUS with : ```brew install dbus```, it may be installed on path : ```/usr/local/Cellar/d-bus/1.10.6/```
+* If you don't have maven installed : ```brew install maven``` , this will install maven 3 in ```/usr/local/Cellar/maven/3.3.9/```
+* Download and build libmatthew-java : 
+    * ```cd $JAVA_HOME/include/``` 
+    * ```sudo ln -s darwin linux```
+    * Go to your favorite directory to clone libmatthew-java project (for ex: cd ~/myworkspace/)
+    * ```git clone https://github.com/abstractj/libmatthew-java```
+    * ```cd libmatthew-java```
+    * ```mvn install```
+* Copy jni libraries libunix-java.so to your lib native path like this (note that extension is .dylib) : 
+```sudo cp ./libmatthew-java/libunix/target/libunix-java.so $JAVA_HOME/jre/lib/libunix-java.dylib```
+* Launch dbus :
+    * if necessary create directory ```~/Library/LaunchAgents/```
+    * Create a symbolic link : ```ln -sfv /usr/local/opt/d-bus/*.plist ~/Library/LaunchAgents```
+    * Edit your .bash_profile file and add : ```export DBUS_SESSION_BUS_ADDRESS=unix:path=$DBUS_LAUNCHD_SESSION_BUS_SOCKET```
+    * Edit the file :  ```/usr/local/Cellar/d-bus/1.10.6/share/dbus-1/session.conf``` , Add this lines after EXTERNAL auth :
+            <br/>```<auth>ANONYMOUS</auth>```
+  			<br/>```<allow_anonymous/>```
+    * Launch dbus agent : ```launchctl load ~/Library/LaunchAgents/org.freedesktop.dbus-session.plist```
+    * Restart your system
+* build erocci-dbus-java :
+    * ```./dbus-java-install.sh```
+    * ```make```
+    * ```make run```
+* For Erocci, use these instruction for Mac OSX : https://github.com/erocci/erocci
+* Some links that may help : 
+    * http://blog.roderickmann.org/2015/03/using-dbus-on-os-x-yosemite/
+    * https://github.com/brianmcgillion/DBus/blob/master/README.launchd
 
 ## CI
 

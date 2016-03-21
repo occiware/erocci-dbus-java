@@ -2,9 +2,24 @@ PROJECT = erocci-dbus-java
 
 JNI_PATH ?= /usr/lib/jni
 
+UNAME := $(shell uname)
+
+$(info "UNAME: $(UNAME)")
+ifeq ($(UNAME), Linux)
+$(info "Linux platform detected")
 ifeq ($(wildcard $(JNI_PATH)/libunix-java.so),)
 $(error "Can not find libunix-java.so in $$(JNI_PATH)/")
 endif
+endif
+ifeq ($(UNAME), Darwin)
+ $(info "Mac OS X platform detected")
+ JNI_PATH = $(JAVA_HOME)/jre/lib
+ifeq ($(wildcard $(JNI_PATH)/libunix-java.dylib),)
+$(error "Can not find libunix-java.dylib in $$(JNI_PATH)/")
+endif
+endif
+
+$(info "JNI Path : $(JNI_PATH)")
 
 MVN ?= $(shell which mvn)
 ifeq ($(MVN),)
@@ -22,7 +37,7 @@ export DBUS_SESSION_BUS_ADDRESS
 
 LD_LIBRARY_PATH += :$(JNI_PATH)
 export LD_LIBRARY_PATH
-
+$(info "LIBRARY path : $(LD_LIBRARY_PATH)")
 all: $(JAR)
 
 $(JAR):
