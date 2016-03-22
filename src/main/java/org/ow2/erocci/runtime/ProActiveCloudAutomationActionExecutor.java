@@ -28,6 +28,10 @@ public class ProActiveCloudAutomationActionExecutor extends AbstractActionExecut
 		// TODO Auto-generated constructor stub
 	}
 
+    private ProActiveCloudAutomationActionExecutor() {
+        super();
+    }
+
 	@Override
 	public void occiMixinDeleted(Entity entity, String mixinId) throws ExecuteActionException {
 		// TODO Auto-generated method stub
@@ -70,5 +74,14 @@ public class ProActiveCloudAutomationActionExecutor extends AbstractActionExecut
 		// TODO Auto-generated method stub
 		
 	}
+
+    public static IActionExecutor getInstance() {
+        return ProActiveCloudAutomationActionExecutorHolder.INSTANCE;
+    }
+    
+    private static class ProActiveCloudAutomationActionExecutorHolder {
+        private final static ProActiveCloudAutomationActionExecutor INSTANCE = new ProActiveCloudAutomationActionExecutor();
+    }
+
 
 }

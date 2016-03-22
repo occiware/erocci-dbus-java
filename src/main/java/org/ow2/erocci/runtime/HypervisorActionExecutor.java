@@ -28,6 +28,10 @@ public class HypervisorActionExecutor extends AbstractActionExecutor implements 
 		// TODO Auto-generated constructor stub
 	}
 
+    private HypervisorActionExecutor() {
+        super();
+    }
+
 	@Override
 	public void occiMixinDeleted(Entity entity, String mixinId) throws ExecuteActionException {
 		// TODO Auto-generated method stub
@@ -70,6 +74,15 @@ public class HypervisorActionExecutor extends AbstractActionExecutor implements 
 		// TODO Auto-generated method stub
 		
 	}
+
+    
+    public static IActionExecutor getInstance() {
+        return HypervisorActionExecutorHolder.INSTANCE;
+    }
+    
+    private static class HypervisorActionExecutorHolder {
+        private final static HypervisorActionExecutor INSTANCE = new HypervisorActionExecutor();
+    }
 
 	
 

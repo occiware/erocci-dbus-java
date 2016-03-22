@@ -33,6 +33,10 @@ public abstract class AbstractActionExecutor implements IActionExecutor {
 	
 	protected Extension extension;
 	
+    public AbstractActionExecutor() {
+        super();
+    }
+    
 	public AbstractActionExecutor(Extension extension) {
 		super();
 		this.extension = extension;
@@ -70,4 +74,16 @@ public abstract class AbstractActionExecutor implements IActionExecutor {
 	 */
 	@Override
 	public abstract void execute(String actionId, Map<String, String> actionAttributes, Entity entity, final String fromMethod) throws ExecuteActionException;
+
+    @Override
+    public void setExtension(Extension ext) {
+        this.extension = ext;
+    }
+    
+    @Override
+    public Extension getExtension() {
+        return this.extension;
+    }
+    
+    
 }

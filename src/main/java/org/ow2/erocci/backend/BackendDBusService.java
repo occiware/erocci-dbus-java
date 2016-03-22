@@ -46,6 +46,7 @@ public class BackendDBusService {
 	/**
 	 * Set OCCI schema
 	 * @param in InputStream to read schema from (will be closed at the end of this call)
+     * @return a BackendDBusService object.
 	 */
 	public final BackendDBusService setSchema(InputStream in) {
 		coreImpl.setSchema(in);
@@ -84,11 +85,21 @@ public class BackendDBusService {
 	 * @param args
 	 */
 	public static void main(String[] args) {
-		new BackendDBusService()
-			.setSchema(BackendDBusService.class.getResourceAsStream("/schema.xml"))
-			.start("org.ow2.erocci.backend");
+		if (args == null || args.length == 0) {
+            // Infrastructure schema is default. 
+            new BackendDBusService()
+                .setSchema(BackendDBusService.class.getResourceAsStream("/schema.xml"))
+                .start("org.ow2.erocci.backend");
+        } else if (args.length == 1) {
+            if (args[0].equals("docker")) {
+                new BackendDBusService()
+                        .setSchema(BackendDBusService.class.getResourceAsStream("/docker-schema.xml"))
+                        .start("org.ow2.erocci.backend");
+            } else {
+                throw new RuntimeException("Argument is not known : " + " , usage: " + " 'docker' or no arguments for infrastructure generic model.");
+            }
+        }
 		ConfigurationManager.getConfigurationForOwner(ConfigurationManager.DEFAULT_OWNER);
-		// TODO : Add argument for specifying an extension to use (with infrastructure and core) or specify it in init method.
 		
 	}
 

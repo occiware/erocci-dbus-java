@@ -17,18 +17,14 @@ package org.ow2.erocci.runtime;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.lang.reflect.Parameter;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
-import org.eclipse.emf.common.util.EList;
 import org.occiware.clouddesigner.occi.Action;
 import org.occiware.clouddesigner.occi.Entity;
 import org.occiware.clouddesigner.occi.Extension;
-import org.occiware.clouddesigner.occi.Kind;
 import org.occiware.clouddesigner.occi.infrastructure.RestartMethod;
 import org.occiware.clouddesigner.occi.infrastructure.StopMethod;
 import org.occiware.clouddesigner.occi.infrastructure.SuspendMethod;
@@ -44,6 +40,10 @@ public class InfrastructureActionExecutor extends AbstractActionExecutor impleme
 	public InfrastructureActionExecutor(Extension extension) {
 		super(extension);
 	}
+
+    private InfrastructureActionExecutor() {
+        super();
+    }
 
 	@Override
 	public void occiPostCreate(Entity entity) throws ExecuteActionException {
@@ -382,5 +382,14 @@ public class InfrastructureActionExecutor extends AbstractActionExecutor impleme
 		}
 
 	}
+    
+    public static IActionExecutor getInstance() {
+        return InfrastructureActionExecutorHolder.INSTANCE;
+    }
+    
+    private static class InfrastructureActionExecutorHolder {
+        private final static InfrastructureActionExecutor INSTANCE = new InfrastructureActionExecutor();
+    }
+
 
 }

@@ -32,6 +32,10 @@ public class DefaultActionExecutor extends AbstractActionExecutor implements IAc
 		// TODO Auto-generated constructor stub
 	}
 
+    private DefaultActionExecutor() {
+        super();
+    }
+
 	@Override
 	public void occiPostCreate(Entity entity) throws ExecuteActionException {
 		// TODO Auto-generated method stub
@@ -74,5 +78,14 @@ public class DefaultActionExecutor extends AbstractActionExecutor implements IAc
 		// TODO Auto-generated method stub
 		
 	}
+
+    public static IActionExecutor getInstance() {
+        return DefaultActionExecutorHolder.INSTANCE;
+    }
+    
+    private static class DefaultActionExecutorHolder {
+        private final static DefaultActionExecutor INSTANCE = new DefaultActionExecutor();
+    }
+
 	
 }

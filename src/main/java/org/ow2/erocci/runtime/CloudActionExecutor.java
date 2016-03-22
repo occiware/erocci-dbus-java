@@ -23,7 +23,11 @@ import org.ow2.erocci.model.exception.ExecuteActionException;
 
 public class CloudActionExecutor extends AbstractActionExecutor implements IActionExecutor {
 
-	public CloudActionExecutor(Extension extension) {
+	private CloudActionExecutor() {
+        super();
+    }
+    
+    public CloudActionExecutor(Extension extension) {
 		super(extension);
 		// TODO Auto-generated constructor stub
 	}
@@ -70,6 +74,15 @@ public class CloudActionExecutor extends AbstractActionExecutor implements IActi
 		// TODO Auto-generated method stub
 		
 	}
+
+    
+    public static IActionExecutor getInstance() {
+        return CloudActionExecutorHolder.INSTANCE;
+    }
+    
+    private static class CloudActionExecutorHolder {
+        private final static CloudActionExecutor INSTANCE = new CloudActionExecutor();
+    }
 
 
 }

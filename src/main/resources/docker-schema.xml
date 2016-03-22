@@ -1,0 +1,112 @@
+<occi:extension xmlns:occi="http://schemas.ogf.org/occi"
+                xmlns:xs="http://www.w3.org/2001/XMLSchema"
+                xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                xsi:schemaLocation="http://schemas.ogf.org/occi occi.xsd " name="Docker"
+                status="stable" version="1">
+    <!-- Docker part -->
+    <occi:kind term="machine" scheme="http://occiware.org/docker#" title="Machine Resource">
+        <occi:parent scheme="http://schemas.ogf.org/occi/core#" term="resource" />
+        <occi:attribute name="name" type="xs:string" title="" />
+    </occi:kind>
+    <occi:kind term="machine_Amazon_EC2" scheme="http://occiware.org/docker#" title="Machine on Amazon EC2">
+        <occi:parent scheme="http://schemas.ogf.org/occi/core#" term="resource" />
+    </occi:kind>
+    <occi:kind term="machine_Digital_Ocean" scheme="http://occiware.org/docker#" title="Machine on Digital Ocean">
+        <occi:parent scheme="http://schemas.ogf.org/occi/core#" term="resource" />
+    </occi:kind>
+    <occi:kind term="machine_Google_Compute_Engine" scheme="http://occiware.org/docker#" title="Machine on Google Compute Engine">
+        <occi:parent scheme="http://schemas.ogf.org/occi/core#" term="resource" />
+    </occi:kind>
+    <occi:kind term="machine_IBM_SoftLayer" scheme="http://occiware.org/docker#" title="Machine on IBM SoftLayer">
+        <occi:parent scheme="http://schemas.ogf.org/occi/core#" term="resource" />
+    </occi:kind>
+    <occi:kind term="machine_Microsoft_Azure" scheme="http://occiware.org/docker#" title="Machine on Microsoft Azure">
+        <occi:parent scheme="http://schemas.ogf.org/occi/core#" term="resource" />
+    </occi:kind>
+    <occi:kind term="machine_Microsoft_Hyper_V" scheme="http://occiware.org/docker#" title="Machine on Microsoft Hyper-V">
+        <occi:parent scheme="http://schemas.ogf.org/occi/core#" term="resource" />
+    </occi:kind>
+    <occi:kind term="machine_OpenStack" scheme="http://occiware.org/docker#" title="Machine on OpenStack">
+        <occi:parent scheme="http://schemas.ogf.org/occi/core#" term="resource" />
+    </occi:kind>
+    <occi:kind term="machine_Rackspace" scheme="http://occiware.org/docker#" title="Machine on Rackspace cloud">
+        <occi:parent scheme="http://schemas.ogf.org/occi/core#" term="resource" />
+    </occi:kind>
+    <occi:kind term="machine_VirtualBox" scheme="http://occiware.org/docker#" title="Machine on VirtualBox">
+        <occi:parent scheme="http://schemas.ogf.org/occi/core#" term="resource" />
+        <occi:attribute name="boot2docker_url" type="xs:string" title="" />
+        <occi:attribute name="disk_size" type="xs:string" title="Size of disk for the host in MB" />
+        <occi:attribute name="memory" type="xs:string" title="Size of memory for the host in MB" />
+    </occi:kind>
+    <occi:kind term="machine_VMware_Fusion" scheme="http://occiware.org/docker#" title="Machine on VMware Fusion">
+        <occi:parent scheme="http://schemas.ogf.org/occi/core#" term="resource" />
+    </occi:kind>
+    <occi:kind term="machine_VMware_vCloud_Air" scheme="http://occiware.org/docker#" title="Machine on VMware vCloud Air">
+        <occi:parent scheme="http://schemas.ogf.org/occi/core#" term="resource" />
+    </occi:kind>
+    <occi:kind term="machine_VMware_vSphere" scheme="http://occiware.org/docker#" title="Machine on VMware vSphere">
+        <occi:parent scheme="http://schemas.ogf.org/occi/core#" term="resource" />
+    </occi:kind>
+    <occi:kind term="link" scheme="http://occiware.org/docker#" title="Link between containers">
+        <occi:parent term="link" scheme="http://schemas.ogf.org/occi/core#" />
+        <occi:attribute name="alias" type="xs:string" title="The alias of this Link instance" />
+    </occi:kind>
+    <occi:kind term="volumesfrom" scheme="http://occiware.org/docker#" title="VolumsFrom">
+        <occi:parent term="link" scheme="http://schemas.ogf.org/occi/core#" />
+        <occi:attribute name="mode" type="xs:string" title="The mode of this VolumesFrom instance" />
+    </occi:kind>
+    <occi:kind term="contains" scheme="http://occiware.org/docker#" title="">
+        <occi:parent term="link" scheme="http://schemas.ogf.org/occi/core#" />
+    </occi:kind>
+    <occi:kind term="container" scheme="http://occiware.org/docker#" title="Container Resource">
+        <occi:parent scheme="http://schemas.ogf.org/occi/core#" term="resource" />
+        <occi:attribute name="name" type="xs:string" title="name" />
+        <occi:attribute name="containerid" type="xs:string" title="ID" />
+        <occi:attribute name="image" type="xs:string" title="" />
+        <occi:attribute name="build" type="xs:string" title="build directory" />
+        <occi:attribute name="command" type="xs:string" title="Override the default command in Dockerfile" />
+        <occi:attribute name="ports" type="xs:string" title="ports list separated by space" />
+        <occi:attribute name="expose" type="xs:string" title="exposed port list separated by space" />
+        <occi:attribute name="volumes" type="xs:string" title="The list of volumes separated by space" />
+        <occi:attribute name="environment" type="xs:string" title="Separated by space" />
+        <occi:attribute name="env_file" type="xs:string" title="" />
+        <occi:attribute name="net" type="xs:string" title="'bridge',  'none', 'container:[name or id]', or 'host'" />
+        <occi:attribute name="dns" type="xs:string" title="Custom DNS servs, sep by space" />
+        <occi:attribute name="dns_search" type="xs:string" title="Custom DNS search domains" />
+        <occi:attribute name="cap_add" type="xs:string" title="Add container capabilities" />
+        <occi:attribute name="cap_drop" type="xs:string" title="Drop container capabilities" />
+        <occi:attribute name="working_dir" type="xs:string" title="Working directory" />
+        <occi:attribute name="entrypoint" type="xs:string" title="" />
+        <occi:attribute name="user" type="xs:string" title="" />
+        <occi:attribute name="hostname" type="xs:string" title="" />
+        <occi:attribute name="domainname" type="xs:string" title="" />
+        <occi:attribute name="mem_limit" type="xs:string" title="" />
+        <occi:attribute name="memory_swap" type="xs:string" title="Memory swap limit" />
+        <occi:attribute name="privileged" type="xs:string" title="" />
+        <occi:attribute name="restart" type="xs:string" title="" />
+        <occi:attribute name="stdin_open" type="xs:string" title="" />
+        <occi:attribute name="interactive" type="xs:string" title="" />
+        <occi:attribute name="tty" type="xs:string" title="" />
+        <occi:attribute name="cpu_shares" type="xs:string" title="CPU shares for this Docker container" />
+        <occi:attribute name="pid" type="xs:string" title="'' or 'host'" />
+        <occi:attribute name="ipc" type="xs:string" title="'', 'host' or 'container:[name:id]'" />
+        <occi:attribute name="add_host" type="xs:string" title="" />
+        <occi:attribute name="mac_address" type="xs:string" title="" />
+        <occi:attribute name="rm" type="xs:string" title="" />
+        <occi:attribute name="security_opt" type="xs:string" title="" />
+        <occi:attribute name="device" type="xs:string" title="" />
+        <occi:attribute name="lxc_conf" type="xs:string" title="" />
+        <occi:attribute name="cpuset" type="xs:string" title="" />
+        <occi:attribute name="publish_all" type="xs:string" title="Publish all exposed ports to random ports on the host interfaces" />
+        <occi:attribute name="read_only" type="xs:string" title="Mount the container's root filesystem as read only" />
+        <occi:action term="create" scheme="http://occiware.org/docker/container/action#" title="" />
+        <occi:action term="start" scheme="http://occiware.org/docker/container/action#" title="" />
+        <occi:action term="stop" scheme="http://occiware.org/docker/container/action#" title="" />
+        <occi:action term="run" scheme="http://occiware.org/docker/container/action#" title="" />
+        <occi:action term="pause" scheme="http://occiware.org/docker/container/action#" title="" />
+        <occi:action term="unpause" scheme="http://occiware.org/docker/container/action#" title="" />
+        <occi:action term="kill" scheme="http://occiware.org/docker/container/action#" title="" >
+            <occi:attribute name="signal" type="xs:string" title="" />
+        </occi:action>
+    </occi:kind>
+</occi:extension>

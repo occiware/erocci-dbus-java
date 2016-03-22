@@ -36,30 +36,30 @@ public class ActionExecutorFactory {
 		String extName = ext.getName();
 		switch (extName) {
 			case ConfigurationManager.EXT_CLOUD_NAME:
-				iActionExecutor = new CloudActionExecutor(ext);
+				iActionExecutor = CloudActionExecutor.getInstance();
 				break;
 			case ConfigurationManager.EXT_CLOUDAUTOMATION_NAME:
-				iActionExecutor = new ProActiveCloudAutomationActionExecutor(ext);
+				iActionExecutor = ProActiveCloudAutomationActionExecutor.getInstance();
 				break;
 			case ConfigurationManager.EXT_CORE_NAME:
-				iActionExecutor = new DefaultActionExecutor(ext);
+				iActionExecutor = DefaultActionExecutor.getInstance();
 				break;
 			case ConfigurationManager.EXT_DOCKER_NAME:
-				iActionExecutor = new DockerActionExecutor(ext);
+				iActionExecutor = DockerActionExecutor.getInstance();
 				break;
 			case ConfigurationManager.EXT_HYPERVISOR_NAME:
-				iActionExecutor = new HypervisorActionExecutor(ext);
+				iActionExecutor = HypervisorActionExecutor.getInstance();
 				break;
 				
 			case ConfigurationManager.EXT_INFRASTRUCTURE_NAME:
-				iActionExecutor = new InfrastructureActionExecutor(ext);
+				iActionExecutor = InfrastructureActionExecutor.getInstance();
 				break;
 				
 			default:
-				iActionExecutor = new DefaultActionExecutor(ext);
+				iActionExecutor = DefaultActionExecutor.getInstance();
 		}
-		
-		
+        iActionExecutor.setExtension(ext);
+        
 		return iActionExecutor;
 	}
 	

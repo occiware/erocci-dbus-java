@@ -18,6 +18,7 @@ package org.ow2.erocci.runtime;
 import java.util.Map;
 
 import org.occiware.clouddesigner.occi.Entity;
+import org.occiware.clouddesigner.occi.Extension;
 import org.ow2.erocci.model.exception.ExecuteActionException;
 
 /**
@@ -60,4 +61,7 @@ public interface IActionExecutor {
 	 * @throws ExecuteActionException
 	 */
 	public void execute(String actionId, Map<String, String> actionAttributes, Entity entity, final String fromMethod) throws ExecuteActionException;
+    
+    public void setExtension(Extension ext);
+    public Extension getExtension();
 }
