@@ -228,14 +228,21 @@ public class Utils {
 	 * 
 	 * @param in
 	 * @param os
-	 * @throws IOException
+	 * @return a String representation of copied bytes, null if outputstream is not a ByteArrayOutputStream.
+     * @throws IOException
+     * 
 	 */
-	public static void copyStream(InputStream in, OutputStream os) throws IOException {
+	public static String copyStream(InputStream in, OutputStream os) throws IOException {
 		byte[] buf = new byte[1024];
 		int len;
 		while ((len = in.read(buf)) > 0) {
 			os.write(buf, 0, len);
 		}
+        os.flush();
+        if (os instanceof ByteArrayOutputStream) {
+            return new String(((ByteArrayOutputStream) os).toByteArray(), "UTF-8");
+        }
+        return null;
 	}
 
 	/**

@@ -22,6 +22,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.eclipse.emf.common.util.Diagnostic;
@@ -795,7 +796,7 @@ public class ConfigurationManager {
                         // corresponding OCCI Package.
                         assignConnectorFactoryToEMFPackage(ext);
                         config.getUse().add(ext);
-                        logger.info("New extension: " + ext.getName() + " --< added to configuration owner: " + owner);
+                        logger.log(Level.INFO, "New extension: {0} --< added to configuration owner: {1}", new Object[]{ext.getName(), owner});
                         break;
                     }
                 }
@@ -1730,17 +1731,22 @@ public class ConfigurationManager {
                     System.err.println("WARNING: EFactory " + epackageNS + " not found!");
                 } else {
                     // Create the EObject for this kind.
-                    createdEntity = (Entity) efactory.create(eclass);
+                    try {
+                        createdEntity = (Entity) efactory.create(eclass);
+                    } catch (Exception e) {
+                        logger.warning(e.getMessage());
+                        e.printStackTrace();
+                    }
                 }
             }
         }
         if (createdEntity == null) {
-            System.err.println("WARNING: Create OCCI Core Resource!");
+            logger.warning("WARNING: Create OCCI Core Resource!");
             createdEntity = OCCIFactory.eINSTANCE.createResource();
             createdEntity.setKind(kind);
         }
 
-        System.err.println("DEBUG: created entity=" + createdEntity);
+        logger.info("DEBUG: created entity=" + createdEntity);
         // Return the new entity.
         return createdEntity;
     }

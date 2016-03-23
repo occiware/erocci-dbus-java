@@ -18,12 +18,8 @@ package org.ow2.erocci.backend;
 import java.io.InputStream;
 import java.util.logging.Logger;
 
-import org.eclipse.ocl.pivot.evaluation.ModelManager;
 import org.freedesktop.dbus.DBusConnection;
-import org.freedesktop.dbus.DBusSignal;
-import org.freedesktop.dbus.bin.CreateInterface;
 import org.freedesktop.dbus.exceptions.DBusException;
-import org.ow2.erocci.backend.impl.ActionImpl;
 import org.ow2.erocci.backend.impl.CoreImpl;
 import org.ow2.erocci.model.ConfigurationManager;
 

@@ -35,3 +35,5 @@ mvn install:install-file -Dfile="./lib/org.occiware.clouddesigner.occi-0.1.0-SNA
 mvn install:install-file -Dfile="./lib/org.occiware.clouddesigner.occi.infrastructure-0.1.0-SNAPSHOT.jar"  -DgroupId="Clouddesigner" -DartifactId="org.occiware.clouddesigner.occi.infrastructure" -Dversion="0.1.0-SNAPSHOT" -Dpackaging=jar
 mvn install:install-file -Dfile="./lib/org.occiware.clouddesigner.occi.docker-0.1.0-SNAPSHOT.jar"  -DgroupId="Clouddesigner" -DartifactId="org.occiware.clouddesigner.occi.docker" -Dversion="0.1.0-SNAPSHOT" -Dpackaging=jar
 mvn install:install-file -Dfile="./lib/org.occiware.clouddesigner.occi.docker.connector-0.1.0-SNAPSHOT.jar"  -DgroupId="Clouddesigner" -DartifactId="org.occiware.clouddesigner.occi.docker.connector" -Dversion="0.1.0-SNAPSHOT" -Dpackaging=jar
+mvn install:install-file -Dfile="./lib/org.occiware.clouddesigner.occi.docker.preference-0.1.0-SNAPSHOT.jar"  -DgroupId="Clouddesigner" -DartifactId="org.occiware.clouddesigner.occi.docker.preference" -Dversion="0.1.0-SNAPSHOT" -Dpackaging=jar
+

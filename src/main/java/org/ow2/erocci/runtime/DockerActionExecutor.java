@@ -18,6 +18,7 @@ package org.ow2.erocci.runtime;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
+import java.util.logging.Logger;
 
 import org.eclipse.emf.ecore.EObject;
 import org.occiware.clouddesigner.occi.Action;
@@ -35,11 +36,15 @@ import org.ow2.erocci.model.exception.ExecuteActionException;
 /**
  * This executor is specialized to DockerConnector.
  *
- * @author christophe
+ * @author Christophe Gourdin - Inria
  *
  */
 public class DockerActionExecutor extends AbstractActionExecutor implements IActionExecutor {
 
+    
+    
+    private Logger logger = Logger.getLogger(this.getClass().getName()); 
+    
     public static final Integer CONTAINER_TYPE = 1;
     public static final Integer CONTAINS_TYPE = 2; // a link.
     public static final Integer VOLUMES_FROM_TYPE = 3; // a link.
@@ -117,7 +122,10 @@ public class DockerActionExecutor extends AbstractActionExecutor implements IAct
     public void occiPostCreate(Entity entity) throws ExecuteActionException {
         if (entity instanceof Container) {
             execute("pullImage", entity, FROM_CREATE);
+        } else {
+            logger.info("No actions to execute on SaveResource() postCreate().");
         }
+        
 
     }
 

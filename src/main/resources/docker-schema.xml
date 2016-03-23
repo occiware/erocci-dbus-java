@@ -7,18 +7,72 @@
     <occi:kind term="machine" scheme="http://occiware.org/docker#" title="Machine Resource">
         <occi:parent scheme="http://schemas.ogf.org/occi/core#" term="resource" />
         <occi:attribute name="name" type="xs:string" title="" />
+        <occi:attribute name="occi.compute.architecture" type="xs:string" title="CPU Architecture" />
+        <occi:attribute name="occi.compute.cores" type="xs:integer" title="CPU cores number" />
+        <occi:attribute name="occi.compute.hostname" type="xs:string" title="System hostname" />
+        <occi:attribute name="occi.compute.speed" type="xs:float" title="CPU speed (GHz)" />
+        <occi:attribute name="occi.compute.memory" type="xs:float" title="System RAM (GB)" />
+        <occi:attribute name="occi.compute.state" use="required" default="inactive" immutable="true" title="System state" type="xs:string" />
+        <occi:action term="start" scheme="http://schemas.ogf.org/occi/infrastructure/compute/action#" title="Start the system" >
+        </occi:action>
+        <occi:action term="stop" scheme="http://schemas.ogf.org/occi/infrastructure/compute/action#" title="Stop the system (graceful, acpioff or poweroff)" >
+            <occi:attribute name="method" type="xs:string" />
+        </occi:action>
+        <occi:action term="restart" scheme="http://schemas.ogf.org/occi/infrastructure/compute/action#" title="Restart the system (graceful, warm or cold)" >
+            <occi:attribute name="method" type="xs:string" />
+        </occi:action>
+        <occi:action term="suspend" scheme="http://schemas.ogf.org/occi/infrastructure/compute/action#" title="Suspend the system (hibernate or in RAM)" >
+            <occi:attribute name="method" type="xs:string" />
+        </occi:action>
     </occi:kind>
     <occi:kind term="machine_Amazon_EC2" scheme="http://occiware.org/docker#" title="Machine on Amazon EC2">
         <occi:parent scheme="http://schemas.ogf.org/occi/core#" term="resource" />
+        <occi:attribute name="name" type="xs:string" title="" />
+        <occi:attribute name="access_key" type="xs:string" title="" />
+        <occi:attribute name="secret_key" type="xs:string" title="" />
+        <occi:attribute name="ami" default="ami-4ae27e22" type="xs:string" title="The AMI ID of the instance to use" />
+        <occi:attribute name="instance_type" default="t2.micro" type="xs:string" title="ec2 instance type" />
+        <occi:attribute name="region" default="us-east-1" type="xs:string" title="The region to use when launching the instance" />
+        <occi:attribute name="root_size" default="16" type="xs:float" title="The root disk size of the instance (in GB)" />
+        <occi:attribute name="security_group" default="docker-machine" type="xs:string" title="AWS VPC Security group name" />
+        <occi:attribute name="session_token" type="xs:string" title="Session AWS Token" />
+        <occi:attribute name="subnet_id" type="xs:string" title="aws vpc subnet id" />
+        <occi:attribute name="vpc_id" type="xs:string" title="AWS VPC Id to launch the instance in" />
+        <occi:attribute name="zone" type="xs:string" default="a" title="aws zone default to a" />
     </occi:kind>
     <occi:kind term="machine_Digital_Ocean" scheme="http://occiware.org/docker#" title="Machine on Digital Ocean">
         <occi:parent scheme="http://schemas.ogf.org/occi/core#" term="resource" />
+        <occi:attribute name="name" type="xs:string" title="" />
+        <occi:attribute name="access_token" required="true" type="xs:string" default="a" title="" />
+        <occi:attribute name="image" default="true" type="xs:string" title="" />
+        <occi:attribute name="region" default="nyc3" type="xs:string" title="" />
+        <occi:attribute name="size" default="512mb" type="xs:string" title="size of the digital ocean driver larger than 512mb are in gb as 2gb" />
     </occi:kind>
     <occi:kind term="machine_Google_Compute_Engine" scheme="http://occiware.org/docker#" title="Machine on Google Compute Engine">
         <occi:parent scheme="http://schemas.ogf.org/occi/core#" term="resource" />
+        <occi:attribute name="name" type="xs:string" title="" />
+        <occi:attribute name="zone" type="xs:string" default="us-central1-a" title="Zone to launch the instance" />
+        <occi:attribute name="machine_type" type="xs:string" default="f1-micro" title="instance type" />
+        <occi:attribute name="username" type="xs:string" default="docker-user" title="username to use with instance" />
+        <occi:attribute name="instance_name" type="xs:string" default="docker-machine" title="instance name" />
+        <occi:attribute name="project" type="xs:string" required="true" title="name of the project to use when instance launch" />
     </occi:kind>
     <occi:kind term="machine_IBM_SoftLayer" scheme="http://occiware.org/docker#" title="Machine on IBM SoftLayer">
         <occi:parent scheme="http://schemas.ogf.org/occi/core#" term="resource" />
+        <occi:attribute name="name" type="xs:string" title="" />
+        <occi:attribute name="api_endpoint" type="xs:string" title="" />
+        <occi:attribute name="user" required="true" type="xs:string" title="username for your softlayer account, api key needs to match this user" />
+        <occi:attribute name="api_key" required="true" type="xs:string" title="API key for your user account" />
+        <occi:attribute name="cpu" type="xs:float" title="Number of CPU's for the machine" />
+        <occi:attribute name="disk_size" type="xs:float" title="Size of the disk in MB. 0 sets the softlayer default" />
+        <occi:attribute name="domain" type="xs:string" required="true" title="domain name for the machine" />
+        <occi:attribute name="hostname" type="xs:string" title="hostname for the machine" />
+        <occi:attribute name="hourly_billing" type="xs:integer" title="Sets the hourly billing flag (default), otherwise uses monthly billing" />
+        <occi:attribute name="image" type="xs:string" title="OS image to use" />
+        <occi:attribute name="local_disk" type="xs:integer" title="Use local machine disk instead of softlayer SAN" />
+        <occi:attribute name="memory" type="xs:float" title="Memory for host in MB" />
+        <occi:attribute name="private_net_only" type="xs:integer" title="Disable public networking" />
+        <occi:attribute name="region" type="xs:string" title="softlayer region" />
     </occi:kind>
     <occi:kind term="machine_Microsoft_Azure" scheme="http://occiware.org/docker#" title="Machine on Microsoft Azure">
         <occi:parent scheme="http://schemas.ogf.org/occi/core#" term="resource" />
@@ -34,9 +88,27 @@
     </occi:kind>
     <occi:kind term="machine_VirtualBox" scheme="http://occiware.org/docker#" title="Machine on VirtualBox">
         <occi:parent scheme="http://schemas.ogf.org/occi/core#" term="resource" />
-        <occi:attribute name="boot2docker_url" type="xs:string" title="" />
-        <occi:attribute name="disk_size" type="xs:string" title="Size of disk for the host in MB" />
-        <occi:attribute name="memory" type="xs:string" title="Size of memory for the host in MB" />
+        <occi:attribute name="name" type="xs:string" title="" />
+        <occi:attribute name="boot2docker_url" type="xs:string" title="The URL of the boot2docker image. Default to the latest available version" />
+        <occi:attribute name="disk_size" default="2000" type="xs:float" title="Size of disk for the host in MB" />
+        <occi:attribute name="memory" default="1024" type="xs:float" title="Size of memory for the host in MB" />
+        <occi:attribute name="occi.compute.architecture" type="xs:string" title="CPU Architecture" />
+        <occi:attribute name="occi.compute.cores" type="xs:integer" title="CPU cores number" />
+        <occi:attribute name="occi.compute.hostname" type="xs:string" title="System hostname" />
+        <occi:attribute name="occi.compute.speed" type="xs:float" title="CPU speed (GHz)" />
+        <occi:attribute name="occi.compute.memory" type="xs:float" title="System RAM (GB)" />
+        <occi:attribute name="occi.compute.state" use="required" default="inactive" immutable="true" title="System state" type="xs:string" />
+        <occi:action term="start" scheme="http://schemas.ogf.org/occi/infrastructure/compute/action#" title="Start the system" >
+        </occi:action>
+        <occi:action term="stop" scheme="http://schemas.ogf.org/occi/infrastructure/compute/action#" title="Stop the system (graceful, acpioff or poweroff)" >
+            <occi:attribute name="method" type="xs:string" />
+        </occi:action>
+        <occi:action term="restart" scheme="http://schemas.ogf.org/occi/infrastructure/compute/action#" title="Restart the system (graceful, warm or cold)" >
+            <occi:attribute name="method" type="xs:string" />
+        </occi:action>
+        <occi:action term="suspend" scheme="http://schemas.ogf.org/occi/infrastructure/compute/action#" title="Suspend the system (hibernate or in RAM)" >
+            <occi:attribute name="method" type="xs:string" />
+        </occi:action>
     </occi:kind>
     <occi:kind term="machine_VMware_Fusion" scheme="http://occiware.org/docker#" title="Machine on VMware Fusion">
         <occi:parent scheme="http://schemas.ogf.org/occi/core#" term="resource" />

@@ -80,8 +80,10 @@ public class CoreImpl implements core, action, mixin, DBus.Properties {
         ByteArrayOutputStream os = null;
         try {
             os = new ByteArrayOutputStream();
-            Utils.copyStream(in, os);
-            this.schema = os.toString("UTF-8");
+            this.schema = Utils.copyStream(in, os);
+            // logger.info("Schema returned: " + this.schema);
+            
+            // this.schema = os.toString("UTF-8");
         } catch (IOException e) {
             Utils.closeQuietly(in);
             Utils.closeQuietly(os);
