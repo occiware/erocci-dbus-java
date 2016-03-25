@@ -59,49 +59,27 @@ public class ActionImpl implements action {
             // TODO : return fail or no state.
             return;
         }
+        // TODO : Owner in parameters entry of Action method.
+        String owner = ConfigurationManager.DEFAULT_OWNER;
+        
         Map<String, String> actionAttributes = Utils.convertVariantMap(attributes);
-        // Launch the action if found on kind.
-        Map<String, Entity> entities = ConfigurationManager.findEntityAction(id, action_id);
-        if (!entities.isEmpty()) {
-            // Launch action.
-            logger.info("Launching the action... " + action_id + " on entity " + id);
 
-            // Validation check before executing any actions.
-            boolean result = false;
-            if (entities.size() > 1) {
-                logger.warning("cant execute action : " + action_id + ", cause : multiple entities with this id with different owners");
-                return;
-            }
-            String owner;
-            String msgError;
-            Entity entity;
-            for (Map.Entry<String, Entity> entry : entities.entrySet()) {
-                owner = entry.getKey();
-                entity = entry.getValue();
-                // Get configuration object and validate it.
-                result = ConfigurationManager.validateConfiguration(owner);
-                if (!result) {
-                    // TODO : Exception to throw Configuration is not valid.
-                    msgError = "Configuration is not valid, please make ajustment, check the logs !";
-                    logger.info(msgError);
-                    break;
-                }
-
-                // Launch the action effectively.
-                IActionExecutor actExecutor = ActionExecutorFactory.build(ConfigurationManager.getExtensionForAction(owner, action_id));
-                try {
-                    actExecutor.execute(action_id, actionAttributes, entity, IActionExecutor.FROM_ACTION);
-                } catch (ExecuteActionException ex) {
-                    logger.warning("Action launch error : " + ex.getMessage());
-                }
-
-            }
-            if (result) {
-                logger.info("Action " + action_id + " executed !");
-            }
-            // return success; (or state)
+        Entity entity = ConfigurationManager.findEntity(owner, id);
+        if (entity != null) {
+          // TODO : Model validator before launching the action, this can cause a lot of problem if constraints aren't respected.
+          // Get the executor corresponding on entity kind.
+          // Launch the action effectively.
+          String entityKind = entity.getKind().getScheme() + entity.getKind().getTerm();
+          IActionExecutor actExecutor = ActionExecutorFactory.build(ConfigurationManager.getExtensionForKind(owner, entityKind));
+          
+          try {
+              actExecutor.execute(action_id, actionAttributes, entity, IActionExecutor.FROM_ACTION);
+          } catch (ExecuteActionException ex) {
+              logger.warning("Action launch error : " + ex.getMessage());
+          }
+          
         } else {
-            logger.info("Action : " + action_id + " doesnt exist for entity : " + id);
+            logger.info("Entity doesnt exist : " + id);
             // return failed; (or state)
         }
 

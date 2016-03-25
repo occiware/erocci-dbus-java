@@ -24,6 +24,8 @@
         <occi:action term="suspend" scheme="http://schemas.ogf.org/occi/infrastructure/compute/action#" title="Suspend the system (hibernate or in RAM)" >
             <occi:attribute name="method" type="xs:string" />
         </occi:action>
+        <occi:action term="startAll" scheme="http://occiware.org/docker/machine/action#" title="Start all the system" >
+        </occi:action>
     </occi:kind>
     <occi:kind term="machine_Amazon_EC2" scheme="http://occiware.org/docker#" title="Machine on Amazon EC2">
         <occi:parent scheme="http://schemas.ogf.org/occi/core#" term="resource" />

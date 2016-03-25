@@ -31,6 +31,7 @@ mvn install:install-file -Dfile="./lib/debug-enable-1.1.jar" -DgroupId=net.windw
 mvn install:install-file -Dfile="./lib/org.eclipse.ocl.pivot-1.0.1.v20150908-1239.jar" -DpomFile="./lib/org.eclipse.ocl.pivot-1.0.1.v20150908-1239.pom"
 mvn install:install-file -Dfile="./lib/org.eclipse.ocl.common-1.3.0.v20150519-0914.jar" -DpomFile="./lib/org.eclipse.ocl.common-1.3.0.v20150519-0914.pom"
 mvn install:install-file -Dfile="./lib/org.occiware.clouddesigner.parent-0.1.0-SNAPSHOT.pom" -DgroupId=Clouddesigner -DartifactId=org.occiware.clouddesigner.parent -Dversion=0.1.0-SNAPSHOT -Dpackaging=pom
+mvn install:install-file -Dfile="./lib/docker-java-3.0.0-SNAPSHOT-jar-with-dependencies.jar"  -DgroupId="com.github.docker-java" -DartifactId="docker-java" -Dversion="3.0.0-SNAPSHOT" -Dpackaging=jar
 mvn install:install-file -Dfile="./lib/org.occiware.clouddesigner.occi-0.1.0-SNAPSHOT.jar" -DpomFile="./lib/org.occiware.clouddesigner.occi-0.1.0-SNAPSHOT.pom"
 mvn install:install-file -Dfile="./lib/org.occiware.clouddesigner.occi.infrastructure-0.1.0-SNAPSHOT.jar"  -DgroupId="Clouddesigner" -DartifactId="org.occiware.clouddesigner.occi.infrastructure" -Dversion="0.1.0-SNAPSHOT" -Dpackaging=jar
 mvn install:install-file -Dfile="./lib/org.occiware.clouddesigner.occi.docker-0.1.0-SNAPSHOT.jar"  -DgroupId="Clouddesigner" -DartifactId="org.occiware.clouddesigner.occi.docker" -Dversion="0.1.0-SNAPSHOT" -Dpackaging=jar

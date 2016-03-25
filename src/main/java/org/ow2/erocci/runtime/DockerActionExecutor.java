@@ -25,9 +25,14 @@ import org.occiware.clouddesigner.occi.Action;
 import org.occiware.clouddesigner.occi.Configuration;
 import org.occiware.clouddesigner.occi.Entity;
 import org.occiware.clouddesigner.occi.Extension;
+import org.occiware.clouddesigner.occi.Resource;
 import org.occiware.clouddesigner.occi.docker.Container;
+import org.occiware.clouddesigner.occi.docker.Contains;
 import org.occiware.clouddesigner.occi.docker.Machine;
 import org.occiware.clouddesigner.occi.docker.connector.ExecutableDockerModel;
+import org.occiware.clouddesigner.occi.docker.connector.ExecutableMachine_VirtualBox;
+import org.occiware.clouddesigner.occi.docker.connector.dockerjava.DockerContainerManager;
+import org.occiware.clouddesigner.occi.infrastructure.ComputeStatus;
 import org.occiware.clouddesigner.occi.infrastructure.RestartMethod;
 import org.occiware.clouddesigner.occi.infrastructure.StopMethod;
 import org.ow2.erocci.model.ConfigurationManager;
@@ -61,21 +66,21 @@ public class DockerActionExecutor extends AbstractActionExecutor implements IAct
     public static final Integer VMWARE_CLOUD_AIR_TYPE = 14;
     public static final Integer VMWARE_VSPHERE_TYPE = 15;
 
-    public static final String CONTAINER_NAME = "Container";
-    public static final String CONTAINS_NAME = "Contains"; // a link.
-    public static final String VOLUMES_FROM_NAME = "Volumesfrom"; // a link.
-    public static final String EC2_NAME = "Machine_Amazon_EC2";
-    public static final String MACHINE_NAME = "Machine";
-    public static final String DIGITAL_OCEAN_NAME = "Machine_Digital_Ocean";
-    public static final String GOOGLE_COMPUTE_NAME = "Machine_Google_Compute_Engine";
-    public static final String AZURE_NAME = "Machine_Microsoft_Azure";
-    public static final String HYPER_V_NAME = "Machine_Microsoft_Hyper_V";
-    public static final String OPENSTACK_NAME = "Machine_OpenStack";
-    public static final String RACKSPACE_NAME = "Machine_Rackspace";
-    public static final String VIRTUALBOX_NAME = "Machine_VirtualBox";
-    public static final String VMWARE_FUSION_NAME = "Machine_VMware_Fusion";
-    public static final String VMWARE_CLOUD_AIR_NAME = "Machine_VMware_vCloud_Air";
-    public static final String VMWARE_VSPHERE_NAME = "Machine_VMware_vSphere";
+    public static final String CONTAINER_NAME = "ExecutableContainer";
+    public static final String CONTAINS_NAME = "ContainsImpl"; // a link.
+    public static final String VOLUMES_FROM_NAME = "VolumesfromImpl"; // a link.
+    public static final String EC2_NAME = "ExecutableMachine_Amazon_EC2";
+    public static final String MACHINE_NAME = "ExecutableMachine";
+    public static final String DIGITAL_OCEAN_NAME = "ExecutableMachine_Digital_Ocean";
+    public static final String GOOGLE_COMPUTE_NAME = "ExecutableMachine_Google_Compute_Engine";
+    public static final String AZURE_NAME = "ExecutableMachine_Microsoft_Azure";
+    public static final String HYPER_V_NAME = "ExecutableMachine_Microsoft_Hyper_V";
+    public static final String OPENSTACK_NAME = "ExecutableMachine_OpenStack";
+    public static final String RACKSPACE_NAME = "ExecutableMachine_Rackspace";
+    public static final String VIRTUALBOX_NAME = "ExecutableMachine_VirtualBox";
+    public static final String VMWARE_FUSION_NAME = "ExecutableMachine_VMware_Fusion";
+    public static final String VMWARE_CLOUD_AIR_NAME = "ExecutableMachine_VMware_vCloud_Air";
+    public static final String VMWARE_VSPHERE_NAME = "ExecutableMachine_VMware_vSphere";
 
     public final Map<String, Integer> entityTypeMap;
 
@@ -120,13 +125,9 @@ public class DockerActionExecutor extends AbstractActionExecutor implements IAct
 
     @Override
     public void occiPostCreate(Entity entity) throws ExecuteActionException {
-        if (entity instanceof Container) {
-            execute("pullImage", entity, FROM_CREATE);
-        } else {
-            logger.info("No actions to execute on SaveResource() postCreate().");
+        if (entity instanceof Contains) {
+        	execute("pullImage", entity, FROM_CREATE);
         }
-        
-
     }
 
     @Override
@@ -171,7 +172,21 @@ public class DockerActionExecutor extends AbstractActionExecutor implements IAct
     @Override
     public void execute(String actionId, Map<String, String> actionAttributes, Entity entity, String fromMethod)
             throws ExecuteActionException {
-
+    	
+    	String actionTerm = null;
+    	String actionScheme = null;
+    	// Get the action Term.
+    	if (actionId.contains("#")) {
+    		// This is a kind action.
+    		actionTerm = actionId.split("#")[1];
+    		
+    	} else {
+    		// This is an actionTerm only.
+    		actionTerm = actionId;
+    		
+    	}
+    	
+    	
         if (fromMethod.equals(FROM_ACTION)) {
             // Called from ActionImpl interface DBUS Object.
             if (actionId == null) {
@@ -194,9 +209,14 @@ public class DockerActionExecutor extends AbstractActionExecutor implements IAct
         // Find which method to execute, following the final type of entity object.
         switch (fromMethod) {
             case FROM_CREATE:
-                if (actionId.equals("pullImage")) {
-                    // Pull the image of a container.
-                    // TODO : Pullimage if container has machine ?;
+                if (actionTerm.equals("pullImage") && entity instanceof Contains) {
+                    // Pull the image of a container on machine.
+                    Contains contains = (Contains)entity;
+                    // Get the machine and pull the image.
+                    Resource machine = contains.getSource();
+                    Container container = (Container)contains.getTarget();
+                    pullImage(machine, container.getImage());
+                       
                 }
                 break;
 
@@ -268,14 +288,7 @@ public class DockerActionExecutor extends AbstractActionExecutor implements IAct
                 }
                 
                 // Other cases.
-                // Get the action term from kind object.
-                Action actionKind = ConfigurationManager.getActionKindFromExtension(extension, actionId);
-                if (actionKind == null) {
-
-                    throw new ExecuteActionException(
-                            "Action : " + actionId + " doesnt exist on extension : " + extension.getName());
-                }
-                switch (actionKind.getTerm()) {
+                switch (actionTerm) {
                     case "start":
                         this.start(entity);
                         break;
@@ -373,7 +386,7 @@ public class DockerActionExecutor extends AbstractActionExecutor implements IAct
                 Container container = ((Container) eo);
                 final ExecutableDockerModel containerExec = new ExecutableDockerModel(container);
                 containerExec.container.create();
-            }
+            } 
         } catch (Exception ex) {
             throw new ExecuteActionException(ex);
         }
@@ -407,7 +420,7 @@ public class DockerActionExecutor extends AbstractActionExecutor implements IAct
         if ((eo instanceof Machine)) {
             Machine machine = ((Machine) eo);
             final ExecutableDockerModel main = new ExecutableDockerModel(machine);
-            main.restart();
+            main.startAll();
         } else if ((eo instanceof Container)) {
             Container container = ((Container) eo);
             final ExecutableDockerModel main_1 = new ExecutableDockerModel(container);
@@ -444,11 +457,31 @@ public class DockerActionExecutor extends AbstractActionExecutor implements IAct
             if ((eo instanceof Machine)) {
                 Machine machine = ((Machine) eo);
                 final ExecutableDockerModel main = new ExecutableDockerModel(machine);
-                main.startAll();
+                main.restart();
             }
         } catch (Exception ex) {
             throw new ExecuteActionException(ex);
         }
+    }
+    
+    /**
+     * Pull an image on a machine.
+     * @param eo
+     * @param image
+     * @throws ExecuteActionException
+     */
+    private void pullImage(final EObject eo, final String image) throws ExecuteActionException {
+    	try {
+    		if ((eo instanceof Machine)) {
+    			Machine machine = (Machine)eo;
+    			if (((Machine) eo).getState().equals(ComputeStatus.ACTIVE)) {
+    				final DockerContainerManager manager = new DockerContainerManager(machine);
+        			manager.pullImage(machine, image);
+    			}
+    		}
+    	} catch (Exception ex) {
+    		throw new ExecuteActionException(ex);
+    	}
     }
 
     /**
