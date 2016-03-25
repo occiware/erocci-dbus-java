@@ -133,7 +133,21 @@ DBUS_SESSION_BUS_ADDRESS=$(printenv DBUS_SESSION_BUS_ADDRESS | sed -e 's/kernel:
 * Some links that may help : 
     * http://blog.roderickmann.org/2015/03/using-dbus-on-os-x-yosemite/
     * https://github.com/brianmcgillion/DBus/blob/master/README.launchd
+* <b>Special usage with docker</b> :
+	* Install docker-tools 1.8.3 (not the last version, a lot of api updates give error on docker connector after this version, this will be updated has soon as possible, stay tuned).
+	* If you have El capitan, you must disable the apple root security added from this version of OS X, this is mandatory for making aliases on docker-machine and VBoxManage binary.
+	* Aliases on binary :
+		* ```sudo ln -s /usr/local/bin/VBoxManage /usr/bin/VBoxManage```
+		* ```sudo ln -s /usr/local/bin/docker-machine /usr/bin/docker-machine```
+	* Launch docker default virtual box machine
+	* Launch erocci-dbus-java with parameter :
+		* ```mvn exec:java -Dexec.mainClass="org.ow2.erocci.backend.BackendDBusService" -Dexec.args="docker"```
+	* Launch Erocci :
+		* Update core xml on Erocci with this file erocci/deps/erocci_core/priv/schemas/occi/occi-core.xml : [occi-core.xml](doc/occi-core.xml)
+		Note that is necessary for adding infrastructure scheme to core directly, this is a hack for now because when Erocci will be updated, it may be possible to add multiple schema see [Erocci issue #36](https://github.com/erocci/erocci/issues/36)
 
+		* ```./start.sh -c ../erocci-dbus-java/erocci-dbus-java.config```
+		
 ## CI
 
 Visit CI results on http://travis-ci.org/occiware/erocci-dbus-java
