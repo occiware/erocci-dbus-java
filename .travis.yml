@@ -9,7 +9,6 @@ jdk:
 sudo: false
 
 install:
-  - "./travis_install.sh"
   - "mvn test"
 
 script:

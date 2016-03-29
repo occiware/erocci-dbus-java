@@ -18,7 +18,12 @@ the specific language governing permissions and limitations under the License. -
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
-
+    <repositories>
+        <repository>
+            <id>local-repository</id>
+            <url>file://${basedir}/lib</url>
+        </repository>
+    </repositories>
     <dependencies>
         <dependency>
             <groupId>org.slf4j</groupId>
