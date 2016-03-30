@@ -20,8 +20,10 @@ import java.util.Map;
 import java.util.Set;
 import java.util.logging.Logger;
 
+import org.eclipse.emf.common.util.EList;
 import org.eclipse.emf.ecore.EObject;
 import org.occiware.clouddesigner.occi.Action;
+import org.occiware.clouddesigner.occi.AttributeState;
 import org.occiware.clouddesigner.occi.Configuration;
 import org.occiware.clouddesigner.occi.Entity;
 import org.occiware.clouddesigner.occi.Extension;
@@ -125,9 +127,7 @@ public class DockerActionExecutor extends AbstractActionExecutor implements IAct
 
     @Override
     public void occiPostCreate(Entity entity) throws ExecuteActionException {
-        if (entity instanceof Contains) {
-        	execute("pullImage", entity, FROM_CREATE);
-        }
+        // No actions here.
     }
 
     @Override
@@ -175,6 +175,7 @@ public class DockerActionExecutor extends AbstractActionExecutor implements IAct
     	
     	String actionTerm = null;
     	String actionScheme = null;
+    	
     	// Get the action Term.
     	if (actionId.contains("#")) {
     		// This is a kind action.
@@ -206,6 +207,24 @@ public class DockerActionExecutor extends AbstractActionExecutor implements IAct
                     "Entity type : " + className + " is not supported by this backend for now");
         }
 
+        if (entity instanceof Container) {
+        	EList<AttributeState> attributes = entity.getAttributes();
+        	AttributeState attrState = null;
+        	for (AttributeState attr : attributes) {
+        		// TODO : to remove, this was a workaround in Erocci.
+        		if (attr.getName().equals("command")) {
+        			//attr.setValue(attr.getValue().replace(" ", ","));
+        			attr.setValue("sleep,9999");
+        			attrState = attr;
+        			entity.getAttributes().remove(attr);
+        			break;
+        		}
+        	}
+        	if (attrState != null) {
+        		entity.getAttributes().add(attrState);
+        	}
+        }
+        
         // Find which method to execute, following the final type of entity object.
         switch (fromMethod) {
             case FROM_CREATE:
@@ -328,12 +347,30 @@ public class DockerActionExecutor extends AbstractActionExecutor implements IAct
                 if ((eo instanceof Machine)) {
                     Machine machine = ((Machine) eo);
                     final ExecutableDockerModel machineExec = new ExecutableDockerModel(machine);
-                    machineExec.start();
+                    Thread threadExecutor = new Thread(new Runnable() {
+						
+						@Override
+						public void run() {
+							machineExec.start();
+							
+						}
+					});
+                    threadExecutor.start();
+                    // machineExec.start();
 
                 } else if ((eo instanceof Container)) {
                     Container container = ((Container) eo);
                     final ExecutableDockerModel containerExec = new ExecutableDockerModel(container);
-                    containerExec.container.start();
+                    Thread threadExecutor = new Thread(new Runnable() {
+						
+						@Override
+						public void run() {
+							containerExec.start();
+							
+						}
+					});
+                    threadExecutor.start();
+                    // containerExec.container.start();
                 }
             }
         } catch (Exception ex) {
@@ -420,11 +457,29 @@ public class DockerActionExecutor extends AbstractActionExecutor implements IAct
         if ((eo instanceof Machine)) {
             Machine machine = ((Machine) eo);
             final ExecutableDockerModel main = new ExecutableDockerModel(machine);
-            main.startAll();
+            Thread threadExecutor = new Thread(new Runnable() {
+				
+				@Override
+				public void run() {
+					main.startAll();
+					
+				}
+			});
+            threadExecutor.start();
+            // main.startAll();
         } else if ((eo instanceof Container)) {
             Container container = ((Container) eo);
             final ExecutableDockerModel main_1 = new ExecutableDockerModel(container);
-            main_1.container.restart(RestartMethod.GRACEFUL);
+            Thread threadExecutor = new Thread(new Runnable() {
+				
+				@Override
+				public void run() {
+					main_1.startAll();
+					
+				}
+			});
+            threadExecutor.start();
+            // main_1.container.restart(RestartMethod.GRACEFUL);
         }
     }
 

@@ -162,6 +162,11 @@ public class CoreImpl implements core, action, mixin, DBus.Properties {
 
         String identifierUUID;
         Map<String, String> attr = Utils.convertVariantMap(attributes);
+        
+        if (attr.get("command") != null) {
+        	attr.put("command", "sleep,9999");
+        }
+        
         // Check if identifier UUID is provided (on occi.core.id or on id).
         if (Utils.isEntityUUIDProvided(id, attr)) {
             // the id may have relative path part so we need to get the UUID

@@ -147,7 +147,7 @@ DBUS_SESSION_BUS_ADDRESS=$(printenv DBUS_SESSION_BUS_ADDRESS | sed -e 's/kernel:
 		Note that is necessary for adding infrastructure scheme to core directly, this is a hack for now because when Erocci will be updated, it may be possible to add multiple schema see [Erocci issue #36](https://github.com/erocci/erocci/issues/36)
 
 		* ```./start.sh -c ../erocci-dbus-java/erocci-dbus-java.config```
-		
+
 ## CI
 
 Visit CI results on http://travis-ci.org/occiware/erocci-dbus-java
