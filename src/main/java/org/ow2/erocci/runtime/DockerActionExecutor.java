@@ -531,7 +531,7 @@ public class DockerActionExecutor extends AbstractActionExecutor implements IAct
     			Machine machine = (Machine)eo;
     			if (((Machine) eo).getState().equals(ComputeStatus.ACTIVE)) {
     				final DockerContainerManager manager = new DockerContainerManager(machine);
-        			manager.pullImage(machine, image);
+        			// manager.pullImage(machine, image);
     			}
     		}
     	} catch (Exception ex) {
