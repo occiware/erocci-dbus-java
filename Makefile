@@ -45,7 +45,7 @@ $(JAR):
 
 deps: deps_dbus_java
 	$(install_dbus_java)
-# ./dbus-java-install-script.sh
+	./dbus-java-install-script.sh
 
 ifneq ($(shell which apt-get),)
 deps_dbus_java:

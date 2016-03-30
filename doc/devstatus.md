@@ -40,12 +40,12 @@ Development Status values :
     </tr>
         <td align="center">SaveMixin(id, entities)</td>
         <td align="center">Associate a list of entities with a mixin, replacing existing list if any previously given, <a href="https://github.com/occiware/erocci-dbus-java/issues/8">feature #8</a></td>
-        <td align="center"><img src="https://raw.github.com/occiware/erocci-dbus-java/master/doc/problem.png" alt="Problem" height="40" width="auto" /></td>
+        <td align="center"><img src="https://raw.github.com/occiware/erocci-dbus-java/master/doc/done.png" alt="Done" height="40" width="auto" /></td>
     </tr>
     <tr>
         <td align="center">UpdateMixin(id, entities)</td>
         <td align="center">Associate a list of entities with a mixin, replacing existing list if any previously given, <a href="https://github.com/occiware/erocci-dbus-java/issues/9">feature #9</a></td>
-        <td align="center"><img src="https://raw.github.com/occiware/erocci-dbus-java/master/doc/problem.png" alt="Problem" height="40" width="auto" /></td>
+        <td align="center"><img src="https://raw.github.com/occiware/erocci-dbus-java/master/doc/done.png" alt="Done" height="40" width="auto" /></td>
     </tr>
     <tr>
         <td align="center">Find(id)</td>
@@ -75,22 +75,22 @@ Development Status values :
     <tr>
         <td align="center">property schema (core interface)</td>
         <td align="center">Assign an OCCI extension xml, on load, for now, extension are loaded via ConfigurationManager , for an owner and a Configuration Object, <a href="https://github.com/occiware/erocci-dbus-java/issues/15">feature #15</a></td>
-        <td align="center"><img src="https://raw.github.com/occiware/erocci-dbus-java/master/doc/todo.png" alt="TODO" height="40" width="auto" /></td>
+        <td align="center"><img src="https://raw.github.com/occiware/erocci-dbus-java/master/doc/done.png" alt="Done" height="40" width="auto" /></td>
     </tr>
     <tr>
         <td align="center">AddMixin(id, location, owner)</td>
         <td align="center">Add a user mixin, act as a user tag, <a href="https://github.com/occiware/erocci-dbus-java/issues/16">feature #16</a></td>
-        <td align="center"><img src="https://raw.github.com/occiware/erocci-dbus-java/master/doc/todo.png" alt="TODO" height="40" width="auto" /></td>
+        <td align="center"><img src="https://raw.github.com/occiware/erocci-dbus-java/master/doc/inprogress.png" alt="In progress" height="40" width="auto" /></td>
     </tr>
     <tr>
         <td align="center">DelMixin(id, location, owner)</td>
         <td align="center">Delete a user mixin, <a href="https://github.com/occiware/erocci-dbus-java/issues/17">feature #17</a></td>
-        <td align="center"><img src="https://raw.github.com/occiware/erocci-dbus-java/master/doc/todo.png" alt="TODO" height="40" width="auto" /></td>
+        <td align="center"><img src="https://raw.github.com/occiware/erocci-dbus-java/master/doc/inprogress.png" alt="In progress" height="40" width="auto" /></td>
     </tr>
     <tr>
         <td align="center">Action(id, action_id, attributes)</td>
-        <td align="center">Execute Action command for real interaction, action is call properly, while action has no connector, it use OCL validator but cant launch a command, <a href="https://github.com/occiware/erocci-dbus-java/issues/18">feature #18</a></td>
-        <td align="center"><img src="https://raw.github.com/occiware/erocci-dbus-java/master/doc/inprogress.png" alt="In progress" height="40" width="auto" /></td>
+        <td align="center">Execute Action command for real interaction, action is call properly, while action has no connector, it use OCL validator, <a href="https://github.com/occiware/erocci-dbus-java/issues/18">feature #18</a></td>
+        <td align="center"><img src="https://raw.github.com/occiware/erocci-dbus-java/master/doc/done.png" alt="Done" height="40" width="auto" /></td>
     </tr>
     <tr>
         <td align="center">Dummy connector</td>
@@ -104,7 +104,7 @@ Development Status values :
     </tr>
     <tr>
         <td align="center">Docker connector</td>
-        <td align="center">Connector based on CloudDesigner implementation, for Docker container purpose</td>
+        <td align="center">Connector based on CloudDesigner implementation, for Docker container purpose, <a href="https://github.com/occiware/erocci-dbus-java/issues/18">feature #22</a></td>
         <td align="center"><img src="https://raw.github.com/occiware/erocci-dbus-java/master/doc/inprogress.png" alt="In progress" height="40" width="auto" /></td>
     </tr>
     <tr>
@@ -113,14 +113,9 @@ Development Status values :
         <td align="center"><img src="https://raw.github.com/occiware/erocci-dbus-java/master/doc/todo.png" alt="TODO" height="40" width="auto" /></td>
     </tr>
     <tr>
-        <td align="center">Simulator connector</td>
-        <td align="center">Connector based on CloudDesigner implementation, for Simulator purpose</td>
-        <td align="center"><img src="https://raw.github.com/occiware/erocci-dbus-java/master/doc/todo.png" alt="TODO" height="40" width="auto" /></td>
-    </tr>
-    <tr>
         <td align="center">Custom connector, light demo</td>
-        <td align="center">Custom connector based on Clouddesigner model of a light demo</td>
-        <td align="center"><img src="https://raw.github.com/occiware/erocci-dbus-java/master/doc/todo.png" alt="TODO" height="40" width="auto" /></td>
+        <td align="center">Custom connector based on Clouddesigner model of a light demo, <a href="https://github.com/occiware/erocci-dbus-java/issues/18">feature #25</a></td>
+        <td align="center"><img src="https://raw.github.com/occiware/erocci-dbus-java/master/doc/inprogress.png" alt="In progress" height="40" width="auto" /></td>
     </tr>
 
 </table>
