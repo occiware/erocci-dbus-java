@@ -66,7 +66,7 @@ public class ActionImpl implements action {
 
         Entity entity = ConfigurationManager.findEntity(owner, id);
         if (entity != null) {
-          // TODO : Model validator before launching the action, this can cause a lot of problem if constraints aren't respected.
+          // TODO : Model validator AFTER launching the action, this can cause a lot of problem if constraints aren't respected.
           // Get the executor corresponding on entity kind.
           // Launch the action effectively.
           String entityKind = entity.getKind().getScheme() + entity.getKind().getTerm();

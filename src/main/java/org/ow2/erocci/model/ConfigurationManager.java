@@ -56,6 +56,7 @@ import org.occiware.clouddesigner.occi.docker.connector.ExecutableDockerFactory;
 import org.occiware.clouddesigner.occi.infrastructure.InfrastructurePackage;
 import org.occiware.clouddesigner.occi.util.OCCIResourceFactoryImpl;
 import org.occiware.clouddesigner.occi.util.OCCIResourceSet;
+import org.ow2.erocci.backend.Struct2;
 import org.ow2.erocci.backend.impl.Utils;
 import org.ow2.mart.connector.infrastructure.dummy.InfrastructureConnectorFactory;
 
@@ -125,6 +126,14 @@ public class ConfigurationManager {
      */
     protected static Map<String, Configuration> configurations = new HashMap<>();
 
+    /**
+     * References location for a user mixin.
+     * this is used by find method to find the collection of user mixin.
+     * Key : Mixin sheme + term, must be unique
+     * Value : Location with form of : http://localhost:8080/mymixincollection/
+     */
+    protected static Map<String, String> userMixinLocationMap = new HashMap<String, String>();
+    
     /**
      * Obtain the factory to create OCCI objects.
      */
@@ -892,9 +901,54 @@ public class ConfigurationManager {
                     usedKinds.add(result);
                 }
             }
+            
         }
+        String mixinId;
+        // Get all location of a user mixins.
+        for (Map.Entry<String, String> entry : userMixinLocationMap.entrySet()) {
+        	mixinId = entry.getKey(); // Scheme + term.
+        	usedKinds.add(mixinId);
+        }
+        
         return usedKinds;
     }
+    
+    /**
+     * Find all user mixins kind that have this location.
+     * @param location (http://localhost:8080/mymixincollection/
+     * @return a map by owner and list of user mixins, map is empty if none found.
+     */
+    public static Map<String,List<String>> findAllUserMixinKindByLocation(final String location) {
+    	
+    	List<String> mixinKinds;
+    	Map<String, List<String>> mixinKindsByOwner = new HashMap<>();
+    	// Recherche sur tous les users mixin kinds.
+    	Set<String> owners = configurations.keySet();
+    	Configuration config;
+    	EList<Mixin> mixins;
+    	String mixinId;
+    	String locationTmp;
+    	for (String owner : owners) {
+    		mixinKinds = new ArrayList<>();
+    		config = getConfigurationForOwner(owner);
+    		mixins = config.getMixins();
+    		for (Mixin mixin : mixins) {
+    			mixinId = mixin.getScheme() + mixin.getTerm();
+    			locationTmp = userMixinLocationMap.get(mixinId);
+    			if (locationTmp != null && locationTmp.contains(location)) {
+    				// Location found for this mixin.
+    				mixinKinds.add(mixinId);
+    			}
+    		}
+    		if (!mixinKinds.isEmpty()) {
+    			mixinKindsByOwner.put(owner, mixinKinds);
+    		}
+    	}
+    	
+    	
+    	return mixinKindsByOwner;
+    }
+    
 
     /**
      * Get all the entities for all owner.
@@ -1520,6 +1574,92 @@ public class ConfigurationManager {
         }
 
     }
+    
+    /**
+     * Add a user mixin to configuration's Object (user tag).
+     * @param id
+     * @param location
+     * @param owner
+     */
+    public static void addUserMixinOnConfiguration(final String id, final String location, final String owner) {
+    	if (owner == null || id == null || location == null) {
+    		return;
+    	}
+    	
+    	Configuration configuration = getConfigurationForOwner(owner);
+    	Mixin mixin = createMixin(id);
+    	
+    	// We add the mixin location to the userMixin map.
+    	userMixinLocationMap.put(id, location);
+    	
+    	configuration.getMixins().add(mixin);
+    	
+    }
+    
+    /**
+     * Search for a user mixin tag on all configurations.
+     * @param mixinId (scheme + term)
+     * @return null if not found on configurations.
+     */
+    public static Mixin findUserMixinOnConfigurations(final String mixinId) {
+    	Mixin mixinToReturn = null;
+    	Set<String> owners = configurations.keySet();
+    	Configuration config;
+    	EList<Mixin> mixins;
+    	for (String owner : owners) {
+    		config = getConfigurationForOwner(owner);
+    		mixins = config.getMixins();
+    		for (Mixin mixin : mixins) {
+    			if ((mixin.getScheme() + mixin.getTerm()).equals(mixinId)) {
+    				mixinToReturn = mixin;
+    				break;
+    			}
+    		}
+    		
+    		if (mixinToReturn != null) {
+    			break;
+    		}
+    	}
+    	
+    	return mixinToReturn;
+    }
+    
+    
+    /**
+     * Delete a user mixin from configuration's Object (user tag).
+     * @param mixinId
+     * @param location
+     * @param owner
+     */
+    public static void removeUserMixinFromConfiguration(final String mixinId) {
+    	if (mixinId == null) {
+    		return;
+    	}
+    	
+    	// Search for userMixin.
+    	Mixin mixin = findUserMixinOnConfigurations(mixinId);
+    	
+    	if (mixin == null) {
+    		// TODO : Throw an exception mixinNotFound.
+    		logger.info("mixin not found on configurations.");
+    		return;
+    	}
+    	
+    	// We remove the mixin location from the userMixin map.
+    	userMixinLocationMap.remove(mixinId);
+    	
+    	// Delete from configuration.
+    	Set<String> owners = configurations.keySet();
+    	Configuration config;
+    	for (String owner : owners) {
+    		config = getConfigurationForOwner(owner);
+    		config.getMixins().remove(mixin);
+    	}
+    	
+    }
+    
+    
+    
 
     /**
      * Create a new mixin without any association.

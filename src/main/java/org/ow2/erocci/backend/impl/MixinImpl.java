@@ -48,7 +48,10 @@ public class MixinImpl implements mixin {
 	 */
 	@Override
 	public void AddMixin(String id, String location, String owner) {
-		logger.info("add mixin with id: " + id + " --< location : " + location + " --< owner : " + owner);
+		logger.info("add user mixin with id: " + id + " --< location : " + location + " --< owner : " + owner);
+		
+		
+		
 //		try {
 //			IActionExecutor actExecutor = ActionExecutorFactory.build(ConfigurationManager.getExtensionFromEntity(entityUpd)); 
 //			actExecutor.occiAddedMixin(entityUpd);

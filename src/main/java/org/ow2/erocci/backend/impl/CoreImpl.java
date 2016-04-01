@@ -29,6 +29,7 @@ import org.freedesktop.DBus;
 import org.freedesktop.dbus.UInt32;
 import org.freedesktop.dbus.Variant;
 import org.occiware.clouddesigner.occi.Entity;
+import org.occiware.clouddesigner.occi.Mixin;
 import org.ow2.erocci.backend.Pair;
 import org.ow2.erocci.backend.Quad;
 import org.ow2.erocci.backend.Struct1;
@@ -534,6 +535,19 @@ public class CoreImpl implements core, action, mixin, DBus.Properties {
                 }
 
             }
+            // Search for user mixin tag.
+            // We consider here that this is by a location (http://localhost:8080/myxinsCollection/).
+            Map<String,List<String>> userMixins = ConfigurationManager.findAllUserMixinKindByLocation(id);
+            List<String> mixins;
+            for (Map.Entry<String, List<String>> entry : userMixins.entrySet()) {
+            	owner = entry.getKey();
+            	mixins = entry.getValue();
+            	for (String mixinKind : mixins) {
+            		ret.add(new Struct2(mixinKind, owner));
+            	}
+            }
+            
+                        
 
         } else if (id == null || id.isEmpty()) {
             // id is null, we return all used used kinds. (scheme + term).
@@ -544,6 +558,7 @@ public class CoreImpl implements core, action, mixin, DBus.Properties {
             for (String usedKind : usedKinds) {
                 ret.add(new Struct2(usedKind, ""));
             }
+            
 
         } else {
             // it's a relative path url part.
@@ -553,6 +568,18 @@ public class CoreImpl implements core, action, mixin, DBus.Properties {
                 owner = entry.getKey();
                 Entity ent = entry.getValue();
                 ret.add(new Struct2(ent.getId(), owner));
+            }
+            
+            // Search for user tag mixin by location with relative path part.
+            // id may be a relative part of a mixin kind. Note that the method use contains for replacing equality on location. 
+            Map<String,List<String>> userMixins = ConfigurationManager.findAllUserMixinKindByLocation(id);
+            List<String> mixins;
+            for (Map.Entry<String, List<String>> entry : userMixins.entrySet()) {
+            	owner = entry.getKey();
+            	mixins = entry.getValue();
+            	for (String mixinKind : mixins) {
+            		ret.add(new Struct2(mixinKind, owner));
+            	}
             }
 
         }
