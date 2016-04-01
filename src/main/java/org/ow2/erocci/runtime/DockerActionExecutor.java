@@ -200,23 +200,23 @@ public class DockerActionExecutor extends AbstractActionExecutor implements IAct
 					"Entity type : " + className + " is not supported by this backend for now");
 		}
 
-//		if (entity instanceof Container) {
-//			EList<AttributeState> attributes = entity.getAttributes();
-//			AttributeState attrState = null;
-//			for (AttributeState attr : attributes) {
-//				// TODO : to remove, this was a workaround in Erocci.
-//				if (attr.getName().equals("command")) {
-//					// attr.setValue(attr.getValue().replace(" ", ","));
-//					attr.setValue("sleep,9999");
-//					attrState = attr;
-//					entity.getAttributes().remove(attr);
-//					break;
-//				}
-//			}
-//			if (attrState != null) {
-//				entity.getAttributes().add(attrState);
-//			}
-//		}
+		if (entity instanceof Container) {
+			EList<AttributeState> attributes = entity.getAttributes();
+			AttributeState attrState = null;
+			for (AttributeState attr : attributes) {
+				// TODO : to remove, this was a workaround in Erocci.
+				if (attr.getName().equals("command")) {
+					// attr.setValue(attr.getValue().replace(" ", ","));
+					attr.setValue("sleep,9999");
+					attrState = attr;
+					entity.getAttributes().remove(attr);
+					break;
+				}
+			}
+			if (attrState != null) {
+				entity.getAttributes().add(attrState);
+			}
+		}
 
 		// Find which method to execute, following the final type of entity
 		// object.
