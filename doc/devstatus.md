@@ -80,12 +80,12 @@ Development Status values :
     <tr>
         <td align="center">AddMixin(id, location, owner)</td>
         <td align="center">Add a user mixin, act as a user tag, <a href="https://github.com/occiware/erocci-dbus-java/issues/16">feature #16</a></td>
-        <td align="center"><img src="https://raw.github.com/occiware/erocci-dbus-java/master/doc/inprogress.png" alt="In progress" height="40" width="auto" /></td>
+        <td align="center"><img src="https://raw.github.com/occiware/erocci-dbus-java/master/doc/done.png" alt="Done" height="40" width="auto" /></td>
     </tr>
     <tr>
         <td align="center">DelMixin(id, location, owner)</td>
         <td align="center">Delete a user mixin, <a href="https://github.com/occiware/erocci-dbus-java/issues/17">feature #17</a></td>
-        <td align="center"><img src="https://raw.github.com/occiware/erocci-dbus-java/master/doc/inprogress.png" alt="In progress" height="40" width="auto" /></td>
+        <td align="center"><img src="https://raw.github.com/occiware/erocci-dbus-java/master/doc/done.png" alt="Done" height="40" width="auto" /></td>
     </tr>
     <tr>
         <td align="center">Action(id, action_id, attributes)</td>
@@ -100,7 +100,7 @@ Development Status values :
     <tr>
         <td align="center">Cloud connector</td>
         <td align="center">Connector based on CloudDesigner implementation, for multi cloud purpose</td>
-        <td align="center"><img src="https://raw.github.com/occiware/erocci-dbus-java/master/doc/todo.png" alt="TODO" height="40" width="auto" /></td>
+        <td align="center"><img src="https://raw.github.com/occiware/erocci-dbus-java/master/doc/inprogress.png" alt="In progress" height="40" width="auto" /></td>
     </tr>
     <tr>
         <td align="center">Docker connector</td>

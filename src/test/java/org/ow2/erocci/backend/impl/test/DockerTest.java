@@ -124,6 +124,7 @@ public class DockerTest {
     /**
      * Test on SaveResource core with docker extension.
      */
+    @Test
     public void testSaveResourceDocker() {
         List<String> resourcePartialIds = new ArrayList<String>();
 		List<String> resourceIds = new ArrayList<String>();

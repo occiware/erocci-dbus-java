@@ -52,7 +52,7 @@ public abstract class AbstractActionExecutor implements IActionExecutor {
 	public abstract void occiPostUpdate(Entity entity) throws ExecuteActionException;
 
 	@Override
-	public abstract void occiMixinAdded(Entity entity, String mixinId) throws ExecuteActionException;
+	public abstract void occiMixinAdded(String mixinId) throws ExecuteActionException;
 	
 	
 	/**

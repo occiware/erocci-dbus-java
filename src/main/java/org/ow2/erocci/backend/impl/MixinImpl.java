@@ -18,6 +18,7 @@ package org.ow2.erocci.backend.impl;
 
 import java.util.logging.Logger;
 
+import org.occiware.clouddesigner.occi.Mixin;
 import org.ow2.erocci.backend.mixin;
 import org.ow2.erocci.model.ConfigurationManager;
 import org.ow2.erocci.model.exception.ExecuteActionException;
@@ -50,16 +51,31 @@ public class MixinImpl implements mixin {
 	public void AddMixin(String id, String location, String owner) {
 		logger.info("add user mixin with id: " + id + " --< location : " + location + " --< owner : " + owner);
 		
+		if (id == null) {
+			logger.info("No mixin id provided ! Cant add a user mixin tag.");
+			return;
+		}
+		if (location == null) {
+			logger.info("No location provided, cant add a user mixin tag");
+			return;
+		}
+		if (owner == null) {
+			// Defaulting to anonymous.
+			owner = ConfigurationManager.DEFAULT_OWNER;
+		}
+		
+		ConfigurationManager.addUserMixinOnConfiguration(id, location, owner);
+		
+		Mixin mixin = ConfigurationManager.findUserMixinOnConfigurations(id);
+		
+		try {
+			IActionExecutor actExecutor = ActionExecutorFactory.build(ConfigurationManager.getConfigurationForOwner(owner).getUse().get(0));
+			actExecutor.occiMixinAdded(id);
+		} catch (ExecuteActionException ex) {
+			logger.warning("Action post mixin added error : " + ex.getMessage());
+		}
 		
 		
-//		try {
-//			IActionExecutor actExecutor = ActionExecutorFactory.build(ConfigurationManager.getExtensionFromEntity(entityUpd)); 
-//			actExecutor.occiAddedMixin(entityUpd);
-//		} catch (ExecuteActionException ex) {
-//			logger.warning("Action launch error : " + ex.getMessage());
-//		}
-		
-		// TODO : Implementation.
 		// Ex : POST /.well-knwown/org/ogf/occi/
 		//      Content-Type: text/occi
 		//		Category: my_tag; scheme="http://example.com/tag"; location="/tag/"
@@ -77,13 +93,22 @@ public class MixinImpl implements mixin {
 	@Override
 	public void DelMixin(String id) {
 		logger.info("delete mixin with category id : " + id);
-//		try {
-//			IActionExecutor actExecutor = ActionExecutorFactory.build(ConfigurationManager.getExtensionFromEntity(entityUpd)); 
-//			actExecutor.occiDelMixin(entityUpd);
-//		} catch (ExecuteActionException ex) {
-//			logger.warning("Action launch error : " + ex.getMessage());
-//		}
-		// TODO : Implementation.
+		
+		if (id == null) {
+			logger.info("No mixin id provided ! Cant add a user mixin tag.");
+			return;
+		}
+		
+		ConfigurationManager.removeUserMixinFromConfiguration(id); 
+		
+		try {
+			// Warning no owner....
+			IActionExecutor actExecutor = ActionExecutorFactory.build(ConfigurationManager.getConfigurationForOwner(ConfigurationManager.DEFAULT_OWNER).getUse().get(0));
+			actExecutor.occiMixinDeleted(id);
+		} catch (ExecuteActionException ex) {
+			logger.warning("Action post mixin added error : " + ex.getMessage());
+		}
+		
 	}
 
 }

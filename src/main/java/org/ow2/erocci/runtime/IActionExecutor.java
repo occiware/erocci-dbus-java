@@ -40,9 +40,9 @@ public interface IActionExecutor {
 		
 	public void occiPostUpdate(Entity entity) throws ExecuteActionException;
 
-	public void occiMixinAdded(Entity entity, final String mixinId) throws ExecuteActionException;
+	public void occiMixinAdded(final String mixinId) throws ExecuteActionException;
 	
-	public void occiMixinDeleted(Entity entity, final String mixinId) throws ExecuteActionException;
+	public void occiMixinDeleted(final String mixinId) throws ExecuteActionException;
 	
 	/**
 	 * Execute an action without specific attributes.

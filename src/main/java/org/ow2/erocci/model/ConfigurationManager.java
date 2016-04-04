@@ -39,6 +39,7 @@ import org.eclipse.emf.ecore.ETypedElement;
 import org.eclipse.emf.ecore.resource.Resource.Factory.Registry;
 import org.eclipse.emf.ecore.resource.ResourceSet;
 import org.eclipse.emf.ecore.util.Diagnostician;
+import org.eclipse.update.ui.UpdateManagerUI;
 import org.freedesktop.dbus.UInt32;
 import org.occiware.clouddesigner.occi.Action;
 import org.occiware.clouddesigner.occi.AttributeState;
@@ -169,12 +170,12 @@ public class ConfigurationManager {
         // Create an empty OCCI configuration.
         Configuration configuration = occiFactory.createConfiguration();
 
-        // Extension extensionOcciCore = loadExtension(EXT_OCCI_CORE_REL_PATH);
-        // Extension extensionOcciInfra =
-        // loadExtension(EXT_OCCI_INFRASTRUCTURE_REL_PATH);
-        // By default, the core is used.
-        // configuration.getUse().add(extensionOcciInfra);
-        // configuration.getUse().add(extensionOcciCore);
+//         Extension extensionOcciCore = loadExtension(EXT_OCCI_CORE_REL_PATH);
+//         Extension extensionOcciInfra =
+//         loadExtension(EXT_OCCI_INFRASTRUCTURE_REL_PATH);
+//         // By default, the core is used.
+//         configuration.getUse().add(extensionOcciInfra);
+//         configuration.getUse().add(extensionOcciCore);
         // Update reference configuration map.
         configurations.put(owner, configuration);
 
@@ -255,17 +256,19 @@ public class ConfigurationManager {
 
             // Add the attributes...
             addAttributesToEntity(resource, attributes);
-
+            
+            addMixinsToEntity(resource, mixins, owner, false);
+            
         } else {
             logger.warning("resource already exist, overwriting...");
             resourceOverwrite = true;
             updateAttributesToEntity(resource, attributes);
+            // Add the mixins if any.
+            addMixinsToEntity(resource, mixins, owner, true);
 
         }
 
-        // Add the mixins if any.
-        addMixinsToEntity(resource, mixins, owner);
-
+        
         // Add resource to configuration.
         if (resourceOverwrite) {
             logger.info("resource updated " + resource.getId() + " on OCCI configuration");
@@ -339,6 +342,8 @@ public class ConfigurationManager {
             }
             addAttributesToEntity(link, attributes);
 
+            addMixinsToEntity(link, mixins, owner, false);
+            
         } else {
             // Link exist upon our configuration, we update it.
             // Check if occi.core.target.kind is set.
@@ -348,12 +353,14 @@ public class ConfigurationManager {
             }
             updateAttributesToEntity(link, attributes);
             overwrite = true;
+            
+            addMixinsToEntity(link, mixins, owner, true);
         }
 
         link.setSource(resourceSrc);
         link.setTarget(resourceDest);
 
-        addMixinsToEntity(link, mixins, owner);
+        
 
         // Assign link to resource source.
         resourceSrc.getLinks().add(link);
@@ -1377,15 +1384,16 @@ public class ConfigurationManager {
      *
      * @param entity (OCCI Entity).
      * @param mixins (List of mixins).
+     * @param owner
+     * @param updateMode (if updateMode is true, reset existing and replace with new ones)
      */
-    public static void addMixinsToEntity(Entity entity, final List<String> mixins, final String owner) {
-        if (mixins != null && !mixins.isEmpty()) {
+    public static void addMixinsToEntity(Entity entity, final List<String> mixins, final String owner, final boolean updateMode) {
+        if (updateMode) {
+        	entity.getMixins().clear();
+        }
+    	if (mixins != null && !mixins.isEmpty()) {
 
-            String scheme;
-            String term;
-            // String title;
-
-            for (String mixinStr : mixins) {
+        	for (String mixinStr : mixins) {
                 // Check if this mixin exist in realm extensions.
                 Mixin mixin = findMixinOnExtension(owner, mixinStr);
 

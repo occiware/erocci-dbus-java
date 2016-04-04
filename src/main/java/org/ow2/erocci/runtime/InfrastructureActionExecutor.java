@@ -68,14 +68,14 @@ public class InfrastructureActionExecutor extends AbstractActionExecutor impleme
 	}
 
 	@Override
-	public void occiMixinAdded(Entity entity, String mixinId) throws ExecuteActionException {
-		this.execute(null, entity, FROM_USER_MIXIN_ADDED);
+	public void occiMixinAdded(String mixinId) throws ExecuteActionException {
+		// No op. this.execute(null, entity, FROM_USER_MIXIN_ADDED);
 
 	}
 
 	@Override
-	public void occiMixinDeleted(Entity entity, String mixinId) throws ExecuteActionException {
-		this.execute(null, entity, FROM_USER_MIXIN_DELETED);
+	public void occiMixinDeleted(String mixinId) throws ExecuteActionException {
+		// No op. this.execute(null, entity, FROM_USER_MIXIN_DELETED);
 
 	}
 

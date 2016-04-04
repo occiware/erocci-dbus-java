@@ -140,13 +140,13 @@ public class DockerActionExecutor extends AbstractActionExecutor implements IAct
 	}
 
 	@Override
-	public void occiMixinAdded(Entity entity, String mixinId) throws ExecuteActionException {
+	public void occiMixinAdded(String mixinId) throws ExecuteActionException {
 		// TODO Auto-generated method stub
 
 	}
 
 	@Override
-	public void occiMixinDeleted(Entity entity, String mixinId) throws ExecuteActionException {
+	public void occiMixinDeleted(String mixinId) throws ExecuteActionException {
 		// TODO Auto-generated method stub
 
 	}

@@ -69,7 +69,6 @@ public class InputDBUSTest {
 	private final String NETWORK_KIND = SCHEME_INFRA + "network";
 	private final String NETWORK_INTERFACE_LINK_KIND = SCHEME_INFRA + "networkinterface";
 	private final String MIXIN_OS_GENERIC_ID = "http://schemas.ogf.org/occi/infrastructure#os_tpl";
-	
 
 	private final String DEFAULT_OWNER = "anonymous";
 
@@ -92,7 +91,7 @@ public class InputDBUSTest {
 	@After
 	public void tearDown() throws Exception {
 		// Validate model in the end.
-		// validateModel();
+		validateModel();
 	}
 
 	@Test
@@ -124,10 +123,11 @@ public class InputDBUSTest {
 					container.getAttributes(), container.getOwner());
 			assertNotNull(idReturned);
 			assertTrue(idReturned.contains(id));
-			List<Entity> entities = ConfigurationManager.findAllEntitiesLikePartialId(container.getOwner(), container.getId());
+			List<Entity> entities = ConfigurationManager.findAllEntitiesLikePartialId(container.getOwner(),
+					container.getId());
 			assertTrue(!entities.isEmpty());
 			idReturned = entities.get(0).getId();
-			
+
 			// Check if resources are here.
 			lstStruct = core.Find(idReturned);
 			assertTrue(!lstStruct.isEmpty());
@@ -143,7 +143,7 @@ public class InputDBUSTest {
 			}
 			container.setId(idReturned);
 		}
-		
+
 		testSaveLink();
 
 	}
@@ -173,20 +173,23 @@ public class InputDBUSTest {
 		for (String id : linkIds) {
 
 			InputContainer container = containers.get(id);
-			
-			Entity resSrc = ConfigurationManager.findAllEntitiesLikePartialId(container.getOwner(), container.getResSrc()).get(0);
-			Entity resTarget = ConfigurationManager.findAllEntitiesLikePartialId(container.getOwner(), container.getResTarget()).get(0);
-			
-			idReturned = core.SaveLink(container.getId(), container.getKind(), container.getMixins(),
-					resSrc.getId(), resTarget.getId(), container.getAttributes(), container.getOwner());
-			
+
+			Entity resSrc = ConfigurationManager
+					.findAllEntitiesLikePartialId(container.getOwner(), container.getResSrc()).get(0);
+			Entity resTarget = ConfigurationManager
+					.findAllEntitiesLikePartialId(container.getOwner(), container.getResTarget()).get(0);
+
+			idReturned = core.SaveLink(container.getId(), container.getKind(), container.getMixins(), resSrc.getId(),
+					resTarget.getId(), container.getAttributes(), container.getOwner());
+
 			assertNotNull(idReturned);
 			assertTrue(idReturned.startsWith(id));
-			List<Entity> entities = ConfigurationManager.findAllEntitiesLikePartialId(container.getOwner(), container.getId());
+			List<Entity> entities = ConfigurationManager.findAllEntitiesLikePartialId(container.getOwner(),
+					container.getId());
 			assertTrue(!entities.isEmpty());
 			idReturned = entities.get(0).getId();
 			container.setId(idReturned);
-			
+
 			// Check if links are here.
 			lstStruct = core.Find(idReturned);
 			assertTrue(!lstStruct.isEmpty());
@@ -217,8 +220,7 @@ public class InputDBUSTest {
 			testSaveResourceAndLinks();
 
 			// check if update attribute is found.
-			Mixin mixin = ConfigurationManager.findMixinOnEntities(container.getOwner(),
-					MIXIN_OS_GENERIC_ID);
+			Mixin mixin = ConfigurationManager.findMixinOnEntities(container.getOwner(), MIXIN_OS_GENERIC_ID);
 			assertNotNull(mixin);
 			assertEquals(SCHEME_INFRA, mixin.getScheme());
 			assertEquals("os_tpl", mixin.getTerm());
@@ -228,14 +230,13 @@ public class InputDBUSTest {
 			assertNotNull(updComputeRes);
 			List<Mixin> mixins = updComputeRes.getMixins();
 			assertTrue(mixins.contains(mixin));
-			
+
 			mixin = ConfigurationManager.findMixinOnExtension(container.getOwner(), MIXIN_OS_GENERIC_ID);
 			assertNotNull(mixin);
 			// assertTrue(mixin.getEntities().contains(updComputeRes));
 			// 2 links must be found on this resource.
 			assertEquals(updComputeRes.getLinks().size(), 2);
-			
-			
+
 		}
 
 	}
@@ -245,7 +246,7 @@ public class InputDBUSTest {
 	 */
 	@Test
 	public void testUpdate() {
-		
+
 		// build or rebuild infra test.
 		buildInfraTest();
 
@@ -263,10 +264,12 @@ public class InputDBUSTest {
 		assertTrue(attributesReturned.isEmpty());
 
 		// Check if all attributes has been updated.
-		// Resource res = ConfigurationManager.findResource(container.getOwner(), container.getId());
+		// Resource res =
+		// ConfigurationManager.findResource(container.getOwner(),
+		// container.getId());
 		Entity entity = ConfigurationManager.findEntity(container.getOwner(), container.getId());
 		assertNotNull(entity);
-		
+
 		// ConfigurationManager.printEntity(res);
 		// relaunch update with better attributes.
 		attributesReturned = core.Update(container.getId(), container.getAttributes());
@@ -330,7 +333,8 @@ public class InputDBUSTest {
 
 		List<String> resourcePartialIds = new ArrayList<String>();
 		List<String> resourceIds = new ArrayList<String>();
-		// resourcePartialIds.add("storage/"); ==>> not compatible with mixin applies.
+		// resourcePartialIds.add("storage/"); ==>> not compatible with mixin
+		// applies.
 		resourcePartialIds.add("compute/");
 
 		String mixinId = MIXIN_OS_GENERIC_ID;
@@ -366,7 +370,7 @@ public class InputDBUSTest {
 		boolean mixinFound = false;
 		for (String id : resourceIds) {
 			mixinFound = false;
-			
+
 			// get resource.
 			entity = ConfigurationManager.findEntity(DEFAULT_OWNER, id);
 
@@ -398,12 +402,13 @@ public class InputDBUSTest {
 		String idLink = "storagelink/sl1";
 
 		// search a resource via core.find(id).
-				
+
 		List<Struct1> structRes = core.Find(containers.get(id).getId());
 		assertNotNull(structRes);
 		assertFalse(structRes.isEmpty());
 		for (Struct1 structRes1 : structRes) {
-			// structRes1.b.value is the opaqueId (generated id by this backend with format : owner + ";" + relativePath).
+			// structRes1.b.value is the opaqueId (generated id by this backend
+			// with format : owner + ";" + relativePath).
 			assertTrue(structRes1.b.getValue().toString().startsWith(id));
 			assertNotNull(structRes1.d);
 		}
@@ -422,15 +427,15 @@ public class InputDBUSTest {
 		assertNotNull(structEmpty);
 		// assertTrue(structEmpty.isEmpty());
 
-//		// Check if partial id.
-//		id = "compute";
-//		List<Struct1> structP = core.Find(id);
-//		assertNotNull(structP);
-//		assertFalse(structP.isEmpty());
-//		for (Struct1 structPls : structP) {
-//			assertNotNull(structPls.d);
-//			assertNotNull(structPls.b);
-//		}
+		// // Check if partial id.
+		// id = "compute";
+		// List<Struct1> structP = core.Find(id);
+		// assertNotNull(structP);
+		// assertFalse(structP.isEmpty());
+		// for (Struct1 structPls : structP) {
+		// assertNotNull(structPls.d);
+		// assertNotNull(structPls.b);
+		// }
 	}
 
 	@Test
@@ -440,12 +445,10 @@ public class InputDBUSTest {
 
 		// Get entity occi object for loading.
 		// Erocci will give opaqueId as parameter on load method.
-		
+
 		List<Entity> ents = ConfigurationManager.findAllEntitiesLikePartialId(DEFAULT_OWNER, "networkinterface/ni1");
-		
-		
+
 		String opaqueId = ents.get(0).getId();
-		
 
 		// Load the content of an entity via the core module.
 		Quad<String, String, List<String>, Map<String, Variant>> quad = core.Load(new Variant(opaqueId));
@@ -477,12 +480,12 @@ public class InputDBUSTest {
 		Map<String, Variant> filters = new HashMap<>();
 		String id = STORAGE_LINK_KIND;
 		list(id, filters);
-		
+
 		id = "http://schemas.ogf.org/occi/infrastructure/compute/action#start";
 		list(id, filters);
 
 	}
-	
+
 	private void list(String catId, Map<String, Variant> filters) {
 		Pair<Variant, UInt32> pair = core.List(catId, filters);
 		assertNotNull(pair);
@@ -512,30 +515,29 @@ public class InputDBUSTest {
 
 	@Test
 	public void testDelete() {
-		
+
 		buildInfraTest();
 		overwriteTestCount = 1;
 		testSaveResourceAndLinks();
 
 		// Test remove entity.
 		String id = "compute/vm2";
-		
+
 		List<Entity> ents = ConfigurationManager.findAllEntitiesLikePartialId(DEFAULT_OWNER, id);
-		
-		
+
 		Entity entity = ConfigurationManager.findEntity(DEFAULT_OWNER, ents.get(0).getId());
 		assertNotNull(entity);
-		
+
 		String entityId = entity.getId();
 
 		Resource res = (Resource) entity;
-		
+
 		EList<Link> links = res.getLinks();
 		assertEquals(links.size(), 2);
 		for (Link link : links) {
 			// ConfigurationManager.printEntity(link);
 		}
-		
+
 		core.Delete(entityId);
 
 		entity = ConfigurationManager.findEntity(DEFAULT_OWNER, entityId);
@@ -552,7 +554,7 @@ public class InputDBUSTest {
 		// Searching all entities with that mixin.
 		List<Entity> entities = ConfigurationManager.findAllEntitiesForMixin(DEFAULT_OWNER, id);
 		assertTrue(entities.isEmpty());
-		
+
 	}
 
 	@Test
@@ -561,49 +563,49 @@ public class InputDBUSTest {
 		testSaveResourceAndLinks();
 		String relativeEntityPath = "compute/vm1";
 		String entityId = containers.get(relativeEntityPath).getId();
-		
-		String actionFullPath = "http://schemas.ogf.org/occi/infrastructure/compute/action#start"; 
+
+		String actionFullPath = "http://schemas.ogf.org/occi/infrastructure/compute/action#start";
 		Map<String, Variant> attributes = new HashMap<>();
-		// attributes.put("method", new Variant("start")); used only with method parameters.
-		
+		// attributes.put("method", new Variant("start")); used only with method
+		// parameters.
+
 		core.Action(entityId, actionFullPath, attributes);
-		
+
 		relativeEntityPath = "test/doesntexist";
 		actionFullPath = "noAction";
 		attributes.clear();
 		core.Action(relativeEntityPath, actionFullPath, attributes);
-		
+
 		// Action stop on compute infrastructure extension with a parameter.
 		relativeEntityPath = "compute/vm2";
-		actionFullPath = "http://schemas.ogf.org/occi/infrastructure/compute/action#stop"; 
+		actionFullPath = "http://schemas.ogf.org/occi/infrastructure/compute/action#stop";
 		entityId = containers.get(relativeEntityPath).getId();
 		attributes.put("method", new Variant<String>("graceful"));
-		
+
 		core.Action(entityId, actionFullPath, attributes);
-		
+
 		attributes.clear();
-		
+
 		// Action on Storage.
 		relativeEntityPath = "storage/storage1";
 		actionFullPath = "http://schemas.ogf.org/occi/infrastructure/storage/action#online";
 		entityId = containers.get(relativeEntityPath).getId();
-		
+
 		core.Action(entityId, actionFullPath, attributes);
 		actionFullPath = "http://schemas.ogf.org/occi/infrastructure/storage/action#resize";
 		attributes.put("size", new Variant<String>("123.0"));
-		
-		core.Action(entityId, actionFullPath, attributes);	
+
+		core.Action(entityId, actionFullPath, attributes);
 		attributes.clear();
-		
+
 		// Action on network.
 		relativeEntityPath = "network/network1";
 		actionFullPath = "http://schemas.ogf.org/occi/infrastructure/network/action#up";
 		entityId = containers.get(relativeEntityPath).getId();
 		core.Action(entityId, actionFullPath, attributes);
-		
-		
+
 	}
-	
+
 	public void validateModel() {
 
 		buildInfraTest();

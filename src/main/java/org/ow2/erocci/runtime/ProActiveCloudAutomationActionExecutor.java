@@ -33,7 +33,7 @@ public class ProActiveCloudAutomationActionExecutor extends AbstractActionExecut
     }
 
 	@Override
-	public void occiMixinDeleted(Entity entity, String mixinId) throws ExecuteActionException {
+	public void occiMixinDeleted(String mixinId) throws ExecuteActionException {
 		// TODO Auto-generated method stub
 		
 	}
@@ -57,7 +57,7 @@ public class ProActiveCloudAutomationActionExecutor extends AbstractActionExecut
 	}
 
 	@Override
-	public void occiMixinAdded(Entity entity, String mixinId) throws ExecuteActionException {
+	public void occiMixinAdded(String mixinId) throws ExecuteActionException {
 		// TODO Auto-generated method stub
 		
 	}
