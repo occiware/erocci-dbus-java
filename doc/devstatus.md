@@ -99,7 +99,7 @@ Development Status values :
     </tr>
     <tr>
         <td align="center">Cloud connector</td>
-        <td align="center">Connector based on CloudDesigner implementation, for multi cloud purpose</td>
+        <td align="center">Connector based on CloudDesigner implementation, for multi cloud purpose, <a href="https://github.com/occiware/erocci-dbus-java/issues/27">feature #27</a></td>
         <td align="center"><img src="https://raw.github.com/occiware/erocci-dbus-java/master/doc/inprogress.png" alt="In progress" height="40" width="auto" /></td>
     </tr>
     <tr>
