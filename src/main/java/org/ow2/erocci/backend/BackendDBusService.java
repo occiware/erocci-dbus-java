@@ -81,21 +81,28 @@ public class BackendDBusService {
 	 * @param args
 	 */
 	public static void main(String[] args) {
-		if (args == null || args.length == 0) {
+		String schema = null;
+        if (args == null || args.length == 0) {
             // Infrastructure schema is default. 
-            new BackendDBusService()
-                .setSchema(BackendDBusService.class.getResourceAsStream("/schema.xml"))
-                .start("org.ow2.erocci.backend");
+            schema = "/schema.xml";
         } else if (args.length == 1) {
-            if (args[0].equals("docker")) {
-                new BackendDBusService()
-                        .setSchema(BackendDBusService.class.getResourceAsStream("/docker-schema.xml"))
-                        .start("org.ow2.erocci.backend");
-            } else {
-                throw new RuntimeException("Argument is not known : " + " , usage: " + " 'docker' or no arguments for infrastructure generic model.");
+            switch (args[0]) {
+                case "docker":
+                    schema = "/docker-schema.xml";
+                    break;
+                default:
+                    schema = null;
+                    break;
             }
+        } else if (args.length > 1 || schema == null) {
+            throw new RuntimeException("Argument is not known : " + " , usage: " + " 'docker' or 'light' or no arguments for infrastructure generic model.");
         }
-		ConfigurationManager.getConfigurationForOwner(ConfigurationManager.DEFAULT_OWNER);
+        new BackendDBusService()
+                .setSchema(BackendDBusService.class.getResourceAsStream(schema))
+                .start("org.ow2.erocci.backend");
+        
+        ConfigurationManager.getConfigurationForOwner(ConfigurationManager.DEFAULT_OWNER);
+
 		
 	}
 
