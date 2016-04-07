@@ -95,7 +95,7 @@ public class BackendDBusService {
                     break;
             }
         } else if (args.length > 1 || schema == null) {
-            throw new RuntimeException("Argument is not known : " + " , usage: " + " 'docker' or 'light' or no arguments for infrastructure generic model.");
+            throw new RuntimeException("Argument is not known : " + " , usage: " + " 'docker' or no arguments for infrastructure generic model.");
         }
         new BackendDBusService()
                 .setSchema(BackendDBusService.class.getResourceAsStream(schema))
