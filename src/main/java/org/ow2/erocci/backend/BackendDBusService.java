@@ -97,13 +97,15 @@ public class BackendDBusService {
         } else if (args.length > 1 || schema == null) {
             throw new RuntimeException("Argument is not known : " + " , usage: " + " 'docker' or no arguments for infrastructure generic model.");
         }
+        if (schema == null) {
+        	throw new RuntimeException("Argument is not known : " + " , usage: " + " 'docker' or no arguments for infrastructure generic model.");
+        }
         new BackendDBusService()
                 .setSchema(BackendDBusService.class.getResourceAsStream(schema))
                 .start("org.ow2.erocci.backend");
         
         ConfigurationManager.getConfigurationForOwner(ConfigurationManager.DEFAULT_OWNER);
 
-		
 	}
 
 }
