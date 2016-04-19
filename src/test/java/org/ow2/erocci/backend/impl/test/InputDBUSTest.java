@@ -47,6 +47,7 @@ import org.occiware.clouddesigner.occi.Kind;
 import org.occiware.clouddesigner.occi.Link;
 import org.occiware.clouddesigner.occi.Mixin;
 import org.occiware.clouddesigner.occi.Resource;
+import org.occiware.clouddesigner.occi.util.OcciHelper;
 import org.ow2.erocci.backend.Pair;
 import org.ow2.erocci.backend.Quad;
 import org.ow2.erocci.backend.Struct1;
@@ -618,7 +619,7 @@ public class InputDBUSTest {
 		for (Extension extension : exts) {
 
 			System.out.println("    * Extension " + extension.getName() + " " + extension.getScheme());
-			result = ConfigurationManager.validate(extension); // Validate
+			result = OcciHelper.validate(extension); // Validate
 																// extension.
 			assertTrue(result);
 			// print(extension);
@@ -626,7 +627,7 @@ public class InputDBUSTest {
 		}
 
 		// Model validation with ocl.
-		result = ConfigurationManager.validate(ConfigurationManager.getConfigurationForOwner(DEFAULT_OWNER));
+		result = OcciHelper.validate(ConfigurationManager.getConfigurationForOwner(DEFAULT_OWNER));
 		// Print our configuration.
 		print(ConfigurationManager.getConfigurationForOwner(DEFAULT_OWNER));
 		assertTrue(result);
@@ -808,8 +809,8 @@ public class InputDBUSTest {
 
 		attribs.put("occi.network.vlan", vlanVar);
 		attribs.put("occi.network.label", labelVar);
-		attribs.put("occi.network.address", addressVar);
-		attribs.put("occi.network.gateway", gateVar);
+		// attribs.put("occi.network.address", addressVar);
+		// attribs.put("occi.network.gateway", gateVar);
 
 		network = new InputContainer(id, NETWORK_KIND, mixins, attribs, owner, null, null);
 
@@ -846,9 +847,9 @@ public class InputDBUSTest {
 		Map<String, Variant> attribs = new HashMap<>();
 		attribs.put("occi.networkinterface.mac", macVar);
 		attribs.put("occi.networkinterface.interface", netInterfaceVar);
-		attribs.put("occi.networkinterface.address", addressVar);
-		attribs.put("occi.networkinterface.gateway", gateVar);
-		attribs.put("occi.networkinterface.allocation", allocVar);
+		// attribs.put("occi.networkinterface.address", addressVar);
+		// attribs.put("occi.networkinterface.gateway", gateVar);
+		// attribs.put("occi.networkinterface.allocation", allocVar);
 
 		networkInterface = new InputContainer(id, NETWORK_INTERFACE_LINK_KIND, mixins, attribs, owner, resSrc,
 				resTarget);
@@ -1018,81 +1019,4 @@ public class InputDBUSTest {
 			}
 		}
 	}
-
-	// #! /bin/sh
-	// #
-	// OCCI_SERVER_URL="http://localhost:8080"
-	// CURL_OPTS="-s -v -i"
-	// # Partie compute (creation resource).
-	// curl $CURL_OPTS -X PUT $OCCI_SERVER_URL/compute/vm1 -H 'Content-Type:
-	// text/occi' -H 'Category: compute;
-	// scheme="http://schemas.ogf.org/occi/infrastructure#"; class="kind";' -H
-	// 'X-OCCI-Attribute: occi.compute.hostname="vm1"' -H 'X-OCCI-Attribute:
-	// occi.compute.architecture="x64"' -H 'X-OCCI-Attribute:
-	// occi.compute.cores=4' -H 'X-OCCI-Attribute: occi.compute.memory=4'
-	//
-	// curl $CURL_OPTS -X PUT $OCCI_SERVER_URL/compute/vm2 -H 'Content-Type:
-	// text/occi' -H 'Category: compute;
-	// scheme="http://schemas.ogf.org/occi/infrastructure#"; class="kind";' -H
-	// 'X-OCCI-Attribute: occi.compute.hostname="vm2"' -H 'X-OCCI-Attribute:
-	// occi.compute.architecture="x64"' -H 'X-OCCI-Attribute:
-	// occi.compute.cores=2' -H 'X-OCCI-Attribute: occi.compute.memory=16'
-	// # storage 1 pour vm1.
-	// curl $CURL_OPTS -X PUT $OCCI_SERVER_URL/storage/storage1 -H
-	// 'Content-Type: text/occi' -H 'Category: storage;
-	// scheme="http://schemas.ogf.org/occi/infrastructure#"; class="kind";' -H
-	// 'X-OCCI-Attribute: occi.storage.size=100000'
-	//
-	// curl $CURL_OPTS -X PUT $OCCI_SERVER_URL/network/network1 -H
-	// 'Content-Type: text/occi' -H 'Category: network;
-	// scheme="http://schemas.ogf.org/occi/infrastructure#"; class="kind",
-	// ipnetwork; scheme="http://schemas.ogf.org/occi/infrastructure/network#";
-	// class="mixin";' -H 'X-OCCI-Attribute: occi.network.vlan=12' -H
-	// 'X-OCCI-Attribute: occi.network.label="private"' -H 'X-OCCI-Attribute:
-	// occi.network.address="10.1.0.0/16"' -H 'X-OCCI-Attribute:
-	// occi.network.gateway="10.1.255.254"'
-	//
-	// # Partie Link (creation link)
-	// curl $CURL_OPTS -X PUT $OCCI_SERVER_URL/storagelink/sl1 -H 'Content-Type:
-	// text/occi' -H 'Category: storagelink;
-	// scheme="http://schemas.ogf.org/occi/infrastructure#"; class="kind";' -H
-	// 'X-OCCI-Attribute: occi.storagelink.deviceid="nfs:..."' -H
-	// 'X-OCCI-Attribute: occi.storagelink.mountpoint="/mnt/scratch"' -H
-	// 'X-OCCI-Attribute: occi.core.source="/compute/vm1",
-	// occi.core.target="/storage/storage1"'
-	//
-	// curl $CURL_OPTS -X PUT $OCCI_SERVER_URL/networkinterface/ni1 -H
-	// 'Content-Type: text/occi' -H 'Category: networkinterface;
-	// scheme="http://schemas.ogf.org/occi/infrastructure#"; class="kind",
-	// ipnetworkinterface;
-	// scheme="http://schemas.ogf.org/occi/infrastructure/networkinterface#";
-	// class="mixin";' -H 'X-OCCI-Attribute:
-	// occi.networkinterface.mac="aa:bb:cc:dd:ee:11"' -H 'X-OCCI-Attribute:
-	// occi.networkinterface.interface="eth0"' -H 'X-OCCI-Attribute:
-	// occi.networkinterface.address="10.1.0.100/16"' -H 'X-OCCI-Attribute:
-	// occi.networkinterface.gateway="10.1.255.254"' -H 'X-OCCI-Attribute:
-	// occi.networkinterface.allocation="static"' -H 'X-OCCI-Attribute:
-	// occi.core.source="/compute/vm1", occi.core.target="/network/network1"'
-	//
-	// curl $CURL_OPTS -X PUT $OCCI_SERVER_URL/storagelink/sl2 -H 'Content-Type:
-	// text/occi' -H 'Category: storagelink;
-	// scheme="http://schemas.ogf.org/occi/infrastructure#"; class="kind";' -H
-	// 'X-OCCI-Attribute: occi.storagelink.deviceid="nfs:..."' -H
-	// 'X-OCCI-Attribute: occi.storagelink.mountpoint="/mnt/scratch"' -H
-	// 'X-OCCI-Attribute: occi.core.source="/compute/vm2",
-	// occi.core.target="/storage/storage1"'
-	//
-	// curl $CURL_OPTS -X PUT $OCCI_SERVER_URL/networkinterface/ni2 -H
-	// 'Content-Type: text/occi' -H 'Category: networkinterface;
-	// scheme="http://schemas.ogf.org/occi/infrastructure#"; class="kind",
-	// ipnetworkinterface;
-	// scheme="http://schemas.ogf.org/occi/infrastructure/networkinterface#";
-	// class="mixin";' -H 'X-OCCI-Attribute:
-	// occi.networkinterface.mac="aa:bb:cc:dd:ee:12"' -H 'X-OCCI-Attribute:
-	// occi.networkinterface.interface="eth0"' -H 'X-OCCI-Attribute:
-	// occi.networkinterface.address="10.1.0.101/16"' -H 'X-OCCI-Attribute:
-	// occi.networkinterface.gateway="10.1.255.254"' -H 'X-OCCI-Attribute:
-	// occi.networkinterface.allocation="static"' -H 'X-OCCI-Attribute:
-	// occi.core.source="/compute/vm2", occi.core.target="/network/network1"'
-
 }

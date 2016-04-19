@@ -27,7 +27,7 @@ import java.util.logging.Logger;
 
 import org.eclipse.emf.common.util.Diagnostic;
 import org.eclipse.emf.common.util.EList;
-import org.eclipse.emf.common.util.URI;
+
 import org.eclipse.emf.ecore.EAttribute;
 import org.eclipse.emf.ecore.EClass;
 import org.eclipse.emf.ecore.EClassifier;
@@ -35,11 +35,11 @@ import org.eclipse.emf.ecore.EFactory;
 import org.eclipse.emf.ecore.EObject;
 import org.eclipse.emf.ecore.EPackage;
 import org.eclipse.emf.ecore.EStructuralFeature;
-import org.eclipse.emf.ecore.ETypedElement;
+
 import org.eclipse.emf.ecore.resource.Resource.Factory.Registry;
-import org.eclipse.emf.ecore.resource.ResourceSet;
+
 import org.eclipse.emf.ecore.util.Diagnostician;
-import org.eclipse.update.ui.UpdateManagerUI;
+
 import org.freedesktop.dbus.UInt32;
 import org.occiware.clouddesigner.occi.Action;
 import org.occiware.clouddesigner.occi.AttributeState;
@@ -56,10 +56,10 @@ import org.occiware.clouddesigner.occi.Resource;
 import org.occiware.clouddesigner.occi.docker.connector.ExecutableDockerFactory;
 import org.occiware.clouddesigner.occi.infrastructure.InfrastructurePackage;
 import org.occiware.clouddesigner.occi.util.OCCIResourceFactoryImpl;
-import org.occiware.clouddesigner.occi.util.OCCIResourceSet;
-import org.ow2.erocci.backend.Struct2;
+import org.occiware.clouddesigner.occi.util.OcciHelper;
+import org.occiware.mart.MART;
 import org.ow2.erocci.backend.impl.Utils;
-import org.ow2.mart.connector.infrastructure.dummy.InfrastructureConnectorFactory;
+
 
 /**
  * Manage configurations (OCCI Model).
@@ -86,28 +86,30 @@ public class ConfigurationManager {
     public static final String EXT_CLOUDAUTOMATION_NAME = "pca";
 
     static {
-        // Init EMF to dealt with OCCI files.
-        Registry.INSTANCE.getExtensionToFactoryMap().put("occie", new OCCIResourceFactoryImpl());
-        Registry.INSTANCE.getExtensionToFactoryMap().put("occic", new OCCIResourceFactoryImpl());
-        Registry.INSTANCE.getExtensionToFactoryMap().put("*", new OCCIResourceFactoryImpl());
-
-        // Register the OCCI package into EMF.
-        OCCIPackage.eINSTANCE.toString();
-
-        // Register OCCI extensions.
-        OCCIRegistry.getInstance().registerExtension("http://schemas.ogf.org/occi/core#", EXT_OCCI_CORE_REL_PATH);
-        OCCIRegistry.getInstance().registerExtension("http://schemas.ogf.org/occi/infrastructure#",
-                EXT_OCCI_INFRASTRUCTURE_REL_PATH);
-
-        // Register other extensions.
-        // TODO : Add user custom extension support.
-        // TODO : Add external link load support (like
-        // https://github.com/occiware/occi-schemas/clouddesigner/extensions/docker.occie
-        // ).
-        OCCIRegistry.getInstance().registerExtension("http://occiware.org/cloud#", EXT_OCCI_CLOUD_REL_PATH);
-        OCCIRegistry.getInstance().registerExtension("http://occiware.org/docker#", EXT_OCCI_DOCKER_REL_PATH);
-        OCCIRegistry.getInstance().registerExtension("http://occiware.org/hypervisor#", EXT_OCCI_HYPERVISOR_REL_PATH);
-        OCCIRegistry.getInstance().registerExtension("http://proactive.ow2.org#", EXT_OCCI_CLOUD_AUTOMATION_REL_PATH);
+        
+        MART.initMART();
+//        // Init EMF to dealt with OCCI files.
+//        Registry.INSTANCE.getExtensionToFactoryMap().put("occie", new OCCIResourceFactoryImpl());
+//        Registry.INSTANCE.getExtensionToFactoryMap().put("occic", new OCCIResourceFactoryImpl());
+//        Registry.INSTANCE.getExtensionToFactoryMap().put("*", new OCCIResourceFactoryImpl());
+//
+//        // Register the OCCI package into EMF.
+//        OCCIPackage.eINSTANCE.toString();
+//
+//        // Register OCCI extensions.
+//        OCCIRegistry.getInstance().registerExtension("http://schemas.ogf.org/occi/core#", EXT_OCCI_CORE_REL_PATH);
+//        OCCIRegistry.getInstance().registerExtension("http://schemas.ogf.org/occi/infrastructure#",
+//                EXT_OCCI_INFRASTRUCTURE_REL_PATH);
+//
+//        // Register other extensions.
+//        // TODO : Add user custom extension support.
+//        // TODO : Add external link load support (like
+//        // https://github.com/occiware/occi-schemas/clouddesigner/extensions/docker.occie
+//        // ).
+//        OCCIRegistry.getInstance().registerExtension("http://occiware.org/cloud#", EXT_OCCI_CLOUD_REL_PATH);
+//        OCCIRegistry.getInstance().registerExtension("http://occiware.org/docker#", EXT_OCCI_DOCKER_REL_PATH);
+//        OCCIRegistry.getInstance().registerExtension("http://occiware.org/hypervisor#", EXT_OCCI_HYPERVISOR_REL_PATH);
+//        OCCIRegistry.getInstance().registerExtension("http://proactive.ow2.org#", EXT_OCCI_CLOUD_AUTOMATION_REL_PATH);
         // OCCIRegistry.getInstance().registerExtension("", "model/");
 
     }
@@ -149,6 +151,8 @@ public class ConfigurationManager {
     /**
      * Get a configuration from the configuration's map.
      *
+     * @param owner
+     * @return a configuration object for an owner.
      */
     public static Configuration getConfigurationForOwner(final String owner) {
         if (configurations.get(owner) == null) {
@@ -245,7 +249,7 @@ public class ConfigurationManager {
             }
             // Create an OCCI resource with good resource type (via extension
             // model).
-            resource = (Resource) createEntity(occiKind);
+            resource = (Resource) OcciHelper.createEntity(occiKind);
 
             resource.setId(id);
 
@@ -255,7 +259,7 @@ public class ConfigurationManager {
             // occiKind.getEntities().add(resource);
 
             // Add the attributes...
-            addAttributesToEntity(resource, attributes);
+            updateAttributesToEntity(resource, attributes);
             
             addMixinsToEntity(resource, mixins, owner, false);
             
@@ -329,7 +333,7 @@ public class ConfigurationManager {
             }
 
             // Link doesnt exist on configuration, we create it.
-            link = (Link) createEntity(occiKind);
+            link = (Link) OcciHelper.createEntity(occiKind);
             link.setId(id);
 
             // Add a new kind to resource (title, scheme, term).
@@ -340,7 +344,7 @@ public class ConfigurationManager {
                     && attributes.get("occi.core.target.kind").equals("undefined")) {
                 attributes.remove("occi.core.target.kind");
             }
-            addAttributesToEntity(link, attributes);
+            updateAttributesToEntity(link, attributes);
 
             addMixinsToEntity(link, mixins, owner, false);
             
@@ -349,7 +353,7 @@ public class ConfigurationManager {
             // Check if occi.core.target.kind is set.
             if (attributes.get("occi.core.target.kind") != null
                     && attributes.get("occi.core.target.kind").equals("undefined")) {
-                attributes.remove("occi.core.target.kind");
+                attributes.remove("occi.core.target.kind"); // It's an erocci workaround.
             }
             updateAttributesToEntity(link, attributes);
             overwrite = true;
@@ -359,8 +363,6 @@ public class ConfigurationManager {
 
         link.setSource(resourceSrc);
         link.setTarget(resourceDest);
-
-        
 
         // Assign link to resource source.
         resourceSrc.getLinks().add(link);
@@ -375,6 +377,33 @@ public class ConfigurationManager {
 
     }
 
+    /**
+     * Update / add attributes to entity.
+     * @param entity
+     * @param attributes 
+     * @return  Updated entity object.
+     */
+    public static Entity updateAttributesToEntity(Entity entity, Map<String, String> attributes) {
+        if (attributes == null || attributes.isEmpty()) {
+            // TODO : Check if concrete object attributes are deleted, or update MART with a remove attributes method.
+            entity.getAttributes().clear();
+            return entity;
+        }
+        String attrName;
+        String attrValue;
+        for (Map.Entry<String, String> entry : attributes.entrySet()) {
+            attrName = entry.getKey();
+            attrValue = entry.getValue();
+            if (!attrName.isEmpty() 
+                    && !attrName.equals("occi.core.id")) {
+                OcciHelper.setAttribute(entity, attrName, attrValue);
+            }
+        }
+        
+        return entity;
+    }
+    
+    
     /**
      * Remove an entity (resource or link) from the configuration on overall
      * owners.
@@ -676,7 +705,7 @@ public class ConfigurationManager {
      * @return true if entity exist or false if it doesnt exist.
      */
     public static boolean isEntityExist(final String owner, final String id) {
-        return findEntity(owner, id) != null ? true : false;
+        return findEntity(owner, id) != null;
     }
 
     /**
@@ -687,7 +716,7 @@ public class ConfigurationManager {
      * @return
      */
     public static Entity findEntityAndGetOwner(String owner, final String entityId) {
-        Entity entity = null;
+        Entity entity;
         Map<String, Entity> ents = findEntitiesOnAllOwner(entityId);
         Set<String> owners = ents.keySet();
         if (owners.size() != 1) {
@@ -803,14 +832,15 @@ public class ConfigurationManager {
             extReg.removeAll(extUsed);
             Extension ext;
             for (String extScheme : extReg) {
-                ext = loadExtension(OCCIRegistry.getInstance().getExtensionURI(extScheme));
+                // ext = OcciHelper.loadExtension(OCCIRegistry.getInstance().getExtensionURI(extScheme));
+                ext = OcciHelper.loadExtension(extScheme);
                 kinds = ext.getKinds();
                 for (Kind kind : kinds) {
                     if (((kind.getScheme() + kind.getTerm()).equals(kindId))) {
                         kindToReturn = kind;
                         // Assign connector factory to EMF Factory of the
                         // corresponding OCCI Package.
-                        assignConnectorFactoryToEMFPackage(ext);
+                        // assignConnectorFactoryToEMFPackage(ext);
                         config.getUse().add(ext);
                         logger.log(Level.INFO, "New extension: {0} --< added to configuration owner: {1}", new Object[]{ext.getName(), owner});
                         break;
@@ -1217,166 +1247,11 @@ public class ConfigurationManager {
     public static void resetAll() {
         configurations.clear();
         versionObjectMap.clear();
-
     }
 
-    /**
-     * Create the attributes list for the OCCI Entity and assign them. Please
-     * note that entity.getAttributes() method will return empty list if none
-     * attributes has been assigned.
-     *
-     * @param entity
-     * @param attributes
-     * @return Be aware the returned list attributes may be null.
-     */
-    private static void addAttributesToEntity(Entity entity, final Map<String, String> attributes) {
-        // TODO : Implement in Clouddesigner an autoset attributes on entities
-        // cf Philippe
-        // Merle.
+    
 
-        // This is a workaround to continue developments and will be replaced in
-        // near future.
-        EClass e = entity.eClass();
-        EList<EAttribute> atts = e.getEAllAttributes();
-
-        EStructuralFeature eFeat;
-        String attrNameToCompare;
-        if (attributes != null && !attributes.isEmpty()) {
-            String key;
-            String value;
-            String[] attrKeyArr;
-            for (Map.Entry<String, String> entry : attributes.entrySet()) {
-                eFeat = null;
-                key = entry.getKey();
-                value = entry.getValue();
-                attrKeyArr = key.split("\\.");
-                // Get the last attrKey (for ex: occi.storage.size ==> size.)
-                attrNameToCompare = attrKeyArr[attrKeyArr.length - 1];
-
-                // Assign key --< value to attributes list.
-                AttributeState attrState = occiFactory.createAttributeState();
-                attrState.setName(key);
-                attrState.setValue(value);
-
-                entity.getAttributes().add(attrState);
-
-                // logger.info("Attributes added to entity --> " +
-                // entity.getId() + " --> " + attrState.getName() + " <-- "
-                // + attrState.getValue());
-                // Assign attribute to concrete class (setter).
-                // Before search feature object.
-                for (EAttribute eatt : atts) {
-                    if (eatt.eContainingFeature() != null) {
-                        if (eatt.getName().equals(attrNameToCompare)) {
-                            eFeat = eatt;
-                            break;
-                        }
-                    }
-                }
-                if (eFeat != null) {
-
-                    EClassifier typedElement = eFeat.getEType();
-
-                    String type = typedElement.getInstanceClassName();
-
-                    // Setter on the concrete attribute.
-                    Object val = Utils.convertStringToGenericType(value, type);
-                    entity.eSet(eFeat, val);
-                    // logger.info("Attribute : " + value + " assigned to
-                    // concrete Entity : " + entity.getId());
-
-                }
-            }
-
-        }
-
-    }
-
-    /**
-     * Update attributes on an entity (link or resource).
-     *
-     * @param entity
-     * @param attributes
-     */
-    public static Entity updateAttributesToEntity(Entity entity, Map<String, String> attributes) {
-        EClass e = entity.eClass();
-        EList<EAttribute> atts = e.getEAllAttributes();
-        EStructuralFeature eFeat;
-        String attrNameToCompare;
-        if (attributes != null && !attributes.isEmpty()) {
-            String key;
-            String value;
-            String[] attrKeyArr;
-
-            EList<AttributeState> attrStates;
-            for (Map.Entry<String, String> entry : attributes.entrySet()) {
-                eFeat = null;
-                key = entry.getKey();
-                value = entry.getValue();
-                attrKeyArr = key.split("\\.");
-                // Check if this attribute already exist and delete if found.
-                attrStates = entity.getAttributes();
-                // Get the last attrKey (for ex: occi.storage.size ==> size.)
-                attrNameToCompare = attrKeyArr[attrKeyArr.length - 1];
-                Iterator<AttributeState> it = attrStates.iterator();
-                while (it.hasNext()) {
-                    AttributeState attrState = it.next();
-                    if (attrState.getName().equals(key)) {
-                        it.remove();
-                        break;
-                    }
-                }
-                // Assign key --< value to attributes list.
-                AttributeState attrState = occiFactory.createAttributeState();
-                attrState.setName(key);
-                attrState.setValue(value);
-                entity.getAttributes().add(attrState);
-                // Assign attribute to concrete class (setter).
-                // Before search feature object.
-                for (EAttribute eatt : atts) {
-                    if (eatt.eContainingFeature() != null) {
-                        if (eatt.getName().equals(attrNameToCompare)) {
-                            eFeat = eatt;
-                            break;
-                        }
-                    }
-                }
-                if (eFeat != null) {
-
-                    EClassifier typedElement = eFeat.getEType();
-
-                    String type = typedElement.getInstanceClassName();
-
-                    // Setter on the concrete attribute.
-                    Object val = Utils.convertStringToGenericType(value, type);
-                    entity.eSet(eFeat, val);
-                    // logger.info("Attribute : " + value + " assigned to
-                    // concrete Entity : " + entity.getId());
-
-                }
-
-            }
-
-        } else if (attributes != null && attributes.isEmpty()) {
-
-            for (EAttribute eatt : atts) {
-                if (eatt.eContainingFeature() != null) {
-                    if (!eatt.getName().equals("id")) {
-                        // unset the concrete attributes.
-                        entity.eUnset(eatt);
-                    }
-
-                }
-
-            }
-
-            // Remove all attributes on entity.
-            entity.getAttributes().clear();
-        }
-
-        return entity;
-
-    }
+    
 
     /**
      * Add mixins to an existing entity (resources or links). Ex of mixin string
@@ -1736,222 +1611,46 @@ public class ConfigurationManager {
         return Utils.createEtagNumber(id, owner, version);
     }
 
-    /**
-     *
-     * @param entity
-     * @return
-     */
-    public static void printEntity(Entity entity) {
-
-        StringBuilder builder = new StringBuilder("");
-        if (entity instanceof Resource) {
-            builder.append("Entity is a resource. \n");
-        }
-        if (entity instanceof Link) {
-            builder.append("Entity is a link.\n");
-        }
-        builder.append("id : " + entity.getId() + " \n");
-        builder.append("kind : " + entity.getKind().getScheme() + entity.getKind().getTerm() + " \n ");
-        if (!entity.getMixins().isEmpty()) {
-            builder.append("mixins : " + entity.getMixins().toString() + " \n ");
-        } else {
-            builder.append("entity has no mixins" + " \n ");
-        }
-        builder.append("Entity attributes : " + " \n ");
-        if (entity.getAttributes().isEmpty()) {
-            builder.append("no attributes found." + " \n ");
-        }
-        for (AttributeState attribute : entity.getAttributes()) {
-            builder.append("--> name : " + attribute.getName() + " \n ");
-            builder.append("-- value : " + attribute.getValue() + " \n ");
-        }
-        if (entity.getKind().getActions().isEmpty()) {
-            builder.append("entity has no action \n ");
-        } else {
-            builder.append("entity has actions available : \n ");
-            for (Action action : entity.getKind().getActions()) {
-                builder.append(action.getTitle() + "--> " + action.getScheme() + action.getTerm() + " \n ");
-            }
-        }
-        logger.info(builder.toString());
-
-    }
-
-    /**
-     * EMF and OCL validation of a given OCCI object.
-     *
-     * @param occi the given OCCI object.
-     */
-    public static boolean validate(EObject occi) {
-        // if (!Boolean.getBoolean("validation")) {
-        // return true;
-        // }
-        // Does the validation when the Java system property 'validation' is set
-        // to 'true'.
-        Diagnostic diagnostic = Diagnostician.INSTANCE.validate(occi);
-        if (diagnostic.getSeverity() != Diagnostic.OK) {
-            StringBuffer stringBuffer = printDiagnostic(diagnostic, "", new StringBuffer());
-            System.err.println(stringBuffer.toString());
-            return false;
-        }
-        return true;
-    }
-
-    /**
-     * Print an EMF validation diagnostic.
-     *
-     * @param diagnostic
-     * @param indent
-     * @param stringBuffer
-     * @return
-     */
-    private static StringBuffer printDiagnostic(Diagnostic diagnostic, String indent, StringBuffer stringBuffer) {
-        stringBuffer.append(indent);
-        stringBuffer.append(diagnostic.getMessage());
-        stringBuffer.append("\n");
-        for (Diagnostic child : diagnostic.getChildren()) {
-            printDiagnostic(child, indent + "  ", stringBuffer);
-        }
-        return stringBuffer;
-    }
-
-    /**
-     * Load an OCCI extension.
-     *
-     * @param extensionURI URI of the extension to load.
-     * @return the loaded extension.
-     */
-    public static Extension loadExtension(String extensionURI) {
-        return (Extension) loadOCCI(extensionURI);
-    }
-
-    /**
-     * Load an OCCI configuration.
-     *
-     * @param configurationURI URI of the configuration to load.
-     * @return the loaded configuration.
-     */
-    public static Configuration loadConfiguration(String configurationURI) {
-        return (Configuration) loadOCCI(configurationURI);
-    }
-
-    /**
-     * Validate a configuration's owner.
-     *
-     * @param owner
-     * @return
-     */
-    public static boolean validateConfiguration(final String owner) {
-        Configuration configuration = getConfigurationForOwner(owner);
-        return validate(configuration);
-    }
-
-    /**
-     * Create an entity of a given kind.
-     *
-     * @param kind The kind of the entity to create.
-     * @return The created entity, else null. TODO: More this method into the
-     * org.occiware.clouddesigner.occi module.
-     */
-    public static Entity createEntity(Kind kind) {
-        Entity createdEntity = null;
-
-        // Get the name space of the Ecore package for this kind.
-        String epackageNS = occischeme2emfns(kind.getScheme());
-        // TODO: change the NS of OCCI.ecore!
-        if (epackageNS.equals("http://schemas.ogf.org/occi/core")) {
-            epackageNS = "http://schemas.ogf.org/occi";
-        }
-        // Get the Ecore package associated to the kind.
-        EPackage epackage = EPackage.Registry.INSTANCE.getEPackage(epackageNS);
-        if (epackage == null) {
-            System.err.println("WARNING: EPackage " + epackageNS + " not found!");
-        } else {
-            String classname = occiterm2emfclassname(kind.getTerm());
-            // Get the Ecore class associated to the kind.
-            EClass eclass = (EClass) epackage.getEClassifier(classname);
-            if (eclass == null) {
-                System.err.println("WARNING: EClass " + classname + " not found!");
-            } else {
-                // Get the Ecore factory associated to the kind.
-                EFactory efactory = EPackage.Registry.INSTANCE.getEFactory(epackageNS);
-                if (efactory == null) {
-                    System.err.println("WARNING: EFactory " + epackageNS + " not found!");
-                } else {
-                    // Create the EObject for this kind.
-                    try {
-                        createdEntity = (Entity) efactory.create(eclass);
-                    } catch (Exception e) {
-                        logger.warning(e.getMessage());
-                        e.printStackTrace();
-                    }
-                }
-            }
-        }
-        if (createdEntity == null) {
-            logger.warning("WARNING: Create OCCI Core Resource!");
-            createdEntity = OCCIFactory.eINSTANCE.createResource();
-            createdEntity.setKind(kind);
-        }
-
-        logger.info("DEBUG: created entity=" + createdEntity);
-        // Return the new entity.
-        return createdEntity;
-    }
-
-    /**
-     * Converts an OCCI scheme to an EMF name space.
-     *
-     * @param scheme the OCCI scheme.
-     * @return the EMF name space. TODO: Move this method into the
-     * org.occiware.clouddesigner.occi module.
-     */
-    private static String occischeme2emfns(String scheme) {
-        return scheme.substring(0, scheme.length() - 1);
-    }
-
-    /**
-     * Converts an OCCI term to an EMF class name.
-     *
-     * @param term the OCCI term.
-     * @return the EMF class name. TODO: Move this method into the
-     * org.occiware.clouddesigner.occi module.
-     */
-    private static String occiterm2emfclassname(String term) {
-        return term.substring(0, 1).toUpperCase() + term.substring(1);
-    }
-
-    /**
-     * Get a kind by its term.
-     *
-     * @param extension The extension where to search.
-     * @param term The term of the kind to search.
-     * @return The found kind, else null. TODO: Move this method into the
-     * org.occiware.clouddesigner.occi module.
-     */
-    public static Kind getKindByTerm(Extension extension, String term) {
-        for (Kind kind : extension.getKinds()) {
-            if (kind.getTerm().equals(term)) {
-                return kind;
-            }
-        }
-        return null;
-    }
-
-    /**
-     * Load an OCCI object.
-     *
-     * @param uri URI of the OCCI object to load.
-     * @return the loaded OCCI object.
-     */
-    private static Object loadOCCI(String uri) {
-        // Create a new resource set.
-        ResourceSet resourceSet = new OCCIResourceSet();
-        // Load the OCCI resource.
-        org.eclipse.emf.ecore.resource.Resource resource = resourceSet.getResource(URI.createURI(uri), true);
-        // Return the first element.
-        return resource.getContents().get(0);
-    }
+//    /**
+//     *
+//     * @param entity
+//     * @return
+//     */
+//    public static void printEntity(Entity entity) {
+//
+//        StringBuilder builder = new StringBuilder("");
+//        if (entity instanceof Resource) {
+//            builder.append("Entity is a resource. \n");
+//        }
+//        if (entity instanceof Link) {
+//            builder.append("Entity is a link.\n");
+//        }
+//        builder.append("id : " + entity.getId() + " \n");
+//        builder.append("kind : " + entity.getKind().getScheme() + entity.getKind().getTerm() + " \n ");
+//        if (!entity.getMixins().isEmpty()) {
+//            builder.append("mixins : " + entity.getMixins().toString() + " \n ");
+//        } else {
+//            builder.append("entity has no mixins" + " \n ");
+//        }
+//        builder.append("Entity attributes : " + " \n ");
+//        if (entity.getAttributes().isEmpty()) {
+//            builder.append("no attributes found." + " \n ");
+//        }
+//        for (AttributeState attribute : entity.getAttributes()) {
+//            builder.append("--> name : " + attribute.getName() + " \n ");
+//            builder.append("-- value : " + attribute.getValue() + " \n ");
+//        }
+//        if (entity.getKind().getActions().isEmpty()) {
+//            builder.append("entity has no action \n ");
+//        } else {
+//            builder.append("entity has actions available : \n ");
+//            for (Action action : entity.getKind().getActions()) {
+//                builder.append(action.getTitle() + "--> " + action.getScheme() + action.getTerm() + " \n ");
+//            }
+//        }
+//        logger.info(builder.toString());
+//
+//    }
 
     /**
      * Find a used extension for an action Kind.
@@ -2059,7 +1758,8 @@ public class ConfigurationManager {
         EList<Resource> resources;
         EList<Extension> exts;
         for (String owner : owners) {
-            configuration = configurations.get(owner);
+            configuration = getConfigurationForOwner(owner);
+            
             resources = configuration.getResources();
             for (Resource resource : resources) {
                 if (resource.getId().equals(entity.getId())) {
@@ -2086,39 +1786,39 @@ public class ConfigurationManager {
         return extRet;
     }
 
-    /**
-     * Factory EMF assign management.
-     *
-     * @param ext
-     */
-    public static void assignConnectorFactoryToEMFPackage(final Extension ext) {
-        if (ext == null) {
-            return;
-        }
-        switch (ext.getName()) {
-            case EXT_INFRASTRUCTURE_NAME:
-                // Set the EMF factory of the OCCI Infrastructure package with the
-                // factory of the infrastructure dummy connector.
-                InfrastructurePackage.eINSTANCE.setEFactoryInstance(new InfrastructureConnectorFactory());
-                break;
-            case EXT_CLOUDAUTOMATION_NAME:
-                // TODO : Set local connector CloudAutomationConnectorFactory to
-                // CloudAutomationPackage (or InfrastructurePackage ?).
-                break;
-            case EXT_DOCKER_NAME:
-                // Assign Docker connector factory (ExecutableDockerFactory).
-                // this will set DockerPackage.eInstance.setEFactoryInstance(new
-                // ExecutableDockerFactory());
-                ExecutableDockerFactory.init();
-                break;
-            case EXT_CLOUD_NAME:
-                // TODO : Add cloud connector support.
-                break;
-            case EXT_HYPERVISOR_NAME:
-                // TODO : Add hypervisor connector support.
-                break;
-        }
-
-    }
+//    /**
+//     * Factory EMF assign management.
+//     *
+//     * @param ext
+//     */
+//    public static void assignConnectorFactoryToEMFPackage(final Extension ext) {
+//        if (ext == null) {
+//            return;
+//        }
+//        switch (ext.getName()) {
+//            case EXT_INFRASTRUCTURE_NAME:
+//                // Set the EMF factory of the OCCI Infrastructure package with the
+//                // factory of the infrastructure dummy connector.
+//                InfrastructurePackage.eINSTANCE.setEFactoryInstance(new InfrastructureConnectorFactory());
+//                break;
+//            case EXT_CLOUDAUTOMATION_NAME:
+//                // TODO : Set local connector CloudAutomationConnectorFactory to
+//                // CloudAutomationPackage (or InfrastructurePackage ?).
+//                break;
+//            case EXT_DOCKER_NAME:
+//                // Assign Docker connector factory (ExecutableDockerFactory).
+//                // this will set DockerPackage.eInstance.setEFactoryInstance(new
+//                // ExecutableDockerFactory());
+//                ExecutableDockerFactory.init();
+//                break;
+//            case EXT_CLOUD_NAME:
+//                // TODO : Add cloud connector support.
+//                break;
+//            case EXT_HYPERVISOR_NAME:
+//                // TODO : Add hypervisor connector support.
+//                break;
+//        }
+//
+//    }
 
 }

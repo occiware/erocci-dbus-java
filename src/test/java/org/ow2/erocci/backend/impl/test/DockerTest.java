@@ -49,6 +49,7 @@ import org.occiware.clouddesigner.occi.Resource;
 import org.occiware.clouddesigner.occi.docker.Container;
 import org.occiware.clouddesigner.occi.docker.Machine;
 import org.occiware.clouddesigner.occi.infrastructure.ComputeStatus;
+import org.occiware.clouddesigner.occi.util.OcciHelper;
 import org.ow2.erocci.backend.Struct1;
 /**
  * Docker Tests connector.
@@ -63,7 +64,7 @@ public class DockerTest {
 	 */
 	private Map<String, InputContainer> containers;
     private final String SCHEME_INFRA = "http://schemas.ogf.org/occi/infrastructure#";
-    private final String SCHEME_DOCKER = "http://occiware.org/docker#";
+    private final String SCHEME_DOCKER = "http://occiware.org/occi/docker#";
     private final String VIRTUALBOX_KIND = SCHEME_DOCKER + "machine_VirtualBox";
     private final String CONTAINER_KIND = SCHEME_DOCKER + "container";
     private final String CONTAINS_KIND = SCHEME_DOCKER + "contains";
@@ -106,7 +107,7 @@ public class DockerTest {
 		for (Extension extension : exts) {
 
 			System.out.println("    * Extension " + extension.getName() + " " + extension.getScheme());
-			result = ConfigurationManager.validate(extension); // Validate
+			result = OcciHelper.validate(extension); // Validate
 																// extension.
 			assertTrue(result);
 			// print(extension);
@@ -114,7 +115,7 @@ public class DockerTest {
 		}
 
 		// Model validation with ocl.
-		result = ConfigurationManager.validate(ConfigurationManager.getConfigurationForOwner(DEFAULT_OWNER));
+		result = OcciHelper.validate(ConfigurationManager.getConfigurationForOwner(DEFAULT_OWNER));
 		// Print our configuration.
 		print(ConfigurationManager.getConfigurationForOwner(DEFAULT_OWNER));
 		assertTrue(result);

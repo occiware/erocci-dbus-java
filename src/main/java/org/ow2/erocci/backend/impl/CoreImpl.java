@@ -29,7 +29,6 @@ import org.freedesktop.DBus;
 import org.freedesktop.dbus.UInt32;
 import org.freedesktop.dbus.Variant;
 import org.occiware.clouddesigner.occi.Entity;
-import org.occiware.clouddesigner.occi.Mixin;
 import org.ow2.erocci.backend.Pair;
 import org.ow2.erocci.backend.Quad;
 import org.ow2.erocci.backend.Struct1;
@@ -193,8 +192,7 @@ public class CoreImpl implements core, action, mixin, DBus.Properties {
         } else {
             logger.info("SaveResource invoked with id=" + entityId + ", kind=" + kind + ", mixins=" + mixins
                     + ", attributes=" + Utils.convertVariantMap(attributes));
-            // attr.put("occi.core.id", "urn:uuid:" + identifierUUID);
-            attr.put("occi.core.id", entityId);
+            // attr.put("occi.core.id", entityId);
             ConfigurationManager.addResourceToConfiguration(entityId, kind, mixins, attr, owner);
         }
 
@@ -262,7 +260,7 @@ public class CoreImpl implements core, action, mixin, DBus.Properties {
             logger.info("SaveLink invoked with id=" + entityId + ", kind=" + kind + ", mixins=" + mixins
                     + ", attributes=" + Utils.convertVariantMap(attributes));
 
-            attr.put("occi.core.id", entityId);
+            // attr.put("occi.core.id", entityId);
 
             ConfigurationManager.addLinkToConfiguration(entityId, kind, mixins, src, target, attr, owner);
 
