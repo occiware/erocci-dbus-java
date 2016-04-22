@@ -89,6 +89,7 @@
 		<!-- Releng -->
 		<module>../org.occiware.clouddesigner.occi.feature</module>
 		<module>../org.occiware.clouddesigner.occi.docker.feature</module>
+		<module>../org.occiware.clouddesigner.occi.cloud.feature</module>
 		<module>../org.occiware.clouddesigner.occi.hypervisor.feature</module>
 		<module>../org.occiware.clouddesigner.repository</module>
 		<module>../org.occiware.clouddesigner.dependencies</module>
@@ -111,11 +112,6 @@
 			<id>mars</id>
 			<layout>p2</layout>
 			<url>http://download.eclipse.org/releases/mars</url>
-		</repository>
-		<repository>
-			<id>k3</id>
-			<layout>p2</layout>
-			<url>http://www.kermeta.org/k3/update</url>
 		</repository>
 		<repository>
 			<id>mvnrepository</id>

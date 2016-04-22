@@ -15,11 +15,15 @@
  */
 package org.ow2.erocci.backend.impl;
 
+import java.lang.reflect.InvocationTargetException;
 import java.util.Map;
 import java.util.logging.Logger;
 
 import org.freedesktop.dbus.Variant;
+import org.occiware.clouddesigner.occi.Action;
 import org.occiware.clouddesigner.occi.Entity;
+import org.occiware.clouddesigner.occi.Extension;
+import org.occiware.clouddesigner.occi.util.OcciHelper;
 import org.ow2.erocci.backend.action;
 import org.ow2.erocci.model.ConfigurationManager;
 import org.ow2.erocci.model.exception.ExecuteActionException;
@@ -35,11 +39,16 @@ import org.ow2.erocci.runtime.IActionExecutor;
 public class ActionImpl implements action {
 
     private Logger logger = Logger.getLogger(this.getClass().getName());
+    private int mode = 0;
 
     @Override
     public boolean isRemote() {
 
         return false;
+    }
+
+    public void setMode(int mode) {
+        this.mode = mode;
     }
 
     /**
@@ -61,23 +70,49 @@ public class ActionImpl implements action {
         }
         // TODO : Owner in parameters entry of Action method.
         String owner = ConfigurationManager.DEFAULT_OWNER;
-        
+
         Map<String, String> actionAttributes = Utils.convertVariantMap(attributes);
 
         Entity entity = ConfigurationManager.findEntity(owner, id);
         if (entity != null) {
-          // TODO : Model validator AFTER launching the action, this can cause a lot of problem if constraints aren't respected.
-          // Get the executor corresponding on entity kind.
-          // Launch the action effectively.
-          String entityKind = entity.getKind().getScheme() + entity.getKind().getTerm();
-          IActionExecutor actExecutor = ActionExecutorFactory.build(ConfigurationManager.getExtensionForKind(owner, entityKind));
-          
-          try {
-              actExecutor.execute(action_id, actionAttributes, entity, IActionExecutor.FROM_ACTION);
-          } catch (ExecuteActionException ex) {
-              logger.warning("Action launch error : " + ex.getMessage());
-          }
-          
+            if (mode == CoreImpl.DEFAULT_MODE) {
+                // TODO : Model validator AFTER launching the action, this can cause a lot of problem if constraints aren't respected.
+                // Get the executor corresponding on entity kind.
+                // Launch the action effectively.
+                String entityKind = entity.getKind().getScheme() + entity.getKind().getTerm();
+                IActionExecutor actExecutor = ActionExecutorFactory.build(ConfigurationManager.getExtensionForKind(owner, entityKind));
+
+                try {
+                    actExecutor.execute(action_id, actionAttributes, entity, IActionExecutor.FROM_ACTION);
+                } catch (ExecuteActionException ex) {
+                    logger.warning("Action launch error : " + ex.getMessage());
+                }
+            } else if (mode == CoreImpl.EMBED_MODE) {
+
+                String entityKind = entity.getKind().getScheme() + entity.getKind().getTerm();
+                Extension ext = ConfigurationManager.getExtensionForKind(owner, entityKind);
+                if (action_id == null) {
+                    logger.warning("You must provide an action kind for entity : " + entity.getId());
+                    return;
+                }
+                Action actionKind = ConfigurationManager.getActionKindFromExtension(ext, action_id);
+                if (actionKind == null) {
+                    logger.warning(
+                            "Action : " + action_id + " doesnt exist on extension : " + ext.getName());
+                }
+
+                String[] actionParameters = Utils.getActionParametersArray(actionAttributes);
+                try {
+                    if (actionParameters == null) {
+                        OcciHelper.executeAction(entity, actionKind.getTerm());
+                    } else {
+                        OcciHelper.executeAction(entity, actionKind.getTerm(), actionParameters);
+                    }
+                } catch (InvocationTargetException ex) {
+                    logger.warning("Action failed to execute : " + ex.getMessage());
+                }
+            }
+
         } else {
             logger.info("Entity doesnt exist : " + id);
             // return failed; (or state)

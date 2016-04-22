@@ -551,6 +551,30 @@ public class Utils {
 		return result;
 
 	}
+    
+    /**
+     * Helper for converting action attributes parameters in array.
+     *
+     * @param actionAttributes
+     * @return parameters for an action null if none.
+     */
+    public static String[] getActionParametersArray(Map<String, String> actionAttributes) {
+        String[] actionParameters = null;
+        if (actionAttributes != null && !actionAttributes.isEmpty()) {
+            actionParameters = new String[actionAttributes.size()];
+            String key;
+            String value;
+            int index = 0;
+            for (Map.Entry<String, String> entry : actionAttributes.entrySet()) {
+                key = entry.getKey();
+                value = entry.getValue();
+                actionParameters[index] = value;
+                index++;
+            }
+        }
+
+        return actionParameters;
+    }
 
 	private static int uniqueInt = 1;
 

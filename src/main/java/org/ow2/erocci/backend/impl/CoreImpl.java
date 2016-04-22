@@ -52,6 +52,9 @@ public class CoreImpl implements core, action, mixin, DBus.Properties {
     public static byte NODE_ENTITY = 0;
     public static byte NODE_UNBOUNDED_COLLECTION = 1;
 
+    public static final int DEFAULT_MODE = 0;
+    public static final int EMBED_MODE = 1; // Used as embedded in an application, that why the full path xml is passed in main argument parameter.
+
     private Logger logger = Logger.getLogger(this.getClass().getName());
 
     private String schema;
@@ -61,6 +64,12 @@ public class CoreImpl implements core, action, mixin, DBus.Properties {
     private ActionImpl actionImpl = new ActionImpl();
     // Delegate to mixin methods.
     private MixinImpl mixinImpl = new MixinImpl();
+
+    /**
+     * Default mode : 0 , with docker or no argument. mode : 1 , with a specific
+     * file xml and also no special implementation business code.
+     */
+    private int mode = 0;
 
     /**
      * Default constructor
@@ -82,12 +91,23 @@ public class CoreImpl implements core, action, mixin, DBus.Properties {
             os = new ByteArrayOutputStream();
             this.schema = Utils.copyStream(in, os);
             // logger.info("Schema returned: " + this.schema);
-            
+
             // this.schema = os.toString("UTF-8");
         } catch (IOException e) {
             Utils.closeQuietly(in);
             Utils.closeQuietly(os);
             schema = null;
+        }
+    }
+
+    public void setMode(int mode) {
+        this.mode = mode;
+        if (this.mode == DEFAULT_MODE) {
+            logger.info("Default mode enabled");
+        } else {
+            if (this.mode == EMBED_MODE) {
+                logger.info("EMBED mode enabled");
+            }
         }
     }
 
@@ -162,11 +182,11 @@ public class CoreImpl implements core, action, mixin, DBus.Properties {
 
         String identifierUUID;
         Map<String, String> attr = Utils.convertVariantMap(attributes);
-        
+
         if (attr.get("command") != null) {
-        	attr.put("command", "sleep,9999");
+            attr.put("command", "sleep,9999");
         }
-        
+
         // Check if identifier UUID is provided (on occi.core.id or on id).
         if (Utils.isEntityUUIDProvided(id, attr)) {
             // the id may have relative path part so we need to get the UUID
@@ -192,17 +212,21 @@ public class CoreImpl implements core, action, mixin, DBus.Properties {
         } else {
             logger.info("SaveResource invoked with id=" + entityId + ", kind=" + kind + ", mixins=" + mixins
                     + ", attributes=" + Utils.convertVariantMap(attributes));
-            // attr.put("occi.core.id", entityId);
+            attr.put("occi.core.id", entityId);
             ConfigurationManager.addResourceToConfiguration(entityId, kind, mixins, attr, owner);
         }
-
-        try {
-            IActionExecutor actExecutor = ActionExecutorFactory
-                    .build(ConfigurationManager.getExtensionForKind(owner, kind));
-            Entity entity = ConfigurationManager.findEntity(owner, entityId);
-            actExecutor.occiPostCreate(entity);
-        } catch (ExecuteActionException ex) {
-            logger.warning("SaveResource action launch error : " + ex.getMessage());
+        Entity entity = ConfigurationManager.findEntity(owner, entityId);
+        if (entity != null && mode == DEFAULT_MODE) {
+            try {
+                IActionExecutor actExecutor = ActionExecutorFactory
+                        .build(ConfigurationManager.getExtensionForKind(owner, kind));
+                // Entity entity = ConfigurationManager.findEntity(owner, entityId);
+                actExecutor.occiPostCreate(entity);
+            } catch (ExecuteActionException ex) {
+                logger.warning("SaveResource action launch error : " + ex.getMessage());
+            }
+        } else if (entity != null && mode == EMBED_MODE) {
+            entity.occiCreate();
         }
 
         logger.info("SaveResource done returning relative path : " + id);
@@ -260,19 +284,24 @@ public class CoreImpl implements core, action, mixin, DBus.Properties {
             logger.info("SaveLink invoked with id=" + entityId + ", kind=" + kind + ", mixins=" + mixins
                     + ", attributes=" + Utils.convertVariantMap(attributes));
 
-            // attr.put("occi.core.id", entityId);
+            attr.put("occi.core.id", entityId);
 
             ConfigurationManager.addLinkToConfiguration(entityId, kind, mixins, src, target, attr, owner);
 
         }
 
-        try {
-            IActionExecutor actExecutor = ActionExecutorFactory
-                    .build(ConfigurationManager.getExtensionForKind(owner, kind));
-            Entity entity = ConfigurationManager.findEntity(owner, entityId);
-            actExecutor.occiPostCreate(entity);
-        } catch (ExecuteActionException ex) {
-            logger.warning("SaveLink action launch error : " + ex.getMessage());
+        Entity entity = ConfigurationManager.findEntity(owner, entityId);
+
+        if (entity != null && mode == DEFAULT_MODE) {
+            try {
+                IActionExecutor actExecutor = ActionExecutorFactory
+                        .build(ConfigurationManager.getExtensionForKind(owner, kind));
+                actExecutor.occiPostCreate(entity);
+            } catch (ExecuteActionException ex) {
+                logger.warning("SaveLink action launch error : " + ex.getMessage());
+            }
+        } else if (entity != null && mode == EMBED_MODE) {
+            entity.occiCreate();
         }
 
         return id;
@@ -308,13 +337,19 @@ public class CoreImpl implements core, action, mixin, DBus.Properties {
             logger.info("entity found : " + id + " updating...");
             // update attributes .
             entity = ConfigurationManager.updateAttributesToEntity(entity, attr);
-            try {
-                IActionExecutor actExecutor = ActionExecutorFactory
-                        .build(ConfigurationManager.getExtensionFromEntity(entity));
-                actExecutor.occiPostUpdate(entity);
-            } catch (ExecuteActionException ex) {
-                logger.warning("Update action launch error : " + ex.getMessage());
+
+            if (mode == DEFAULT_MODE) {
+                try {
+                    IActionExecutor actExecutor = ActionExecutorFactory
+                            .build(ConfigurationManager.getExtensionFromEntity(entity));
+                    actExecutor.occiPostUpdate(entity);
+                } catch (ExecuteActionException ex) {
+                    logger.warning("Update action launch error : " + ex.getMessage());
+                }
+            } else if (mode == EMBED_MODE) {
+                entity.occiCreate();
             }
+
         }
 
         return attributes;
@@ -487,12 +522,16 @@ public class CoreImpl implements core, action, mixin, DBus.Properties {
         List<Entity> entities = ConfigurationManager.findAllEntitiesLikePartialId(ConfigurationManager.DEFAULT_OWNER,
                 id);
         for (Entity entity : entities) {
-            try {
-                IActionExecutor actExecutor = ActionExecutorFactory
-                        .build(ConfigurationManager.getExtensionFromEntity(entity));
-                actExecutor.occiPreDelete(entity);
-            } catch (ExecuteActionException ex) {
-                logger.warning("Delete action launch error : " + ex.getMessage());
+            if (mode == DEFAULT_MODE) {
+                try {
+                    IActionExecutor actExecutor = ActionExecutorFactory
+                            .build(ConfigurationManager.getExtensionFromEntity(entity));
+                    actExecutor.occiPreDelete(entity);
+                } catch (ExecuteActionException ex) {
+                    logger.warning("Delete action launch error : " + ex.getMessage());
+                }
+            } else if (mode == EMBED_MODE) {
+                entity.occiDelete();
             }
             ConfigurationManager.removeOrDissociate(id);
         }
@@ -517,7 +556,7 @@ public class CoreImpl implements core, action, mixin, DBus.Properties {
         Map<String, List<Entity>> entitiesMap;
 
         // Check if categoryId or relative path part.
-        if (id.startsWith("http")) {
+        if (id != null && id.startsWith("http")) {
             // it's a categoryId...
             // Search for kind, mixins, actions and get their entities.
             // the map is by owner.
@@ -535,17 +574,15 @@ public class CoreImpl implements core, action, mixin, DBus.Properties {
             }
             // Search for user mixin tag.
             // We consider here that this is by a location (http://localhost:8080/myxinsCollection/).
-            Map<String,List<String>> userMixins = ConfigurationManager.findAllUserMixinKindByLocation(id);
+            Map<String, List<String>> userMixins = ConfigurationManager.findAllUserMixinKindByLocation(id);
             List<String> mixins;
             for (Map.Entry<String, List<String>> entry : userMixins.entrySet()) {
-            	owner = entry.getKey();
-            	mixins = entry.getValue();
-            	for (String mixinKind : mixins) {
-            		ret.add(new Struct2(mixinKind, owner));
-            	}
+                owner = entry.getKey();
+                mixins = entry.getValue();
+                for (String mixinKind : mixins) {
+                    ret.add(new Struct2(mixinKind, owner));
+                }
             }
-            
-                        
 
         } else if (id == null || id.isEmpty()) {
             // id is null, we return all used used kinds. (scheme + term).
@@ -556,7 +593,6 @@ public class CoreImpl implements core, action, mixin, DBus.Properties {
             for (String usedKind : usedKinds) {
                 ret.add(new Struct2(usedKind, ""));
             }
-            
 
         } else {
             // it's a relative path url part.
@@ -567,17 +603,17 @@ public class CoreImpl implements core, action, mixin, DBus.Properties {
                 Entity ent = entry.getValue();
                 ret.add(new Struct2(ent.getId(), owner));
             }
-            
+
             // Search for user tag mixin by location with relative path part.
             // id may be a relative part of a mixin kind. Note that the method use contains for replacing equality on location. 
-            Map<String,List<String>> userMixins = ConfigurationManager.findAllUserMixinKindByLocation(id);
+            Map<String, List<String>> userMixins = ConfigurationManager.findAllUserMixinKindByLocation(id);
             List<String> mixins;
             for (Map.Entry<String, List<String>> entry : userMixins.entrySet()) {
-            	owner = entry.getKey();
-            	mixins = entry.getValue();
-            	for (String mixinKind : mixins) {
-            		ret.add(new Struct2(mixinKind, owner));
-            	}
+                owner = entry.getKey();
+                mixins = entry.getValue();
+                for (String mixinKind : mixins) {
+                    ret.add(new Struct2(mixinKind, owner));
+                }
             }
 
         }
@@ -595,7 +631,7 @@ public class CoreImpl implements core, action, mixin, DBus.Properties {
     @Override
     public void Action(String id, String action_id, Map<String, Variant> attributes) {
         logger.info("---------------------->Action method invoked !!!");
-
+        actionImpl.setMode(mode);
         actionImpl.Action(id, action_id, attributes);
     }
 
