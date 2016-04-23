@@ -17,7 +17,10 @@ package org.ow2.erocci.backend;
 
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.io.InputStream;
+import java.net.URL;
+import java.util.Enumeration;
 import java.util.logging.Logger;
 
 import org.freedesktop.dbus.DBusConnection;
@@ -130,7 +133,18 @@ public class BackendDBusService {
                 .start("org.ow2.erocci.backend");
         }
         ConfigurationManager.getConfigurationForOwner(ConfigurationManager.DEFAULT_OWNER);
-
+        
+//        // For testing classpath entries..
+//        
+//        try {
+//            ClassLoader classLoader = BackendDBusService.class.getClassLoader();
+//            Enumeration<URL> pluginResources = classLoader.getResources("plugin.xml");
+//			for(URL url : java.util.Collections.list(pluginResources)) {
+//				System.out.println("  * " + url.toExternalForm() + "...");
+//            }
+//        } catch (IOException ex) {
+//            System.out.println("Exception io : " + ex.getMessage());
+//        }
 	}
 
 }
