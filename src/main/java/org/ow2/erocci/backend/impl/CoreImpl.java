@@ -387,7 +387,7 @@ public class CoreImpl implements core, action, mixin, DBus.Properties {
     @Override
     public java.util.List<Struct1> Find(String id) {
         logger.info("Find invoked with id=" + id);
-
+         
         List<Struct1> ret = new LinkedList<Struct1>();
 
         Map<String, Entity> entities = ConfigurationManager.findEntitiesOnAllOwner(id);
@@ -476,7 +476,9 @@ public class CoreImpl implements core, action, mixin, DBus.Properties {
     @Override
     public Pair<Variant, UInt32> List(String id, Map<String, Variant> filters) {
         logger.info("List invoked with id=" + id + " and filters=" + filters);
-
+        // TODO : Next step, Add support for root query like :  http://localhost:8080/ <--< "/".
+            // give : all resources on collections.
+            
         int collectionNb = Utils.getUniqueInt();
         String collectionName = "collection" + collectionNb;
 
