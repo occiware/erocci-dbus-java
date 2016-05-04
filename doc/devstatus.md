@@ -118,8 +118,8 @@ Development Status values :
         <td align="center"><img src="https://raw.github.com/occiware/erocci-dbus-java/master/doc/inprogress.png" alt="In progress" height="40" width="auto" /></td>
     </tr>
     <tr>
-        <td align="center">Refactoring ConfigurationManager (CloudDesigner model reversing implementation)</td>
-        <td align="center">Connector based on CloudDesigner implementation, for VMware, <a href="https://github.com/occiware/erocci-dbus-java/issues/30">feature #30</a></td>
+        <td align="center">Refactoring ConfigurationManager</td>
+        <td align="center">Refactoring on CloudDesigner model reversing implementation, <a href="https://github.com/occiware/erocci-dbus-java/issues/30">feature #30</a></td>
         <td align="center"><img src="https://raw.github.com/occiware/erocci-dbus-java/master/doc/inprogress.png" alt="In progress" height="40" width="auto" /></td>
     </tr>
 
