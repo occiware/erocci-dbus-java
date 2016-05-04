@@ -119,30 +119,6 @@ public class UtilsTest {
 		
 		
 	}
-	@Test
-	public void testConvertStringToGenericType() {
-		String test = "123";
-		String type = "int";
-		Object result = Utils.convertStringToGenericType(test, type);
-		assertTrue(result instanceof Integer);
-		test = "1.6";
-		type = "float";
-		result = Utils.convertStringToGenericType(test, type);
-		assertTrue(result instanceof Float);
-		test = "x64";
-		type = "org.occiware.clouddesigner.occi.infrastructure.Architecture";
-		result = Utils.convertStringToGenericType(test, type);
-		assertTrue(result instanceof org.occiware.clouddesigner.occi.infrastructure.Architecture);
-		type = "String";
-		test = "Test13.4T5";
-		result = Utils.convertStringToGenericType(test, type);
-		assertTrue(result instanceof String);
-		type = "boolean";
-		test = "true";
-		result = Utils.convertStringToGenericType(test, type);
-		assertTrue(result instanceof Boolean);
-		assertTrue(((Boolean)result));
-	}
 	
 	private Map<String, Map<String, String>> buildIds() {
 		Map<String, Map<String, String>> idsAttr = new HashMap<>();

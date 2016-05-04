@@ -347,7 +347,7 @@ public class CoreImpl implements core, action, mixin, DBus.Properties {
                     logger.warning("Update action launch error : " + ex.getMessage());
                 }
             } else if (mode == EMBED_MODE) {
-                entity.occiCreate();
+                entity.occiUpdate();
             }
 
         }

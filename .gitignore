@@ -21,3 +21,5 @@ src/generated/**
 #idea
 *.iml
 .idea/
+#netbeans
+nbactions.xml

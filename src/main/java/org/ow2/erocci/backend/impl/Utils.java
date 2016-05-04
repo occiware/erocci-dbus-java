@@ -42,10 +42,6 @@ import org.occiware.clouddesigner.occi.AttributeState;
 import org.occiware.clouddesigner.occi.Entity;
 import org.occiware.clouddesigner.occi.Kind;
 import org.occiware.clouddesigner.occi.Mixin;
-import org.occiware.clouddesigner.occi.infrastructure.Architecture;
-import org.occiware.clouddesigner.occi.infrastructure.ComputeStatus;
-import org.occiware.clouddesigner.occi.infrastructure.NetworkInterfaceStatus;
-import org.occiware.clouddesigner.occi.infrastructure.StorageLinkStatus;
 import org.ow2.erocci.backend.Quad;
 
 /**
@@ -471,85 +467,6 @@ public class Utils {
 		}
 
 		return relativePathPart;
-	}
-
-	/**
-	 * Convert a String to Object corresponding type as : "1.5" is a Float
-	 * Object, "5" is an Integer, "test" is a String.
-	 * 
-	 * @param value
-	 * @param type
-	 *            (instanceClassName)
-	 * @return
-	 */
-	public static Object convertStringToGenericType(final String value, final String type) {
-		Object result = null;
-	//	String typeToTest = type.toLowerCase();
-		
-		switch (type) {
-		case "float":
-			try {
-				result = new Float(value);
-
-			} catch (NumberFormatException ex) {
-				result = value;
-			}
-			break;
-		case "integer":
-		case "int":
-			try {
-				result = new Integer(value);
-			} catch (NumberFormatException ex) {
-				result = value;
-			}
-			break;
-		case "boolean":
-			String tmp = null;
-			if (value.equals("0")) {
-				tmp = "false";
-			}
-			if (value.equals("1")) {
-				tmp = "true";
-			}
-			if (tmp == null) {
-				tmp = value;
-			}
-			result = new Boolean(tmp);
-			break;
-		case "org.occiware.clouddesigner.occi.infrastructure.Architecture":
-			if (value.contains("64")) {
-				result = org.occiware.clouddesigner.occi.infrastructure.Architecture.X64;
-			} else if (value.contains("86") || value.contains("32")) {
-				result = org.occiware.clouddesigner.occi.infrastructure.Architecture.X86;
-			} else {
-				// Default to X86 if no arch specified correctly.
-				result = org.occiware.clouddesigner.occi.infrastructure.Architecture.X86;
-			}
-			break;
-		case "org.occiware.clouddesigner.occi.infrastructure.ComputeStatus":
-			result = ComputeStatus.get(value);
-			if (result == null) {
-				// Undefined in realm.
-				result = ComputeStatus.INACTIVE;
-			}
-			break;
-		case "org.occiware.clouddesigner.occi.infrastructure.NetworkInterfaceStatus" :
-			result = NetworkInterfaceStatus.get(value);
-			if (result == null) {
-				result = NetworkInterfaceStatus.INACTIVE;
-			}
-			
-			break;
-		case "org.occiware.clouddesigner.occi.infrastructure.StorageLinkStatus" :
-			result = StorageLinkStatus.get(value);
-			
-			break;
-		default:
-			result = value;
-		}
-
-		return result;
-
 	}
     
     /**
