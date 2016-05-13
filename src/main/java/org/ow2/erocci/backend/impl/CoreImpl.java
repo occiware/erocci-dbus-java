@@ -452,6 +452,9 @@ public class CoreImpl implements core, action, mixin, DBus.Properties {
 
             logger.info("Owner : " + owner + "--< Entity : " + entity.getId()
                     + " loaded with success, transaction with dbus to come...");
+            // get the real values of this entity.
+            entity.occiRetrieve();
+            
             return Utils.convertEntityToQuad(entity);
         } else {
             logger.info("Entity : " + opaque_id + " --< entity doesnt exist !");
