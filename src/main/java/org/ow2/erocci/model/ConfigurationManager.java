@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2015-2017 Inria - Linagora
+ * Copyright (c) 2015-2017 Inria
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,15 +15,23 @@
  */
 package org.ow2.erocci.model;
 
+import java.io.BufferedReader;
+import java.io.ByteArrayOutputStream;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.Reader;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 import org.eclipse.emf.common.util.EList;
 
@@ -40,7 +48,10 @@ import org.occiware.clouddesigner.occi.OCCIRegistry;
 import org.occiware.clouddesigner.occi.Resource;
 import org.occiware.clouddesigner.occi.util.OcciHelper;
 import org.occiware.mart.MART;
+import org.ow2.erocci.backend.BackendDBusService;
 import org.ow2.erocci.backend.impl.Utils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Manage configurations (OCCI Model).
@@ -50,52 +61,16 @@ import org.ow2.erocci.backend.impl.Utils;
  */
 public class ConfigurationManager {
 
-    private static final String EXT_OCCI_REL_PATH = "model/";
-    private static final String EXT_OCCI_CORE_REL_PATH = EXT_OCCI_REL_PATH + "core.occie";
-    private static final String EXT_OCCI_INFRASTRUCTURE_REL_PATH = EXT_OCCI_REL_PATH + "infrastructure.occie";
-    private static final String EXT_OCCI_CLOUD_REL_PATH = EXT_OCCI_REL_PATH + "Cloud.occie";
-    private static final String EXT_OCCI_DOCKER_REL_PATH = EXT_OCCI_REL_PATH + "Docker.occie";
-    private static final String EXT_OCCI_HYPERVISOR_REL_PATH = EXT_OCCI_REL_PATH + "Hypervisor.occie";
-    private static final String EXT_OCCI_CLOUD_AUTOMATION_REL_PATH = EXT_OCCI_REL_PATH
-            + "ProActive-Cloud-Automation.occie";
-
-    public static final String EXT_CORE_NAME = "core";
-    public static final String EXT_INFRASTRUCTURE_NAME = "infrastructure";
-    public static final String EXT_CLOUD_NAME = "cloud";
-    public static final String EXT_DOCKER_NAME = "docker";
-    public static final String EXT_HYPERVISOR_NAME = "hypervisor";
-    public static final String EXT_CLOUDAUTOMATION_NAME = "pca";
-
     static {
 
+        // Registering extension found in classpath.
         MART.initMART();
-//        // Init EMF to dealt with OCCI files.
-//        Registry.INSTANCE.getExtensionToFactoryMap().put("occie", new OCCIResourceFactoryImpl());
-//        Registry.INSTANCE.getExtensionToFactoryMap().put("occic", new OCCIResourceFactoryImpl());
-//        Registry.INSTANCE.getExtensionToFactoryMap().put("*", new OCCIResourceFactoryImpl());
-//
-//        // Register the OCCI package into EMF.
-//        OCCIPackage.eINSTANCE.toString();
-//
-//        // Register OCCI extensions.
-//        OCCIRegistry.getInstance().registerExtension("http://schemas.ogf.org/occi/core#", EXT_OCCI_CORE_REL_PATH);
-//        OCCIRegistry.getInstance().registerExtension("http://schemas.ogf.org/occi/infrastructure#",
-//                EXT_OCCI_INFRASTRUCTURE_REL_PATH);
-//
-//        // Register other extensions.
-//        // TODO : Add user custom extension support.
-//        // TODO : Add external link load support (like
-//        // https://github.com/occiware/occi-schemas/clouddesigner/extensions/docker.occie
-//        // ).
-//        OCCIRegistry.getInstance().registerExtension("http://occiware.org/cloud#", EXT_OCCI_CLOUD_REL_PATH);
-//        OCCIRegistry.getInstance().registerExtension("http://occiware.org/docker#", EXT_OCCI_DOCKER_REL_PATH);
-//        OCCIRegistry.getInstance().registerExtension("http://occiware.org/hypervisor#", EXT_OCCI_HYPERVISOR_REL_PATH);
-//        OCCIRegistry.getInstance().registerExtension("http://proactive.ow2.org#", EXT_OCCI_CLOUD_AUTOMATION_REL_PATH);
-        // OCCIRegistry.getInstance().registerExtension("", "model/");
 
     }
 
-    private static Logger logger = Logger.getLogger("ConfigurationManager");
+    private static final Logger LOGGER = LoggerFactory.getLogger(ConfigurationManager.class);
+
+    private static String erocciSchema = "";
 
     /**
      * Used for now when no owner defined (on dbus methods find for example or
@@ -115,7 +90,7 @@ public class ConfigurationManager {
      * the collection of user mixin. Key : Mixin sheme + term, must be unique
      * Value : Location with form of : http://localhost:8080/mymixincollection/
      */
-    protected static Map<String, String> userMixinLocationMap = new HashMap<String, String>();
+    protected static Map<String, String> userMixinLocationMap = new HashMap<>();
 
     /**
      * Obtain the factory to create OCCI objects.
@@ -154,16 +129,10 @@ public class ConfigurationManager {
         // Create an empty OCCI configuration.
         Configuration configuration = occiFactory.createConfiguration();
 
-//         Extension extensionOcciCore = loadExtension(EXT_OCCI_CORE_REL_PATH);
-//         Extension extensionOcciInfra =
-//         loadExtension(EXT_OCCI_INFRASTRUCTURE_REL_PATH);
-//         // By default, the core is used.
-//         configuration.getUse().add(extensionOcciInfra);
-//         configuration.getUse().add(extensionOcciCore);
         // Update reference configuration map.
         configurations.put(owner, configuration);
 
-        logger.info("Configuration for user " + owner + " created");
+        LOGGER.info("Configuration for user " + owner + " created");
 
         return configuration;
     }
@@ -171,10 +140,10 @@ public class ConfigurationManager {
     /**
      * Remove a configuration from the configuration's map.
      *
-     * @param configuration
+     * @param owner
      */
-    public static void removeConfiguration(final Configuration configuration) {
-        configurations.remove(configuration);
+    public static void removeConfiguration(final String owner) {
+        configurations.remove(owner);
     }
 
     /**
@@ -199,7 +168,7 @@ public class ConfigurationManager {
      * @param attributes (ex: attributes={occi.network.vlan=12,
      * occi.network.label=private, occi.network.address=10.1.0.0/16,
      * occi.network.gateway=10.1.255.254})
-     * @return the updated configuration, can't return null
+     * @param owner
      */
     public static void addResourceToConfiguration(String id, String kind, List<String> mixins,
             Map<String, String> attributes, String owner) {
@@ -244,7 +213,7 @@ public class ConfigurationManager {
             addMixinsToEntity(resource, mixins, owner, false);
 
         } else {
-            logger.warning("resource already exist, overwriting...");
+            LOGGER.info("resource already exist, overwriting...");
             resourceOverwrite = true;
             updateAttributesToEntity(resource, attributes);
             // Add the mixins if any.
@@ -254,10 +223,10 @@ public class ConfigurationManager {
 
         // Add resource to configuration.
         if (resourceOverwrite) {
-            logger.info("resource updated " + resource.getId() + " on OCCI configuration");
+            LOGGER.info("resource updated " + resource.getId() + " on OCCI configuration");
         } else {
             configuration.getResources().add(resource);
-            logger.info("Added Resource " + resource.getId() + " to configuration object.");
+            LOGGER.info("Added Resource " + resource.getId() + " to configuration object.");
 
         }
 
@@ -276,7 +245,6 @@ public class ConfigurationManager {
      * @param target
      * @param attributes
      * @param owner
-     * @return a configuration updated.
      */
     public static void addLinkToConfiguration(String id, String kind, java.util.List<String> mixins, String src,
             String target, Map<String, String> attributes, String owner) {
@@ -349,9 +317,9 @@ public class ConfigurationManager {
         updateVersion(owner, id);
 
         if (overwrite) {
-            logger.info("Link " + id + " updated ! Version: " + versionObjectMap.get(owner + id));
+            LOGGER.info("Link " + id + " updated ! Version: " + versionObjectMap.get(owner + id));
         } else {
-            logger.info("link " + id + " added to configuration !");
+            LOGGER.info("link " + id + " added to configuration !");
         }
 
     }
@@ -443,7 +411,6 @@ public class ConfigurationManager {
         if (!found) {
             mixin = findMixinOnEntities(owner, id);
             if (mixin != null) {
-                found = true;
                 mixinToDissociate = true;
             }
         }
@@ -466,6 +433,7 @@ public class ConfigurationManager {
     /**
      * Remove a resource from owner's configuration.
      *
+     * @param owner
      * @param resource
      */
     public static void removeResource(final String owner, final Resource resource) {
@@ -613,6 +581,8 @@ public class ConfigurationManager {
     /**
      * Find a link on all chains of resources.
      *
+     * @param owner
+     * @param id
      * @return
      */
     public static Link findLink(final String owner, final String id) {
@@ -656,7 +626,7 @@ public class ConfigurationManager {
 
         Resource resource = findResource(owner, id);
 
-        Link link = null;
+        Link link;
         if (resource == null) {
             link = findLink(owner, id);
             if (link != null) {
@@ -817,11 +787,8 @@ public class ConfigurationManager {
                 for (Kind kind : kinds) {
                     if (((kind.getScheme() + kind.getTerm()).equals(kindId))) {
                         kindToReturn = kind;
-                        // Assign connector factory to EMF Factory of the
-                        // corresponding OCCI Package.
-                        // assignConnectorFactoryToEMFPackage(ext);
                         config.getUse().add(ext);
-                        logger.log(Level.INFO, "New extension: {0} --< added to configuration owner: {1}", new Object[]{ext.getName(), owner});
+                        LOGGER.info("New extension: {0} --< added to configuration owner: {1}", new Object[]{ext.getName(), owner});
                         break;
                     }
                 }
@@ -857,7 +824,7 @@ public class ConfigurationManager {
             entities.addAll(findAllEntitiesForMixin(owner, categoryId));
             entities.addAll(findAllEntitiesForAction(owner, categoryId));
 
-            if (entities != null && !entities.isEmpty()) {
+            if (!entities.isEmpty()) {
                 entitiesMap.put(owner, entities);
             } else {
                 entities = new ArrayList<>();
@@ -982,7 +949,7 @@ public class ConfigurationManager {
             entities.clear();
             entities.addAll(findAllEntitiesOwner(owner));
 
-            if (entities != null && !entities.isEmpty()) {
+            if (!entities.isEmpty()) {
                 entitiesMap.put(owner, entities);
             } else {
                 entities = new ArrayList<>();
@@ -1024,7 +991,6 @@ public class ConfigurationManager {
      * @param relativePath (like "compute/vm1")
      * @param actionId (like
      * "http://schemas.ogf.org/occi/infrastructure/compute/action#start")
-     * @param owner
      * @return an entity map (key=owner, value=Entity) with this relative path
      * and has this actionId, may return empty map if action not found on entity
      * object, or if entity not found.
@@ -1215,8 +1181,7 @@ public class ConfigurationManager {
      * @param owner
      */
     public static void resetForOwner(final String owner) {
-        Configuration configuration = getConfigurationForOwner(owner);
-        removeConfiguration(configuration);
+        removeConfiguration(owner);
 
     }
 
@@ -1259,7 +1224,7 @@ public class ConfigurationManager {
                 }
                 entity.getMixins().add(mixin);
                 // mixin.getEntities().add(entity);
-                logger.info("Mixin --> Term : " + mixin.getTerm() + " --< Scheme : " + mixin.getScheme());
+                LOGGER.info("Mixin --> Term : " + mixin.getTerm() + " --< Scheme : " + mixin.getScheme());
 
             }
         }
@@ -1336,6 +1301,7 @@ public class ConfigurationManager {
      *
      * @param owner
      * @param mixinId
+     * @return
      */
     public static Mixin findMixinOnExtension(final String owner, final String mixinId) {
         Configuration config = getConfigurationForOwner(owner);
@@ -1377,8 +1343,10 @@ public class ConfigurationManager {
      * Associate a list of entities with a mixin, replacing existing list if
      * any. if mixin doest exist, this will create it.
      *
+     * @param owner
      * @param mixinId
      * @param entityIds
+     * @param updateMode
      */
     public static void saveMixinForEntities(final String owner, final String mixinId, final List<String> entityIds,
             final boolean updateMode) {
@@ -1394,7 +1362,7 @@ public class ConfigurationManager {
                 mixin = createMixin(mixinId);
             }
         }
-        logger.info("Mixin --> Term : " + mixin.getTerm() + " --< Scheme : " + mixin.getScheme());
+        LOGGER.info("Mixin --> Term : " + mixin.getTerm() + " --< Scheme : " + mixin.getScheme());
 
         for (String entityId : entityIds) {
             Entity entity = findEntity(owner, entityId);
@@ -1489,8 +1457,6 @@ public class ConfigurationManager {
      * Delete a user mixin from configuration's Object (user tag).
      *
      * @param mixinId
-     * @param location
-     * @param owner
      */
     public static void removeUserMixinFromConfiguration(final String mixinId) {
         if (mixinId == null) {
@@ -1502,7 +1468,7 @@ public class ConfigurationManager {
 
         if (mixin == null) {
             // TODO : Throw an exception mixinNotFound.
-            logger.info("mixin not found on configurations.");
+            LOGGER.info("mixin not found on configurations.");
             return;
         }
 
@@ -1557,14 +1523,14 @@ public class ConfigurationManager {
         if (entity != null) {
             // update the attributes.
             updateAttributesToEntity(entity, attributes);
-            logger.info("owner : " + ownerFound + " --< entity id : " + entityId);
+            LOGGER.info("owner : {0} --< entity id : {1}", new Object[]{ownerFound, entityId});
             updateVersion(ownerFound, entityId);
             // printEntity(entity);
 
         } else {
             // TODO : Report an exception, impossible to update entity, it
             // doesnt exist.
-            logger.warning("The entity " + entityId + " doesnt exist, can't update ! ");
+            LOGGER.error("The entity {0} doesnt exist, can''t update ! ", entityId);
         }
 
         // return entity;
@@ -1586,46 +1552,6 @@ public class ConfigurationManager {
         return Utils.createEtagNumber(id, owner, version);
     }
 
-//    /**
-//     *
-//     * @param entity
-//     * @return
-//     */
-//    public static void printEntity(Entity entity) {
-//
-//        StringBuilder builder = new StringBuilder("");
-//        if (entity instanceof Resource) {
-//            builder.append("Entity is a resource. \n");
-//        }
-//        if (entity instanceof Link) {
-//            builder.append("Entity is a link.\n");
-//        }
-//        builder.append("id : " + entity.getId() + " \n");
-//        builder.append("kind : " + entity.getKind().getScheme() + entity.getKind().getTerm() + " \n ");
-//        if (!entity.getMixins().isEmpty()) {
-//            builder.append("mixins : " + entity.getMixins().toString() + " \n ");
-//        } else {
-//            builder.append("entity has no mixins" + " \n ");
-//        }
-//        builder.append("Entity attributes : " + " \n ");
-//        if (entity.getAttributes().isEmpty()) {
-//            builder.append("no attributes found." + " \n ");
-//        }
-//        for (AttributeState attribute : entity.getAttributes()) {
-//            builder.append("--> name : " + attribute.getName() + " \n ");
-//            builder.append("-- value : " + attribute.getValue() + " \n ");
-//        }
-//        if (entity.getKind().getActions().isEmpty()) {
-//            builder.append("entity has no action \n ");
-//        } else {
-//            builder.append("entity has actions available : \n ");
-//            for (Action action : entity.getKind().getActions()) {
-//                builder.append(action.getTitle() + "--> " + action.getScheme() + action.getTerm() + " \n ");
-//            }
-//        }
-//        logger.info(builder.toString());
-//
-//    }
     /**
      * Find a used extension for an action Kind.
      *
@@ -1760,38 +1686,141 @@ public class ConfigurationManager {
         return extRet;
     }
 
-//    /**
-//     * Factory EMF assign management.
-//     *
-//     * @param ext
-//     */
-//    public static void assignConnectorFactoryToEMFPackage(final Extension ext) {
-//        if (ext == null) {
-//            return;
-//        }
-//        switch (ext.getName()) {
-//            case EXT_INFRASTRUCTURE_NAME:
-//                // Set the EMF factory of the OCCI Infrastructure package with the
-//                // factory of the infrastructure dummy connector.
-//                InfrastructurePackage.eINSTANCE.setEFactoryInstance(new InfrastructureConnectorFactory());
-//                break;
-//            case EXT_CLOUDAUTOMATION_NAME:
-//                // TODO : Set local connector CloudAutomationConnectorFactory to
-//                // CloudAutomationPackage (or InfrastructurePackage ?).
-//                break;
-//            case EXT_DOCKER_NAME:
-//                // Assign Docker connector factory (ExecutableDockerFactory).
-//                // this will set DockerPackage.eInstance.setEFactoryInstance(new
-//                // ExecutableDockerFactory());
-//                ExecutableDockerFactory.init();
-//                break;
-//            case EXT_CLOUD_NAME:
-//                // TODO : Add cloud connector support.
-//                break;
-//            case EXT_HYPERVISOR_NAME:
-//                // TODO : Add hypervisor connector support.
-//                break;
-//        }
-//
-//    }
+    /**
+     * Load Erocci Schemas from extensions.
+     */
+    public static void loadErocciSchema() {
+
+        Collection<String> extReg = OCCIRegistry.getInstance().getRegisteredExtensions();
+        Extension ext;
+        String xmlErocciExt;
+        String filePath;
+
+        LOGGER.info("Collection: " + extReg);
+        boolean firstFile = true;
+        boolean lastFile = false;
+        int position = 0;
+        
+        
+        // First core.xml
+        // Second infrastructure.xml (as parent if needed)
+        // First regorganize the list to remove core.xml, and the last infrastructure.xml (if needed by other extensions).
+        
+        List<Extension> extensions = new LinkedList<>();
+        
+        Extension infra = null;
+        for (String extScheme : extReg) {
+            ext = OcciHelper.loadExtension(extScheme);
+            if (ext.getName().equals("core")) {
+                // Erocci has already this extension scheme.
+                continue;
+            }
+            if (ext.getName().equals("infrastructure")) {
+                // We're adding this to the last element of the linked list.
+                infra = ext;
+                continue;
+            }
+            extensions.add(ext);
+        }
+        if (infra != null) {
+            extensions.add(infra);
+        }
+        
+        int size = extensions.size();
+        
+        for (Extension extension : extensions) {
+            position++;
+         
+            LOGGER.info("Extension registered : " + extension.getScheme());
+
+            xmlErocciExt = "/erocci/" + extension.getName() + ".xml";
+            LOGGER.info("Add Erocci xml extension: " + extension.getName() + " --< " + xmlErocciExt);
+
+            filePath = MART.getResourceFromClasspath(xmlErocciExt);
+            LOGGER.info("FilePath : " + filePath);
+            // Load the resource extension file.
+            InputStream in = BackendDBusService.class.getResourceAsStream(xmlErocciExt);
+
+            if (in == null) {
+                LOGGER.warn("Tips: Generate xml erocci files on Cloud Designer and add erocci/ in build.properties on extension project <" + extension.getName() + "> and rebuild it with > mvn clean install.");
+                throw new RuntimeException("Cannot read the file : " + xmlErocciExt);
+            }
+
+            // Position of the file first or last or between ?
+            if (size == 1) {
+                firstFile = true;
+                lastFile = true;
+            } else if (position == size && size > 1) {
+                firstFile = false;
+                lastFile = true;
+            } else if (position < size && position > 1) {
+                firstFile = false;
+                lastFile = false;
+            }
+            LOGGER.info("position: " + position);
+            LOGGER.info("Size of the collections file : " + size);
+            
+            if (firstFile) {
+                LOGGER.info("First file : " + xmlErocciExt);
+            }
+            if (!firstFile && !lastFile) {
+                LOGGER.info("File in the middle : " + xmlErocciExt);
+            }
+            if (lastFile) {
+                LOGGER.info("Last file : " + xmlErocciExt);
+            }
+            
+            StringBuilder sb = new StringBuilder();
+            Reader r = null;
+            BufferedReader br = null;
+            try {
+                String line;
+                r = new InputStreamReader(in, "UTF-8");
+                br = new BufferedReader(r);
+
+                while ((line = br.readLine()) != null) {
+
+                    if (!firstFile) {
+                        if (line.contains("<?xml") || line.contains("<occi:extension") || line.contains("xmlns:") || line.contains("xsi:")
+                                || line.trim().startsWith("name")
+                                || line.trim().startsWith("scheme")
+                                || line.trim().startsWith("version")
+                                || line.trim().startsWith("status")) {
+                            continue;
+                        }
+                    }
+
+                    if (!lastFile) {
+                        if (line.contains("</occi:extension")) {
+                            continue;
+                        }
+                    }
+                    // Add the content to the string output.
+                    sb.append(line).append("\n");
+
+                }
+            } catch (IOException ex) {
+                LOGGER.error(ex.getMessage());
+            } finally {
+                Utils.closeQuietly(br);
+                Utils.closeQuietly(r);
+                Utils.closeQuietly(in);
+            }
+
+            erocciSchema += sb.toString();
+
+        }
+        LOGGER.info("Extension final schema : " + erocciSchema);
+    }
+
+    /**
+     * Get the Erocci Schema (full concatened schema core+extensions
+     * registered).
+     *
+     * @return
+     */
+    public static String getErocciSchema() {
+        return erocciSchema;
+    }
+
 }

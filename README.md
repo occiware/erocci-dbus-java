@@ -9,7 +9,7 @@
 
 * JDK
 * Maven
-* java D-Bus implementation. It can be installed with:
+* java D-Bus implementation. It can be installed on linux with:
 
 ```sh
 $ make deps
@@ -47,6 +47,15 @@ target/classes .
 ```sh
 $ mvn exec:java -Dexec.mainClass="org.ow2.erocci.backend.BackendDBusService"
 ```
+
+You can execute with a cloud designer extension and connector with the following command (replace the dependencies path by your paths) :
+```
+$ make
+$ java -cp ./target/erocci-dbus-java-1.0-SNAPSHOT-jar-with-dependencies.jar:/your/path/org.occiware.clouddesigner.occi.infrastructure-0.1.0-SNAPSHOT.jar:/your/path/org.occiware.clouddesigner.occi.infrastructure.connector.dummy-0.1.0-SNAPSHOT.jar org.ow2.erocci.backend.BackendDBusService
+```
+
+
+Please don't forget to add your jars dependencies on classpath and to generate Erocci xml files on your Cloud Designer extension project.
 
 The dbus service is called "org.ow2.erocci.backend".
 
@@ -99,7 +108,7 @@ DBUS_SESSION_BUS_ADDRESS=$(printenv DBUS_SESSION_BUS_ADDRESS | sed -e 's/kernel:
 * ```make deps```
 * ```make```
 * Go to Erocci root directory
-* launch ```./bootstrap``` and then ```make``` after the message "release successfully created" will display if all ok.
+* launch ```./bootstrap``` , ```./configure``` and then ```make``` after the message "release successfully created" will display if all ok.
 * Launch erocci-dbus-java on first place before Erocci
 * Launch Erocci as describe upper.
 
@@ -140,12 +149,10 @@ DBUS_SESSION_BUS_ADDRESS=$(printenv DBUS_SESSION_BUS_ADDRESS | sed -e 's/kernel:
 		* ```sudo ln -s /usr/local/bin/VBoxManage /usr/bin/VBoxManage```
 		* ```sudo ln -s /usr/local/bin/docker-machine /usr/bin/docker-machine```
 	* Launch docker default virtual box machine
-	* Launch erocci-dbus-java with parameter :
-		* ```mvn exec:java -Dexec.mainClass="org.ow2.erocci.backend.BackendDBusService" -Dexec.args="docker"```
+	* Launch erocci-dbus-java with Cloud designer dependencies on classpath (replace paths of your dependencies) :
+        * ```make```
+		* ```java -cp ./target/erocci-dbus-java-1.0-SNAPSHOT-jar-with-dependencies.jar:/your/path/org.occiware.clouddesigner.occi.infrastructure-0.1.0-SNAPSHOT.jar:/your/path/org.occiware.clouddesigner.occi.infrastructure.connector.dummy-0.1.0-SNAPSHOT.jar:/your/path/org.occiware.clouddesigner.occi.docker-0.1.0-SNAPSHOT.jar:/your/path/org.occiware.clouddesigner.occi.docker.connector-0.1.0-SNAPSHOT.jar org.ow2.erocci.backend.BackendDBusService```
 	* Launch Erocci :
-		* Update core xml on Erocci with this file erocci/deps/erocci_core/priv/schemas/occi/occi-core.xml : [occi-core.xml](doc/occi-core.xml)
-		Note that is necessary for adding infrastructure scheme to core directly, this is a hack for now because when Erocci will be updated, it may be possible to add multiple schema see [Erocci issue #36](https://github.com/erocci/erocci/issues/36)
-
 		* ```./start.sh -c ../erocci-dbus-java/erocci-dbus-java.config```
 
 ## CI

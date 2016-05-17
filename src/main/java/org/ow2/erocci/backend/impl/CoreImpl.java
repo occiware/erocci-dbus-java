@@ -23,7 +23,6 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.logging.Logger;
 
 import org.freedesktop.DBus;
 import org.freedesktop.dbus.UInt32;
@@ -37,9 +36,9 @@ import org.ow2.erocci.backend.action;
 import org.ow2.erocci.backend.core;
 import org.ow2.erocci.backend.mixin;
 import org.ow2.erocci.model.ConfigurationManager;
-import org.ow2.erocci.model.exception.ExecuteActionException;
-import org.ow2.erocci.runtime.ActionExecutorFactory;
-import org.ow2.erocci.runtime.IActionExecutor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 
 /**
  * Implementation of OCCI core.
@@ -52,12 +51,7 @@ public class CoreImpl implements core, action, mixin, DBus.Properties {
     public static byte NODE_ENTITY = 0;
     public static byte NODE_UNBOUNDED_COLLECTION = 1;
 
-    public static final int DEFAULT_MODE = 0;
-    public static final int EMBED_MODE = 1; // Used as embedded in an application, that why the full path xml is passed in main argument parameter.
-
-    private Logger logger = Logger.getLogger(this.getClass().getName());
-
-    private String schema;
+    private static final Logger LOGGER = LoggerFactory.getLogger(CoreImpl.class);
 
     private Map<String, List<Struct2>> currentListRequests = new HashMap<String, List<Struct2>>();
     // Delegate to action.
@@ -66,90 +60,51 @@ public class CoreImpl implements core, action, mixin, DBus.Properties {
     private MixinImpl mixinImpl = new MixinImpl();
 
     /**
-     * Default mode : 0 , with docker or no argument. mode : 1 , with a specific
-     * file xml and also no special implementation business code.
-     */
-    private int mode = 0;
-
-    /**
      * Default constructor
      */
     public CoreImpl() {
-        // Try to pick default schema (ignore error).
-        setSchema(this.getClass().getResourceAsStream("/schema.xml"));
-    }
-
-    /**
-     * Set OCCI schema
-     *
-     * @param in InputStream to read schema from (will be closed at the end of
-     * this call)
-     */
-    public void setSchema(InputStream in) {
-        ByteArrayOutputStream os = null;
-        try {
-            os = new ByteArrayOutputStream();
-            this.schema = Utils.copyStream(in, os);
-            // logger.info("Schema returned: " + this.schema);
-
-            // this.schema = os.toString("UTF-8");
-        } catch (IOException e) {
-            Utils.closeQuietly(in);
-            Utils.closeQuietly(os);
-            schema = null;
-        }
-    }
-
-    public void setMode(int mode) {
-        this.mode = mode;
-        if (this.mode == DEFAULT_MODE) {
-            logger.info("Default mode enabled");
-        } else {
-            if (this.mode == EMBED_MODE) {
-                logger.info("EMBED mode enabled");
-            }
-        }
+        
     }
 
     @Override
     public <A> A Get(String interfaceName, String property) {
+        
         if ("schema".equalsIgnoreCase(property)) {
-            return (A) this.schema;
+            return (A) ConfigurationManager.getErocciSchema();
         } else {
             return null;
         }
+        
     }
 
     @Override
     public Map<String, Variant> GetAll(String interface_name) {
-        logger.info("GetAll invoked");
+        LOGGER.info("GetAll invoked");
         return null;
     }
 
     @Override
     public <A> void Set(String arg0, String arg1, A arg2) {
-        logger.info("set method invoked with arg0 : " + arg0);
-        logger.info("set method invoked with arg1 : " + arg1);
-        logger.info("set method invoked with arg2 : " + arg2);
+        LOGGER.info("set method invoked with arg0 : " + arg0);
+        LOGGER.info("set method invoked with arg1 : " + arg1);
+        LOGGER.info("set method invoked with arg2 : " + arg2);
 
     }
 
     @Override
     public boolean isRemote() {
-        logger.info("is remote invoked");
+        LOGGER.info("is remote invoked");
         return false;
     }
 
     @Override
     public void Init(Map<String, Variant> opts) {
-        logger.info("Init method invoked with opts : " + Utils.convertVariantMap(opts));
-        // It may be here for using a new extension schema, to check.
-
+        LOGGER.info("Init method invoked with opts : " + Utils.convertVariantMap(opts));
     }
 
     @Override
     public void Terminate() {
-        logger.info("Terminate method invoked");
+        LOGGER.info("Terminate method invoked");
         // TODO : Release all resources (and link) created and referenced here.
         // TODO : Check with occi spec and erocci spec.
         ConfigurationManager.resetAll();
@@ -171,7 +126,7 @@ public class CoreImpl implements core, action, mixin, DBus.Properties {
     @Override
     public String SaveResource(String id, String kind, java.util.List<String> mixins, Map<String, Variant> attributes,
             String owner) {
-        logger.info("Save resource input with id=" + id + ", kind=" + kind + ", mixins=" + mixins + ", attributes="
+        LOGGER.info("Save resource input with id=" + id + ", kind=" + kind + ", mixins=" + mixins + ", attributes="
                 + Utils.convertVariantMap(attributes));
 
         if (id == null || id.isEmpty()) {
@@ -182,10 +137,6 @@ public class CoreImpl implements core, action, mixin, DBus.Properties {
 
         String identifierUUID;
         Map<String, String> attr = Utils.convertVariantMap(attributes);
-
-        if (attr.get("command") != null) {
-            attr.put("command", "sleep,9999");
-        }
 
         // Check if identifier UUID is provided (on occi.core.id or on id).
         if (Utils.isEntityUUIDProvided(id, attr)) {
@@ -206,30 +157,25 @@ public class CoreImpl implements core, action, mixin, DBus.Properties {
         // Check if id is an entity Id or a relative Path only. (for update it
         // if necessary).
         if (ConfigurationManager.isEntityExist(owner, entityId)) {
-            logger.info("Overwrite resource invoked with id=" + id + ", kind=" + kind + ", mixins=" + mixins
+            LOGGER.info("Overwrite resource invoked with id=" + id + ", kind=" + kind + ", mixins=" + mixins
                     + ", attributes=" + Utils.convertVariantMap(attributes));
             ConfigurationManager.addResourceToConfiguration(id, kind, mixins, attr, owner);
         } else {
-            logger.info("SaveResource invoked with id=" + entityId + ", kind=" + kind + ", mixins=" + mixins
+            LOGGER.info("SaveResource invoked with id=" + entityId + ", kind=" + kind + ", mixins=" + mixins
                     + ", attributes=" + Utils.convertVariantMap(attributes));
             attr.put("occi.core.id", entityId);
             ConfigurationManager.addResourceToConfiguration(entityId, kind, mixins, attr, owner);
         }
         Entity entity = ConfigurationManager.findEntity(owner, entityId);
-        if (entity != null && mode == DEFAULT_MODE) {
-            try {
-                IActionExecutor actExecutor = ActionExecutorFactory
-                        .build(ConfigurationManager.getExtensionForKind(owner, kind));
-                // Entity entity = ConfigurationManager.findEntity(owner, entityId);
-                actExecutor.occiPostCreate(entity);
-            } catch (ExecuteActionException ex) {
-                logger.warning("SaveResource action launch error : " + ex.getMessage());
-            }
-        } else if (entity != null && mode == EMBED_MODE) {
+        if (entity != null) {
             entity.occiCreate();
+            LOGGER.info("SaveResource done returning relative path : " + id);
+        } else {
+            LOGGER.error("Error, entity was not created on object model, please check your query.");
+            throw new RuntimeException("Error, entity was not created on object model, please check your query.");
         }
 
-        logger.info("SaveResource done returning relative path : " + id);
+        
         return id;
     }
 
@@ -250,7 +196,7 @@ public class CoreImpl implements core, action, mixin, DBus.Properties {
     public String SaveLink(String id, String kind, java.util.List<String> mixins, String src, String target,
             Map<String, Variant> attributes, String owner) {
 
-        logger.info("SaveLink invoked");
+        LOGGER.info("SaveLink invoked");
         if (id == null || id.isEmpty()) {
             id = "/link/" + Utils.createUUID();
         }
@@ -276,12 +222,12 @@ public class CoreImpl implements core, action, mixin, DBus.Properties {
         // Check if id is an entity Id or a relative Path only. (for update it
         // if necessary).
         if (ConfigurationManager.isEntityExist(owner, entityId)) {
-            logger.info("Overwrite link invoked with id=" + id + ", kind=" + kind + ", mixins=" + mixins
+            LOGGER.info("Overwrite link invoked with id=" + id + ", kind=" + kind + ", mixins=" + mixins
                     + ", attributes=" + Utils.convertVariantMap(attributes));
             ConfigurationManager.addLinkToConfiguration(id, kind, mixins, src, target, attr, owner);
 
         } else {
-            logger.info("SaveLink invoked with id=" + entityId + ", kind=" + kind + ", mixins=" + mixins
+            LOGGER.info("SaveLink invoked with id=" + entityId + ", kind=" + kind + ", mixins=" + mixins
                     + ", attributes=" + Utils.convertVariantMap(attributes));
 
             attr.put("occi.core.id", entityId);
@@ -292,16 +238,12 @@ public class CoreImpl implements core, action, mixin, DBus.Properties {
 
         Entity entity = ConfigurationManager.findEntity(owner, entityId);
 
-        if (entity != null && mode == DEFAULT_MODE) {
-            try {
-                IActionExecutor actExecutor = ActionExecutorFactory
-                        .build(ConfigurationManager.getExtensionForKind(owner, kind));
-                actExecutor.occiPostCreate(entity);
-            } catch (ExecuteActionException ex) {
-                logger.warning("SaveLink action launch error : " + ex.getMessage());
-            }
-        } else if (entity != null && mode == EMBED_MODE) {
+        if (entity != null) {
             entity.occiCreate();
+            LOGGER.info("SaveLink done returning relative path : " + id);
+        } else {
+            LOGGER.error("Error, entity was not created on object model, please check your query.");
+            throw new RuntimeException("Error, entity was not created on object model, please check your query.");
         }
 
         return id;
@@ -312,10 +254,11 @@ public class CoreImpl implements core, action, mixin, DBus.Properties {
      *
      * @param id entity path relative url part
      * @param attributes updated entity attributes
+     * @return 
      */
     @Override
     public Map<String, Variant> Update(String id, Map<String, Variant> attributes) {
-        logger.info("Update invoked");
+        LOGGER.info("Update invoked");
         Map<String, String> attr = Utils.convertVariantMap(attributes);
 
         List<Entity> entities = null;
@@ -332,23 +275,15 @@ public class CoreImpl implements core, action, mixin, DBus.Properties {
             entity = entities.get(0);
         }
         if (entity == null) {
-            logger.info("entity : " + id + " has not been found for update, cant update.");
+            LOGGER.error("entity : " + id + " has not been found for update, cant update.");
+            throw new RuntimeException("entity : " + id + " has not been found for update, cant update.");
         } else {
-            logger.info("entity found : " + id + " updating...");
+            LOGGER.info("entity found : " + id + " updating...");
             // update attributes .
             entity = ConfigurationManager.updateAttributesToEntity(entity, attr);
+            
+            entity.occiUpdate();
 
-            if (mode == DEFAULT_MODE) {
-                try {
-                    IActionExecutor actExecutor = ActionExecutorFactory
-                            .build(ConfigurationManager.getExtensionFromEntity(entity));
-                    actExecutor.occiPostUpdate(entity);
-                } catch (ExecuteActionException ex) {
-                    logger.warning("Update action launch error : " + ex.getMessage());
-                }
-            } else if (mode == EMBED_MODE) {
-                entity.occiUpdate();
-            }
 
         }
 
@@ -365,16 +300,18 @@ public class CoreImpl implements core, action, mixin, DBus.Properties {
      */
     @Override
     public void SaveMixin(String id, java.util.List<String> entities) {
-        logger.info("SaveMixin invoked");
+        LOGGER.info("SaveMixin invoked");
         ConfigurationManager.saveMixinForEntities(id, entities, false);
     }
 
     /**
      * update mixin association.
+     * @param id
+     * @param entities
      */
     @Override
     public void UpdateMixin(String id, java.util.List<String> entities) {
-        logger.info("UpdateMixin invoked");
+        LOGGER.info("UpdateMixin invoked");
         ConfigurationManager.saveMixinForEntities(id, entities, true);
 
     }
@@ -383,12 +320,13 @@ public class CoreImpl implements core, action, mixin, DBus.Properties {
      * Find an entity by his relative path.
      *
      * @param id relative path of the entity.
+     * @return 
      */
     @Override
     public java.util.List<Struct1> Find(String id) {
-        logger.info("Find invoked with id=" + id);
+        LOGGER.info("Find invoked with id=" + id);
          
-        List<Struct1> ret = new LinkedList<Struct1>();
+        List<Struct1> ret = new LinkedList<>();
 
         Map<String, Entity> entities = ConfigurationManager.findEntitiesOnAllOwner(id);
         Entity ent;
@@ -403,7 +341,7 @@ public class CoreImpl implements core, action, mixin, DBus.Properties {
                     ent = entry.getValue();
 
                     // ConfigurationManager.printEntity(ent);
-                    logger.info("One entity found ! owner : " + owner);
+                    LOGGER.info("One entity found ! owner : " + owner);
                     ret.add(new Struct1(CoreImpl.NODE_ENTITY, new Variant<String>(ent.getId()), owner,
                             ConfigurationManager.getEtagNumber(owner, id)));
                 }
@@ -420,11 +358,11 @@ public class CoreImpl implements core, action, mixin, DBus.Properties {
             }
 
         } else if (id == null || id.equals("/") || id.isEmpty()) {
-            logger.info("it's an unbounded collection (generic)");
+            LOGGER.info("it's an unbounded collection (generic)");
             ret.add(new Struct1(CoreImpl.NODE_UNBOUNDED_COLLECTION, new Variant<String>(""), "", new UInt32(1)));
 
         } else {
-            logger.info("Entity " + id + " --< doesnt exist !");
+            LOGGER.info("Entity " + id + " --< doesnt exist !");
         }
 
         return ret;
@@ -439,7 +377,7 @@ public class CoreImpl implements core, action, mixin, DBus.Properties {
      */
     @Override
     public Quad<String, String, java.util.List<String>, Map<String, Variant>> Load(Variant opaque_id) {
-        logger.info("Load invoked with opaque_id=" + opaque_id);
+        LOGGER.info("Load invoked with opaque_id=" + opaque_id);
 
         String id = opaque_id.getValue().toString();
         String owner = null;
@@ -450,14 +388,14 @@ public class CoreImpl implements core, action, mixin, DBus.Properties {
         if (entity != null) {
             // ConfigurationManager.printEntity(entity);
 
-            logger.info("Owner : " + owner + "--< Entity : " + entity.getId()
+            LOGGER.info("Owner : " + owner + "--< Entity : " + entity.getId()
                     + " loaded with success, transaction with dbus to come...");
             // get the real values of this entity.
             entity.occiRetrieve();
             
             return Utils.convertEntityToQuad(entity);
         } else {
-            logger.info("Entity : " + opaque_id + " --< entity doesnt exist !");
+            LOGGER.info("Entity : " + opaque_id + " --< entity doesnt exist !");
 
         }
 
@@ -478,7 +416,7 @@ public class CoreImpl implements core, action, mixin, DBus.Properties {
      */
     @Override
     public Pair<Variant, UInt32> List(String id, Map<String, Variant> filters) {
-        logger.info("List invoked with id=" + id + " and filters=" + filters);
+        LOGGER.info("List invoked with id=" + id + " and filters=" + filters);
         // TODO : Next step, Add support for root query like :  http://localhost:8080/ <--< "/".
             // give : all resources on collections.
             
@@ -500,7 +438,7 @@ public class CoreImpl implements core, action, mixin, DBus.Properties {
      */
     @Override
     public java.util.List<Struct2> Next(Variant opaque_id, UInt32 start, UInt32 items) {
-        logger.info("Next invoked with opaque_id=" + opaque_id + ", start=" + start + ", items=" + items);
+        LOGGER.info("Next invoked with opaque_id=" + opaque_id + ", start=" + start + ", items=" + items);
         List<Struct2> fullList = currentListRequests.remove(opaque_id.getValue());
         if (fullList != null) {
             int toIndex = items.intValue();
@@ -521,23 +459,13 @@ public class CoreImpl implements core, action, mixin, DBus.Properties {
     @Override
     public void Delete(String id) {
 
-        logger.info("Delete invoked with id : " + id);
+        LOGGER.info("Delete invoked with id : " + id);
 
         // TODO : Default owner to all owners ? Or owner in parameter.
         List<Entity> entities = ConfigurationManager.findAllEntitiesLikePartialId(ConfigurationManager.DEFAULT_OWNER,
                 id);
         for (Entity entity : entities) {
-            if (mode == DEFAULT_MODE) {
-                try {
-                    IActionExecutor actExecutor = ActionExecutorFactory
-                            .build(ConfigurationManager.getExtensionFromEntity(entity));
-                    actExecutor.occiPreDelete(entity);
-                } catch (ExecuteActionException ex) {
-                    logger.warning("Delete action launch error : " + ex.getMessage());
-                }
-            } else if (mode == EMBED_MODE) {
-                entity.occiDelete();
-            }
+            entity.occiDelete();
             ConfigurationManager.removeOrDissociate(id);
         }
         if (entities.isEmpty()) {
@@ -635,8 +563,7 @@ public class CoreImpl implements core, action, mixin, DBus.Properties {
      */
     @Override
     public void Action(String id, String action_id, Map<String, Variant> attributes) {
-        logger.info("---------------------->Action method invoked !!!");
-        actionImpl.setMode(mode);
+        LOGGER.info("---------------------->Action method invoked !!!");
         actionImpl.Action(id, action_id, attributes);
     }
 
@@ -649,7 +576,7 @@ public class CoreImpl implements core, action, mixin, DBus.Properties {
      */
     @Override
     public void AddMixin(String id, String location, String owner) {
-        logger.info("---------------------->AddMixin method invoked !!!");
+        LOGGER.info("---------------------->AddMixin method invoked !!!");
         mixinImpl.AddMixin(id, location, owner);
     }
 
@@ -660,7 +587,7 @@ public class CoreImpl implements core, action, mixin, DBus.Properties {
      */
     @Override
     public void DelMixin(String id) {
-        logger.info("---------------------->DelMixin method invoked !!!");
+        LOGGER.info("---------------------->DelMixin method invoked !!!");
         mixinImpl.DelMixin(id);
     }
 

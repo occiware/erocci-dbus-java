@@ -15,18 +15,15 @@
  */
 package org.ow2.erocci.backend;
 
-import java.io.FileInputStream;
 import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.URL;
-import java.util.Enumeration;
-import java.util.logging.Logger;
+
 
 import org.freedesktop.dbus.DBusConnection;
 import org.freedesktop.dbus.exceptions.DBusException;
 import org.ow2.erocci.backend.impl.CoreImpl;
 import org.ow2.erocci.model.ConfigurationManager;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Erocci backend DBus service implementation.
@@ -36,30 +33,11 @@ import org.ow2.erocci.model.ConfigurationManager;
  */
 public class BackendDBusService {
 
-	private Logger logger = Logger.getLogger(this.getClass().getName());
+	private static final Logger LOGGER = LoggerFactory.getLogger(BackendDBusService.class);
 	
 	private DBusConnection dbusConnection;
 	private CoreImpl coreImpl = new CoreImpl();
 
-	// private ActionImpl actionImpl = new ActionImpl();
-	
-	
-	/**
-	 * Set OCCI schema
-	 * @param in InputStream to read schema from (will be closed at the end of this call)
-     * @return a BackendDBusService object.
-	 */
-	public final BackendDBusService setSchema(InputStream in) {
-		coreImpl.setSchema(in);
-		return this;
-	}
-	
-    public final BackendDBusService setMode(int mode) {
-        coreImpl.setMode(mode);
-        return this;
-    }
-    
-    
 	/**
 	 * Start the DBus service backend
      * @param dbusServiceName The DBus service name
@@ -79,60 +57,28 @@ public class BackendDBusService {
             // dbusConnection.exportObject("/action", actionImpl);
             
             
-            logger.info("Connected to dbus with unique name : " + dbusConnection.getUniqueName());
+            LOGGER.info("Connected to dbus with unique name : " + dbusConnection.getUniqueName());
 
         } catch (DBusException e) {
-        	logger.warning("Error while connecting to DBUS !");
+        	LOGGER.error("Error while connecting to DBUS !");
             e.printStackTrace(System.err);
+            LOGGER.warn("Program Exit.");
+            throw new RuntimeException(e);
         }
 	}
 
 	/**
-	 * Sample main program
+	 * Main program
 	 * @param args
-     * @throws java.io.FileNotFoundException
 	 */
-	public static void main(String[] args) throws FileNotFoundException {
-		String schema = null;
-        boolean withFullPathSchema = false;
-        if (args == null || args.length == 0) {
-            // Infrastructure schema is default. 
-            schema = "/schema.xml";
-        } else if (args.length == 1) {
-            switch (args[0]) {
-                case "docker":
-                    schema = "/docker-schema.xml";
-                    break;
-                
-                default:
-                    if (args[0] != null && args[0].endsWith(".xml")) {
-                        // Assign the schema with full path.
-                        schema = args[0];
-                        withFullPathSchema = true;
-                    } else {
-                        schema = null;
-                    }
-                    break;
-            }
-        } else if (args.length > 1 || schema == null) {
-            throw new RuntimeException("Argument is not known : " + " , usage: " + " 'docker' or no arguments for infrastructure generic model.");
-        }
-        if (schema == null) {
-        	throw new RuntimeException("Argument is not known : " + " , usage: " + " 'docker' or no arguments for infrastructure generic model.");
-        }
-        if (withFullPathSchema) {
-            new BackendDBusService()
-                    .setSchema(new FileInputStream(schema))
-                    .setMode(1)
+	public static void main(String[] args) {
+		
+        new BackendDBusService()
                     .start("org.ow2.erocci.backend");
-            
-        } else {
-            new BackendDBusService()
-                .setSchema(BackendDBusService.class.getResourceAsStream(schema))
-                .setMode(0)
-                .start("org.ow2.erocci.backend");
-        }
+        
         ConfigurationManager.getConfigurationForOwner(ConfigurationManager.DEFAULT_OWNER);
+        // Register Erocci Schema for Erocci usage (when get on core interface is called).
+        ConfigurationManager.loadErocciSchema();
         
 //        // For testing classpath entries..
 //        

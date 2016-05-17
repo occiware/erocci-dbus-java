@@ -64,50 +64,7 @@ the specific language governing permissions and limitations under the License. -
             <artifactId>org.occiware.clouddesigner.occi</artifactId>
             <version>0.1.0-SNAPSHOT</version>
         </dependency>
-        <dependency>
-            <!-- OCCI Infrastructure Generic Model implementation. -->
-            <groupId>Clouddesigner</groupId>
-            <artifactId>org.occiware.clouddesigner.occi.infrastructure</artifactId>
-            <version>0.1.0-SNAPSHOT</version>
-        </dependency>
-        <dependency>
-            <!-- OCCI Infrastructure Generic Model implementation connector. -->
-            <groupId>Clouddesigner</groupId>
-            <artifactId>org.occiware.clouddesigner.occi.infrastructure.connector.dummy</artifactId>
-            <version>0.1.0-SNAPSHOT</version>
-        </dependency>
-        <dependency>
-            <!-- OCCI Platform Generic Model implementation. -->
-            <groupId>Clouddesigner</groupId>
-            <artifactId>org.occiware.clouddesigner.occi.platform</artifactId>
-            <version>0.1.0-SNAPSHOT</version>
-        </dependency>
-        <dependency>
-            <!-- OCCI Platform Generic Model implementation connector. -->
-            <groupId>Clouddesigner</groupId>
-            <artifactId>org.occiware.clouddesigner.occi.platform.connector.dummy</artifactId>
-            <version>0.1.0-SNAPSHOT</version>
-        </dependency>
         
-        <dependency>
-            <!-- OCCI Docker Model implementation -->
-            <groupId>Clouddesigner</groupId>
-            <artifactId>org.occiware.clouddesigner.occi.docker</artifactId>
-            <version>0.1.0-SNAPSHOT</version>
-        </dependency>
-        <dependency>
-            <!-- OCCI Docker connector -->
-            <groupId>Clouddesigner</groupId>
-            <artifactId>org.occiware.clouddesigner.occi.docker.preference</artifactId>
-            <version>0.1.0-SNAPSHOT</version>
-            <scope>compile</scope>
-        </dependency>
-        <dependency>
-            <!-- OCCI Docker connector -->
-            <groupId>Clouddesigner</groupId>
-            <artifactId>org.occiware.clouddesigner.occi.docker.connector</artifactId>
-            <version>0.1.0-SNAPSHOT</version>
-        </dependency>
         <!-- Requires Eclipse Modeling Framework. -->
         <dependency>
             <groupId>org.eclipse.core</groupId>
@@ -198,26 +155,6 @@ the specific language governing permissions and limitations under the License. -
             <artifactId>org.eclipse.xtext.xbase.lib</artifactId>
             <version>2.9.2</version>
         </dependency>
-        <!-- for docker connector usage -->
-        <dependency>
-            <groupId>com.github.docker-java</groupId>
-            <artifactId>docker-java</artifactId>
-            <version>3.0.0-SNAPSHOT</version>
-            <scope>compile</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.codehaus.jackson</groupId>
-            <artifactId>jackson-jaxrs</artifactId>
-            <version>1.7.9</version>
-            <scope>compile</scope>
-        </dependency>
-        <dependency>
-            <groupId>com.jcraft</groupId>
-            <artifactId>jsch</artifactId>
-            <version>0.1.52</version>
-            <scope>compile</scope>
-        </dependency>
-        
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
@@ -383,104 +320,6 @@ the specific language governing permissions and limitations under the License. -
                         </configuration>
                     </execution>
                     <execution>
-                        <id>Clouddesigner-infra</id>
-                        <phase>initialize</phase>
-                        <goals>
-                            <goal>install-file</goal>
-                        </goals>
-                        <configuration>
-                            <groupId>Clouddesigner</groupId>
-                            <artifactId>org.occiware.clouddesigner.occi.infrastructure</artifactId>
-                            <version>0.1.0-SNAPSHOT</version>
-                            <packaging>jar</packaging>
-                            <file>${basedir}/lib/org.occiware.clouddesigner.occi.infrastructure-0.1.0-SNAPSHOT.jar</file>
-                        </configuration>
-                    </execution>
-                    <execution>
-                        <id>Clouddesigner-infra-connector</id>
-                        <phase>initialize</phase>
-                        <goals>
-                            <goal>install-file</goal>
-                        </goals>
-                        <configuration>
-                            <groupId>Clouddesigner</groupId>
-                            <artifactId>org.occiware.clouddesigner.occi.infrastructure.connector.dummy</artifactId>
-                            <version>0.1.0-SNAPSHOT</version>
-                            <packaging>jar</packaging>
-                            <file>${basedir}/lib/org.occiware.clouddesigner.occi.infrastructure.connector.dummy-0.1.0-SNAPSHOT.jar</file>
-                        </configuration>
-                    </execution>
-                    <execution>
-                        <id>Clouddesigner-platform</id>
-                        <phase>initialize</phase>
-                        <goals>
-                            <goal>install-file</goal>
-                        </goals>
-                        <configuration>
-                            <groupId>Clouddesigner</groupId>
-                            <artifactId>org.occiware.clouddesigner.occi.platform</artifactId>
-                            <version>0.1.0-SNAPSHOT</version>
-                            <packaging>jar</packaging>
-                            <file>${basedir}/lib/org.occiware.clouddesigner.occi.platform-0.1.0-SNAPSHOT.jar</file>
-                        </configuration>
-                    </execution>
-                    <execution>
-                        <id>Clouddesigner-platform-connector</id>
-                        <phase>initialize</phase>
-                        <goals>
-                            <goal>install-file</goal>
-                        </goals>
-                        <configuration>
-                            <groupId>Clouddesigner</groupId>
-                            <artifactId>org.occiware.clouddesigner.occi.platform.connector.dummy</artifactId>
-                            <version>0.1.0-SNAPSHOT</version>
-                            <packaging>jar</packaging>
-                            <file>${basedir}/lib/org.occiware.clouddesigner.occi.platform.connector.dummy-0.1.0-SNAPSHOT.jar</file>
-                        </configuration>
-                    </execution>
-                    <execution>
-                        <id>Clouddesigner-docker</id>
-                        <phase>initialize</phase>
-                        <goals>
-                            <goal>install-file</goal>
-                        </goals>
-                        <configuration>
-                            <groupId>Clouddesigner</groupId>
-                            <artifactId>org.occiware.clouddesigner.occi.docker</artifactId>
-                            <version>0.1.0-SNAPSHOT</version>
-                            <packaging>jar</packaging>
-                            <file>${basedir}/lib/org.occiware.clouddesigner.occi.docker-0.1.0-SNAPSHOT.jar</file>
-                        </configuration>
-                    </execution>
-                    <execution>
-                        <id>Clouddesigner-docker-preference</id>
-                        <phase>initialize</phase>
-                        <goals>
-                            <goal>install-file</goal>
-                        </goals>
-                        <configuration>
-                            <groupId>Clouddesigner</groupId>
-                            <artifactId>org.occiware.clouddesigner.occi.docker.preference</artifactId>
-                            <version>0.1.0-SNAPSHOT</version>
-                            <packaging>jar</packaging>
-                            <file>${basedir}/lib/org.occiware.clouddesigner.occi.docker.preference-0.1.0-SNAPSHOT.jar</file>
-                        </configuration>
-                    </execution>
-                    <execution>
-                        <id>Clouddesigner-docker-connector</id>
-                        <phase>initialize</phase>
-                        <goals>
-                            <goal>install-file</goal>
-                        </goals>
-                        <configuration>
-                            <groupId>Clouddesigner</groupId>
-                            <artifactId>org.occiware.clouddesigner.occi.docker.connector</artifactId>
-                            <version>0.1.0-SNAPSHOT</version>
-                            <packaging>jar</packaging>
-                            <file>${basedir}/lib/org.occiware.clouddesigner.occi.docker.connector-0.1.0-SNAPSHOT.jar</file>
-                        </configuration>
-                    </execution>
-                    <execution>
                         <id>eclipse-ocl</id>
                         <phase>initialize</phase>
                         <goals>
@@ -508,21 +347,7 @@ the specific language governing permissions and limitations under the License. -
                             <file>${basedir}/lib/org.eclipse.ocl.common-1.3.0.v20150519-0914.jar</file>
                         </configuration>
                     </execution>
-                    <execution>
-                        <id>docker-java</id>
-                        <phase>initialize</phase>
-                        <goals>
-                            <goal>install-file</goal>
-                        </goals>
-                        <configuration>
-                            <groupId>com.github.docker-java</groupId>
-                            <artifactId>docker-java</artifactId>
-                            <version>3.0.0-SNAPSHOT</version>
-                            <packaging>jar</packaging>
-                            <file>${basedir}/lib/docker-java-3.0.0-SNAPSHOT-jar-with-dependencies.jar</file>
-                        </configuration>
-                    </execution>
-                   
+                    
                 </executions>
             </plugin>
             <plugin>

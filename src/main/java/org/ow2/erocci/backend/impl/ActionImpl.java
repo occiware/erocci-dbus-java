@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2015-2017 Inria - Linagora
+ * Copyright (c) 2015-2017 Inria
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@ package org.ow2.erocci.backend.impl;
 
 import java.lang.reflect.InvocationTargetException;
 import java.util.Map;
-import java.util.logging.Logger;
 
 import org.freedesktop.dbus.Variant;
 import org.occiware.clouddesigner.occi.Action;
@@ -26,9 +25,8 @@ import org.occiware.clouddesigner.occi.Extension;
 import org.occiware.clouddesigner.occi.util.OcciHelper;
 import org.ow2.erocci.backend.action;
 import org.ow2.erocci.model.ConfigurationManager;
-import org.ow2.erocci.model.exception.ExecuteActionException;
-import org.ow2.erocci.runtime.ActionExecutorFactory;
-import org.ow2.erocci.runtime.IActionExecutor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Implementation of OCCI action
@@ -38,19 +36,14 @@ import org.ow2.erocci.runtime.IActionExecutor;
  */
 public class ActionImpl implements action {
 
-    private Logger logger = Logger.getLogger(this.getClass().getName());
-    private int mode = 0;
-
+    private static final Logger LOGGER = LoggerFactory.getLogger(ActionImpl.class);
+    
     @Override
     public boolean isRemote() {
-
         return false;
     }
 
-    public void setMode(int mode) {
-        this.mode = mode;
-    }
-
+    
     /**
      * Launch an action on a resource or link.
      *
@@ -62,10 +55,11 @@ public class ActionImpl implements action {
     @Override
     public void Action(String id, String action_id, Map<String, Variant> attributes) {
 
-        logger.info("id " + id + " >-- action_id: " + action_id + " --< attributes=" + Utils.convertVariantMap(attributes));
+        LOGGER.info("id " + id + " >-- action_id: " + action_id + " --< attributes=" + Utils.convertVariantMap(attributes));
 
         if (action_id == null) {
             // TODO : return fail or no state.
+            LOGGER.error("You must provide an action kind to execute");
             return;
         }
         // TODO : Owner in parameters entry of Action method.
@@ -75,30 +69,14 @@ public class ActionImpl implements action {
 
         Entity entity = ConfigurationManager.findEntity(owner, id);
         if (entity != null) {
-            if (mode == CoreImpl.DEFAULT_MODE) {
-                // TODO : Model validator AFTER launching the action, this can cause a lot of problem if constraints aren't respected.
-                // Get the executor corresponding on entity kind.
-                // Launch the action effectively.
-                String entityKind = entity.getKind().getScheme() + entity.getKind().getTerm();
-                IActionExecutor actExecutor = ActionExecutorFactory.build(ConfigurationManager.getExtensionForKind(owner, entityKind));
-
-                try {
-                    actExecutor.execute(action_id, actionAttributes, entity, IActionExecutor.FROM_ACTION);
-                } catch (ExecuteActionException ex) {
-                    logger.warning("Action launch error : " + ex.getMessage());
-                }
-            } else if (mode == CoreImpl.EMBED_MODE) {
-
                 String entityKind = entity.getKind().getScheme() + entity.getKind().getTerm();
                 Extension ext = ConfigurationManager.getExtensionForKind(owner, entityKind);
-                if (action_id == null) {
-                    logger.warning("You must provide an action kind for entity : " + entity.getId());
-                    return;
-                }
+                
                 Action actionKind = ConfigurationManager.getActionKindFromExtension(ext, action_id);
                 if (actionKind == null) {
-                    logger.warning(
+                    LOGGER.error(
                             "Action : " + action_id + " doesnt exist on extension : " + ext.getName());
+                    return;
                 }
 
                 String[] actionParameters = Utils.getActionParametersArray(actionAttributes);
@@ -109,12 +87,12 @@ public class ActionImpl implements action {
                         OcciHelper.executeAction(entity, actionKind.getTerm(), actionParameters);
                     }
                 } catch (InvocationTargetException ex) {
-                    logger.warning("Action failed to execute : " + ex.getMessage());
+                    LOGGER.error("Action failed to execute : {0}", ex.getMessage());
                 }
-            }
+            
 
         } else {
-            logger.info("Entity doesnt exist : " + id);
+            LOGGER.error("Entity doesnt exist : {0}", id);
             // return failed; (or state)
         }
 
