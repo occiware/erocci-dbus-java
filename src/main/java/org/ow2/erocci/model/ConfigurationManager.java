@@ -1711,7 +1711,7 @@ public class ConfigurationManager {
         Extension infra = null;
         for (String extScheme : extReg) {
             ext = OcciHelper.loadExtension(extScheme);
-            if (ext.getName().equals("core")) {
+            if (ext.getName().equals("core") && extReg.size() > 1) {
                 // Erocci has already this extension scheme.
                 continue;
             }
@@ -1725,6 +1725,7 @@ public class ConfigurationManager {
         if (infra != null) {
             extensions.add(infra);
         }
+        
         
         int size = extensions.size();
         
