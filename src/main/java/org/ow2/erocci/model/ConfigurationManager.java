@@ -287,21 +287,49 @@ public class ConfigurationManager {
             link.setKind(occiKind);
 
             // Check if occi.core.target.kind is set.
-            if (attributes.get("occi.core.target.kind") != null
-                    && attributes.get("occi.core.target.kind").equals("undefined")) {
-                attributes.remove("occi.core.target.kind");
+            // Remove "undefined" attributes, specific to Erocci.
+            Iterator<Map.Entry<String,String>> it = attributes.entrySet().iterator(); 
+            String val;
+            String key;
+            while (it.hasNext()) {
+            	Map.Entry<String, String> itmap = it.next();
+            	val = itmap.getValue();
+            	key = itmap.getKey();
+            	if (val != null && val.equals("undefined")) {
+            		it.remove();
+            	}
             }
+            
+//            
+//            if (attributes.get("occi.core.target.kind") != null
+//                    && attributes.get("occi.core.target.kind").equals("undefined")) {
+//                attributes.remove("occi.core.target.kind");
+//            }
             updateAttributesToEntity(link, attributes);
 
             addMixinsToEntity(link, mixins, owner, false);
 
         } else {
             // Link exist upon our configuration, we update it.
-            // Check if occi.core.target.kind is set.
-            if (attributes.get("occi.core.target.kind") != null
-                    && attributes.get("occi.core.target.kind").equals("undefined")) {
-                attributes.remove("occi.core.target.kind"); // It's an erocci workaround.
+            
+        	// Check if occi.core.target.kind is set.
+            // Remove "undefined" attributes, specific to Erocci.
+            Iterator<Map.Entry<String,String>> it = attributes.entrySet().iterator(); 
+            String val;
+            String key;
+            while (it.hasNext()) {
+            	Map.Entry<String, String> itmap = it.next();
+            	val = itmap.getValue();
+            	key = itmap.getKey();
+            	if (val != null && val.equals("undefined")) {
+            		it.remove();
+            	}
             }
+        	// Check if occi.core.target.kind is set.
+//            if (attributes.get("occi.core.target.kind") != null
+//                    && attributes.get("occi.core.target.kind").equals("undefined")) {
+//                attributes.remove("occi.core.target.kind"); // It's an erocci workaround.
+//            }
             updateAttributesToEntity(link, attributes);
             overwrite = true;
 
@@ -343,11 +371,11 @@ public class ConfigurationManager {
             attrName = entry.getKey();
             attrValue = entry.getValue();
             if (!attrName.isEmpty()
-                    && !attrName.equals("occi.core.id")) {
+                    && !attrName.equals("occi.core.id") && !attrName.equals("occi.core.target") && !attrName.equals("occi.core.source")) {
                 OcciHelper.setAttribute(entity, attrName, attrValue);
             }
         }
-
+        
         return entity;
     }
 
@@ -788,7 +816,7 @@ public class ConfigurationManager {
                     if (((kind.getScheme() + kind.getTerm()).equals(kindId))) {
                         kindToReturn = kind;
                         config.getUse().add(ext);
-                        LOGGER.info("New extension: {0} --< added to configuration owner: {1}", new Object[]{ext.getName(), owner});
+                        LOGGER.info("New extension: " + ext.getName() + " --< added to configuration owner: " + owner);
                         break;
                     }
                 }
@@ -1523,14 +1551,14 @@ public class ConfigurationManager {
         if (entity != null) {
             // update the attributes.
             updateAttributesToEntity(entity, attributes);
-            LOGGER.info("owner : {0} --< entity id : {1}", new Object[]{ownerFound, entityId});
+            LOGGER.info("owner : " + ownerFound + " --< entity id : " + entityId);
             updateVersion(ownerFound, entityId);
             // printEntity(entity);
 
         } else {
             // TODO : Report an exception, impossible to update entity, it
             // doesnt exist.
-            LOGGER.error("The entity {0} doesnt exist, can''t update ! ", entityId);
+            LOGGER.error("The entity " + entityId + " doesnt exist, can''t update ! ");
         }
 
         // return entity;
@@ -1711,7 +1739,7 @@ public class ConfigurationManager {
         Extension infra = null;
         for (String extScheme : extReg) {
             ext = OcciHelper.loadExtension(extScheme);
-            if (ext.getName().equals("core")) {
+            if (ext.getName().equals("core") && extReg.size() > 1) {
                 // Erocci has already this extension scheme.
                 continue;
             }

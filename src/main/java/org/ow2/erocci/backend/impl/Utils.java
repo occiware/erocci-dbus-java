@@ -207,6 +207,14 @@ public class Utils {
                 attribVariant.put(attrState.getName(), new Variant(attrState.getValue()));
             }
         }
+        // Add to attributes the source and target if this entity is a link.
+        if (entity instanceof Link) {
+        	Link link = (Link)entity;
+        	// Add the source id and the target id to the attribVariant object.
+        	attribVariant.put("occi.core.source", new Variant(link.getSource().getId()));
+        	attribVariant.put("occi.core.target", new Variant(link.getTarget().getId()));
+        }
+        
 
         return new Quad<>(entity.getId(), kindStr, mixinsStr, attribVariant);
 

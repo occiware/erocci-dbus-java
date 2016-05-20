@@ -15,9 +15,6 @@
  */
 package org.ow2.erocci.backend;
 
-import java.io.FileNotFoundException;
-
-
 import org.freedesktop.dbus.DBusConnection;
 import org.freedesktop.dbus.exceptions.DBusException;
 import org.ow2.erocci.backend.impl.CoreImpl;

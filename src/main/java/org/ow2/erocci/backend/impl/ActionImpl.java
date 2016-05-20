@@ -87,12 +87,12 @@ public class ActionImpl implements action {
                         OcciHelper.executeAction(entity, actionKind.getTerm(), actionParameters);
                     }
                 } catch (InvocationTargetException ex) {
-                    LOGGER.error("Action failed to execute : {0}", ex.getMessage());
+                    LOGGER.error("Action failed to execute : " + ex.getMessage());
                 }
             
 
         } else {
-            LOGGER.error("Entity doesnt exist : {0}", id);
+            LOGGER.error("Entity doesnt exist : " + id);
             // return failed; (or state)
         }
 

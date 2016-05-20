@@ -48,7 +48,7 @@ public class MixinImpl implements mixin {
      */
     @Override
     public void AddMixin(String id, String location, String owner) {
-        LOGGER.info("add user mixin with id: {0} --< location : {1} --< owner : {2}", new Object[]{id, location, owner});
+        LOGGER.info("add user mixin with id: " + id + " --< location : " + location + " --< owner : " + owner);
 
         if (id == null) {
             LOGGER.info("No mixin id provided ! Cant add a user mixin tag.");
