@@ -1754,6 +1754,7 @@ public class ConfigurationManager {
             extensions.add(infra);
         }
         
+        
         int size = extensions.size();
         
         for (Extension extension : extensions) {
