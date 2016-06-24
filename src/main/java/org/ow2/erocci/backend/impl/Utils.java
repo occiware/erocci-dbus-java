@@ -44,7 +44,7 @@ import org.occiware.clouddesigner.occi.Kind;
 import org.occiware.clouddesigner.occi.Link;
 import org.occiware.clouddesigner.occi.Mixin;
 import org.occiware.clouddesigner.occi.Resource;
-import org.ow2.erocci.backend.Quad;
+//import org.ow2.erocci.backend.Quad;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -166,59 +166,59 @@ public class Utils {
         return map;
     }
 
-    /**
-     * Convert an OCCI Entity to Quad object, this is for dialog with dbus
-     * protocol.
-     *
-     * @param entity
-     * @return
-     */
-    public static Quad<String, String, List<String>, Map<String, Variant>> convertEntityToQuad(Entity entity) {
-        if (entity == null) {
-            return null;
-        }
-
-        // to cast to String
-        Kind kind = entity.getKind();
-
-        // to cast to List<String>
-        EList<Mixin> mixins = entity.getMixins();
-
-        // to cast to Map<String, Variant>.
-        EList<AttributeState> attributes = entity.getAttributes();
-
-        if (kind == null) {
-            // TODO : throw exception.
-            LOGGER.warn("No kind on this entity !!!");
-            // malformed entity. normally this never happen.
-            return null;
-        }
-
-        String kindStr = kind.getScheme() + kind.getTerm();
-        List<String> mixinsStr = new ArrayList<>();
-        for (Mixin mixin : mixins) {
-            mixinsStr.add(mixin.getScheme() + mixin.getTerm());
-        }
-        Map<String, Variant> attribVariant = new HashMap<>();
-        for (AttributeState attrState : attributes) {
-            // Warning : dont convert undefined Value, this will cause Erocci
-            // bug and terminate this application.
-            if (!attrState.getValue().equals("undefined")) {
-                attribVariant.put(attrState.getName(), new Variant(attrState.getValue()));
-            }
-        }
-        // Add to attributes the source and target if this entity is a link.
-        if (entity instanceof Link) {
-        	Link link = (Link)entity;
-        	// Add the source id and the target id to the attribVariant object.
-        	attribVariant.put("occi.core.source", new Variant(link.getSource().getId()));
-        	attribVariant.put("occi.core.target", new Variant(link.getTarget().getId()));
-        }
-        
-
-        return new Quad<>(entity.getId(), kindStr, mixinsStr, attribVariant);
-
-    }
+//    /**
+//     * Convert an OCCI Entity to Quad object, this is for dialog with dbus
+//     * protocol.
+//     *
+//     * @param entity
+//     * @return
+//     */
+//    public static Quad<String, String, List<String>, Map<String, Variant>> convertEntityToQuad(Entity entity) {
+//        if (entity == null) {
+//            return null;
+//        }
+//
+//        // to cast to String
+//        Kind kind = entity.getKind();
+//
+//        // to cast to List<String>
+//        EList<Mixin> mixins = entity.getMixins();
+//
+//        // to cast to Map<String, Variant>.
+//        EList<AttributeState> attributes = entity.getAttributes();
+//
+//        if (kind == null) {
+//            // TODO : throw exception.
+//            LOGGER.warn("No kind on this entity !!!");
+//            // malformed entity. normally this never happen.
+//            return null;
+//        }
+//
+//        String kindStr = kind.getScheme() + kind.getTerm();
+//        List<String> mixinsStr = new ArrayList<>();
+//        for (Mixin mixin : mixins) {
+//            mixinsStr.add(mixin.getScheme() + mixin.getTerm());
+//        }
+//        Map<String, Variant> attribVariant = new HashMap<>();
+//        for (AttributeState attrState : attributes) {
+//            // Warning : dont convert undefined Value, this will cause Erocci
+//            // bug and terminate this application.
+//            if (!attrState.getValue().equals("undefined")) {
+//                attribVariant.put(attrState.getName(), new Variant(attrState.getValue()));
+//            }
+//        }
+//        // Add to attributes the source and target if this entity is a link.
+//        if (entity instanceof Link) {
+//        	Link link = (Link)entity;
+//        	// Add the source id and the target id to the attribVariant object.
+//        	attribVariant.put("occi.core.source", new Variant(link.getSource().getId()));
+//        	attribVariant.put("occi.core.target", new Variant(link.getTarget().getId()));
+//        }
+//        
+//
+//        return new Quad<>(entity.getId(), kindStr, mixinsStr, attribVariant);
+//
+//    }
 
     public static String createUUID() {
         return UUID.randomUUID().toString();

@@ -75,7 +75,7 @@ public class BackendDBusService {
         
         ConfigurationManager.getConfigurationForOwner(ConfigurationManager.DEFAULT_OWNER);
         // Register Erocci Schema for Erocci usage (when get on core interface is called).
-        ConfigurationManager.loadErocciSchema();
+        ConfigurationManager.loadExtensionsAndErocciSchema(true);
         
 //        // For testing classpath entries..
 //        

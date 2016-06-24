@@ -70,7 +70,7 @@ public class ConfigurationManager {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ConfigurationManager.class);
 
-    private static String erocciSchema = "";
+    private static List<String> erocciSchemas = new LinkedList<String>();
 
     /**
      * Used for now when no owner defined (on dbus methods find for example or
@@ -1716,8 +1716,9 @@ public class ConfigurationManager {
 
     /**
      * Load Erocci Schemas from extensions.
+     * @param modeDbus (if true, this set the extensions on a linkedlist, to assign with erocci, if false, this extension list is empty).
      */
-    public static void loadErocciSchema() {
+    public static void loadExtensionsAndErocciSchema(boolean modeDbus) {
 
         Collection<String> extReg = OCCIRegistry.getInstance().getRegisteredExtensions();
         Extension ext;
@@ -1728,118 +1729,61 @@ public class ConfigurationManager {
         boolean firstFile = true;
         boolean lastFile = false;
         int position = 0;
-        
-        
-        // First core.xml
-        // Second infrastructure.xml (as parent if needed)
-        // First regorganize the list to remove core.xml, and the last infrastructure.xml (if needed by other extensions).
-        
+       
         List<Extension> extensions = new LinkedList<>();
         
         Extension infra = null;
         for (String extScheme : extReg) {
-            ext = OcciHelper.loadExtension(extScheme);
+            // Load the extension and register, include the core as well...
+        	LOGGER.info("Loading model extension : " + extScheme);
+        	ext = OcciHelper.loadExtension(extScheme);
             if (ext.getName().equals("core") && extReg.size() > 1) {
                 // Erocci has already this extension scheme.
                 continue;
             }
             if (ext.getName().equals("infrastructure")) {
-                // We're adding this to the last element of the linked list.
-                infra = ext;
-                continue;
+            	extensions.add(0, ext); // Add on first infrastructure extension.
+            } else {
+            	extensions.add(ext);
             }
-            extensions.add(ext);
-        }
-        if (infra != null) {
-            extensions.add(infra);
         }
         
-        
-        int size = extensions.size();
-        
+        String extXml;
         for (Extension extension : extensions) {
-            position++;
          
             LOGGER.info("Extension registered : " + extension.getScheme());
+            if (modeDbus) {
+            	xmlErocciExt = "/erocci/" + extension.getName() + ".xml";
+            	LOGGER.info("Add Erocci xml extension: " + extension.getName() + " --< " + xmlErocciExt);
 
-            xmlErocciExt = "/erocci/" + extension.getName() + ".xml";
-            LOGGER.info("Add Erocci xml extension: " + extension.getName() + " --< " + xmlErocciExt);
-
-            filePath = MART.getResourceFromClasspath(xmlErocciExt);
-            LOGGER.info("FilePath : " + filePath);
-            // Load the resource extension file.
-            InputStream in = BackendDBusService.class.getResourceAsStream(xmlErocciExt);
-
-            if (in == null) {
-                LOGGER.warn("Tips: Generate xml erocci files on Cloud Designer and add erocci/ in build.properties on extension project <" + extension.getName() + "> and rebuild it with > mvn clean install.");
-                throw new RuntimeException("Cannot read the file : " + xmlErocciExt);
-            }
-
-            // Position of the file first or last or between ?
-            if (size == 1) {
-                firstFile = true;
-                lastFile = true;
-            } else if (position == size && size > 1) {
-                firstFile = false;
-                lastFile = true;
-            } else if (position < size && position > 1) {
-                firstFile = false;
-                lastFile = false;
-            }
-            LOGGER.info("position: " + position);
-            LOGGER.info("Size of the collections file : " + size);
-            
-            if (firstFile) {
-                LOGGER.info("First file : " + xmlErocciExt);
-            }
-            if (!firstFile && !lastFile) {
-                LOGGER.info("File in the middle : " + xmlErocciExt);
-            }
-            if (lastFile) {
-                LOGGER.info("Last file : " + xmlErocciExt);
-            }
-            
-            StringBuilder sb = new StringBuilder();
-            Reader r = null;
-            BufferedReader br = null;
-            try {
-                String line;
-                r = new InputStreamReader(in, "UTF-8");
-                br = new BufferedReader(r);
-
-                while ((line = br.readLine()) != null) {
-
-                    if (!firstFile) {
-                        if (line.contains("<?xml") || line.contains("<occi:extension") || line.contains("xmlns:") || line.contains("xsi:")
-                                || line.trim().startsWith("name")
-                                || line.trim().startsWith("scheme")
-                                || line.trim().startsWith("version")
-                                || line.trim().startsWith("status")) {
-                            continue;
-                        }
-                    }
-
-                    if (!lastFile) {
-                        if (line.contains("</occi:extension")) {
-                            continue;
-                        }
-                    }
-                    // Add the content to the string output.
-                    sb.append(line).append("\n");
-
+                filePath = MART.getResourceFromClasspath(xmlErocciExt);
+                LOGGER.info("FilePath : " + filePath);
+                // Load the resource extension file.
+                InputStream in = BackendDBusService.class.getResourceAsStream(xmlErocciExt);
+                if (in == null) {
+                    LOGGER.warn("Tips: Generate xml erocci files on Cloud Designer and add erocci/ in build.properties on extension project <" + extension.getName() + "> and rebuild it with > mvn clean install.");
+                    throw new RuntimeException("Cannot read the file : " + xmlErocciExt);
                 }
-            } catch (IOException ex) {
-                LOGGER.error(ex.getMessage());
-            } finally {
-                Utils.closeQuietly(br);
-                Utils.closeQuietly(r);
-                Utils.closeQuietly(in);
-            }
-
-            erocciSchema += sb.toString();
+                // Load the LinkedList erocciSchemas.
+                ByteArrayOutputStream os = null;
+                try {
+                	os = new ByteArrayOutputStream();
+                	extXml = Utils.copyStream(in, os);
+                	LOGGER.info("Erocci Schema loaded: " + extXml);
+                	if (extXml != null) {
+                		erocciSchemas.add(extXml);
+                	} else {
+                		LOGGER.error("Schema: " + extension.getName() + " is empty or there is a problem during the read.");
+                	}
+                } catch (IOException e) {
+                    Utils.closeQuietly(in);
+                    Utils.closeQuietly(os);
+                    extXml = null;
+                }
+            }       
 
         }
-        LOGGER.info("Extension final schema : " + erocciSchema);
+        
     }
 
     /**
@@ -1848,8 +1792,8 @@ public class ConfigurationManager {
      *
      * @return
      */
-    public static String getErocciSchema() {
-        return erocciSchema;
+    public static List<String> getErocciSchemas() {
+        return erocciSchemas;
     }
 
 }
