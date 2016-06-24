@@ -37,6 +37,7 @@ import org.eclipse.emf.common.util.EList;
 
 import org.freedesktop.dbus.UInt32;
 import org.occiware.clouddesigner.occi.Action;
+import org.occiware.clouddesigner.occi.AttributeState;
 import org.occiware.clouddesigner.occi.Configuration;
 import org.occiware.clouddesigner.occi.Entity;
 import org.occiware.clouddesigner.occi.Extension;
@@ -225,6 +226,9 @@ public class ConfigurationManager {
         if (resourceOverwrite) {
             LOGGER.info("resource updated " + resource.getId() + " on OCCI configuration");
         } else {
+//        	EList<Resource> resources = configuration.getResources();
+//        	resources.add(resource);
+//        	
             configuration.getResources().add(resource);
             LOGGER.info("Added Resource " + resource.getId() + " to configuration object.");
 
@@ -1801,7 +1805,7 @@ public class ConfigurationManager {
      * @param attr = attributes of an entity
      * @return false if this entity is a link, true otherwise.
      */
-    public static boolean checkIfEntityIsResourceOrTargetFromAttributes(Map<String, String> attr) {
+    public static boolean checkIfEntityIsResourceOrLinkFromAttributes(Map<String, String> attr) {
         boolean result = true;
         if (attr == null || attr.isEmpty()) {
             return result;
@@ -1814,5 +1818,19 @@ public class ConfigurationManager {
         
         return result;
     }
+
+    /**
+     * Create a Map<String,String> from EList<AttributeState>.
+     * @param attributes
+     * @return a map<String, String>
+     */
+	public static Map<String, String> getEntityAttributesMap(EList<AttributeState> attributes) {
+		Map<String, String> mapResult = new HashMap<String, String>();
+		for (AttributeState attr : attributes) {
+			mapResult.put(attr.getName(), attr.getValue());
+		}
+		
+		return mapResult;
+	}
 
 }

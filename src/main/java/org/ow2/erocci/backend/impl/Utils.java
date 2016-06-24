@@ -219,7 +219,26 @@ public class Utils {
 //        return new Quad<>(entity.getId(), kindStr, mixinsStr, attribVariant);
 //
 //    }
-
+    
+    /**
+     * 
+     * @param attrs
+     * @return
+     */
+    public static Map<String, Variant> convertStringMapToVariant(Map<String, String> attrs) {
+    	Map<String, Variant> mapResult = new HashMap<String, Variant>();
+    	for (Map.Entry<String, String> entry : attrs.entrySet()) {
+    		mapResult.put(entry.getKey(), new Variant(entry.getValue()));
+    		
+    	}
+    	return mapResult;
+		
+    }
+    
+    /**
+     * Create a v4 UUID standard.
+     * @return
+     */
     public static String createUUID() {
         return UUID.randomUUID().toString();
 
@@ -564,4 +583,6 @@ public class Utils {
     public static synchronized int getUniqueInt() {
         return uniqueInt++;
     }
+
+	
 }
