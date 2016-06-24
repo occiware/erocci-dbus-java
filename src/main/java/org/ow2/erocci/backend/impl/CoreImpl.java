@@ -28,6 +28,7 @@ import org.freedesktop.dbus.Variant;
 import org.occiware.clouddesigner.occi.Entity;
 import org.occiware.clouddesigner.occi.Link;
 import org.occiware.clouddesigner.occi.Mixin;
+import org.occiware.clouddesigner.occi.Resource;
 import org.occiware.clouddesigner.occi.util.OcciHelper;
 import org.ow2.erocci.backend.Pair;
 import org.ow2.erocci.backend.Quintuple;
@@ -259,9 +260,11 @@ public class CoreImpl implements core, DBus.Properties {
 	 * 
 	 * @param location
 	 *            (string): path relative url part
-	 * @return a Struct Septuble object with this : kind (string): kind id
-	 *         mixins (string array): mixin ids attributes (string/variant
-	 *         array): entity attributes links (as): (possible empty) link
+	 * @return a Struct Septuble object with this : 
+	 * 		   kind (string): kind id
+	 *         mixins (string array): mixin ids attributes (string/variant array) 
+	 *         entity attributes
+	 *         links (as): (possible empty) link
 	 *         location list owner (string): entity owner group (string): entity
 	 *         group serial (string): entity serial
 	 * 
@@ -309,34 +312,10 @@ public class CoreImpl implements core, DBus.Properties {
 			}
 			String serial = ConfigurationManager.getEtagNumber(owner, entity.getId()).toString();
 			String kind =  entity.getKind().getScheme() + entity.getKind().getTerm();
-			LOGGER.info("Kind to send: " + kind);
-
-			// TO TEST : 
-			// attributes = new HashMap<>();
-			
 			
 			sept = new Septuple<String, List<String>, Map<String, Variant>, List<String>, String, String, String>(kind,
 					mixinsToReturn, attributes, links, owner, group, serial);
-			// LOGGER.info("Values returned for entity : " + location);
-			// LOGGER.info("Kind : " + kind);
-			// LOGGER.info("Mixins : ");
-			// for (String mix : mixinsToReturn) {
-			// LOGGER.info("-----< Mixin : " + mix);
-			// }
-			// LOGGER.info("Attributes : ");
-			// for (Map.Entry<String, Variant> entry : attributes.entrySet()) {
-			// String key = entry.getKey();
-			// Variant<String> value = entry.getValue();
-			//
-			// LOGGER.info("------< " + key + "=" + value);
-			// }
-			// LOGGER.info("Links : ");
-			// for (String link : links) {
-			// LOGGER.info("------< " + link);
-			// }
-			// LOGGER.info("owner: " + owner);
-			// LOGGER.info("Group : " + group);
-			// LOGGER.info("Serial : " + serial);
+			
 
 		} else {
 			LOGGER.info("Entity " + location + " --< doesnt exist !");
@@ -345,24 +324,113 @@ public class CoreImpl implements core, DBus.Properties {
 		return sept;
 	}
 
+	/**
+	 * Set resource endpoint (source or target).
+	 * @param location (string): entity path relative path
+	 * @param type (byte): 0: source, 1: target
+	 * @param link (string): link location
+	 */
 	@Override
 	public void Link(String location, byte type, String link) {
-		// TODO Auto-generated method stub
-
+		
+		String owner = ConfigurationManager.DEFAULT_OWNER;
+		String group = ConfigurationManager.DEFAULT_OWNER;
+		
+		// Load entry entity.
+		Entity entity = ConfigurationManager.findEntity(owner, location);
+		
+		// Load link resource location.
+		Entity linkedResource = ConfigurationManager.findEntity(owner, link);
+		
+		if (entity != null && linkedResource != null && entity instanceof Link && linkedResource instanceof Resource) {
+			Link linkEntity = (Link)entity;
+			Resource res = (Resource) linkedResource;
+			// Assign the source.
+			if (type == 0) {
+				linkEntity.setSource(res);
+			}
+			// Assign the target.
+			if (type == 1) {
+				linkEntity.setTarget(res);
+			}
+		} else {
+			LOGGER.warn("Cant assign a link " + location + " to the resource: " + link);
+			throw new RuntimeException("Cant assign a link " + location + " to the resource: " + link);
+		}
+		
 	}
 
+	/**
+	 * Associate a mixin with an entity.
+	 * @param location  (string): entity path relative path
+	 * @param mixin (string): mixin id
+	 * @param attributes (string/variant array): new attributes
+	 * @return a Struct Quintuple object contains:
+      * kind (string): kind id
+	  * mixins (string array): mixin ids
+	  * attributes (string/variant array): entity attributes
+	  * serial (string): entity serial
+	 */
 	@Override
 	public Quintuple<String, List<String>, Map<String, Variant>, List<String>, String> Mixin(String location,
 			String mixin, Map<String, Variant> attributes) {
-		// TODO Auto-generated method stub
-		return null;
+		
+		String owner = ConfigurationManager.DEFAULT_OWNER;
+		String group = ConfigurationManager.DEFAULT_OWNER;
+		
+		// Load entry entity.
+		Entity entity = ConfigurationManager.findEntity(owner, location);
+		
+		if (entity == null) {
+			LOGGER.error("Cant associate a mixin with the entity : " + location + ", cant retrieve this entity.");
+			throw new RuntimeException("Cant associate a mixin with the entity : " + location + ", cant retrieve this entity.");
+		}
+		List<String> mixins = new ArrayList<>();
+		mixins.add(mixin);
+		boolean result = ConfigurationManager.addMixinsToEntity(entity, mixins, owner, false);
+		if (!result) {
+			throw new RuntimeException("cannot find mixin: " + mixin + " on configuration.");
+		}
+		
+		Septuple<String, List<String>, Map<String, Variant>, List<String>, String, String, String> sept = Get(location);
+		Quintuple<String, List<String>, Map<String, Variant>, List<String>, String> q = new Quintuple<>(sept.a, sept.b, sept.c, sept.d, sept.g);
+		
+		return q;
+		
 	}
 
+	/**
+	 * Disocciate mixin from entity.
+	 * @param location (string): entity path relative path
+	 * @param mixin  (string): mixin id
+	 * @return a struct quintuple object representing an updated entity.
+	 */
 	@Override
 	public Quintuple<String, List<String>, Map<String, Variant>, List<String>, String> Unmixin(String location,
 			String mixin) {
-		// TODO Auto-generated method stub
-		return null;
+		
+		String owner = ConfigurationManager.DEFAULT_OWNER;
+		String group = ConfigurationManager.DEFAULT_OWNER;
+		
+		// Load entry entity.
+		Entity entity = ConfigurationManager.findEntity(owner, location);
+		
+		if (entity == null) {
+			LOGGER.error("Cant dissociate a mixin: " + mixin + " from the entity : " + location + ", cant retrieve this entity.");
+			throw new RuntimeException("Cant dissociate a mixin: " + mixin + " with the entity : " + location + ", cant retrieve this entity.");
+		}
+		
+		boolean result = ConfigurationManager.dissociateMixinFromEntity(owner, mixin, entity);
+		if (result) {
+			LOGGER.info("Mixin: " + mixin + " successfully dissociated from entity : " + location);
+		} else {
+			LOGGER.error("Cant dissociate a mixin from the entity : " + location + ", cant retrieve this mixin " + mixin);
+			throw new RuntimeException("Cant dissociate a mixin from the entity : " + location + ", cant retrieve this mixin " + mixin);
+		}
+		Septuple<String, List<String>, Map<String, Variant>, List<String>, String, String, String> sept = Get(location);
+		Quintuple<String, List<String>, Map<String, Variant>, List<String>, String> q = new Quintuple<>(sept.a, sept.b, sept.c, sept.d, sept.g);
+		
+		return q;
 	}
 
 	@Override

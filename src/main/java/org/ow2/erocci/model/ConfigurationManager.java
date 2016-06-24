@@ -560,6 +560,40 @@ public class ConfigurationManager {
         // mixin.getEntities().clear();
 
     }
+    
+    /**
+     * Dissociate a mixin from an entity.
+     * @param owner
+     * @param mixinId
+     * @param entity
+     * @return
+     */
+    public static boolean dissociateMixinFromEntity(final String owner, final String mixinId, Entity entity) {
+    	boolean result = false;
+    	if (mixinId == null) {
+    		return result;
+    	}
+    	// Load the mixin object.
+    	List<Mixin> mixins = entity.getMixins();
+    	if (mixins.isEmpty()) {
+    		result = true;
+    		return result;
+    	}
+    	Mixin myMixin = null;
+    	for (Mixin mixin : mixins) {
+    		if ((mixin.getScheme() + mixin.getTerm()).equals(mixinId)) {
+    			myMixin = mixin;
+    			break;
+    		}
+    	}
+    	// Remove the mixin.
+    	if (myMixin != null) {
+    		entity.getMixins().remove(myMixin);
+    		updateVersion(owner, entity.getId());
+    		result = true;
+    	}
+    	return result;
+    }
 
     /**
      * Find a resource for owner and entity Id.
@@ -1235,8 +1269,9 @@ public class ConfigurationManager {
      * @param updateMode (if updateMode is true, reset existing and replace with
      * new ones)
      */
-    public static void addMixinsToEntity(Entity entity, final List<String> mixins, final String owner, final boolean updateMode) {
-        if (updateMode) {
+    public static boolean addMixinsToEntity(Entity entity, final List<String> mixins, final String owner, final boolean updateMode) {
+        boolean result = false;
+    	if (updateMode) {
             entity.getMixins().clear();
         }
         if (mixins != null && !mixins.isEmpty()) {
@@ -1255,12 +1290,13 @@ public class ConfigurationManager {
 
                 }
                 entity.getMixins().add(mixin);
+                result = true;
                 // mixin.getEntities().add(entity);
                 LOGGER.info("Mixin --> Term : " + mixin.getTerm() + " --< Scheme : " + mixin.getScheme());
 
             }
         }
-
+        return result;
     }
 
     /**
