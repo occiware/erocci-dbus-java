@@ -1769,7 +1769,6 @@ public class ConfigurationManager {
                 try {
                 	os = new ByteArrayOutputStream();
                 	extXml = Utils.copyStream(in, os);
-                	LOGGER.info("Erocci Schema loaded: " + extXml);
                 	if (extXml != null) {
                 		erocciSchemas.add(extXml);
                 	} else {
@@ -1794,6 +1793,26 @@ public class ConfigurationManager {
      */
     public static List<String> getErocciSchemas() {
         return erocciSchemas;
+    }
+
+    
+    /**
+     * Determine if entity is a Resource or a Link from the provided attributes.
+     * @param attr = attributes of an entity
+     * @return false if this entity is a link, true otherwise.
+     */
+    public static boolean checkIfEntityIsResourceOrTargetFromAttributes(Map<String, String> attr) {
+        boolean result = true;
+        if (attr == null || attr.isEmpty()) {
+            return result;
+        }
+        if (attr.containsKey(OcciConstants.ATTRIBUTE_SOURCE) || attr.containsKey(OcciConstants.ATTRIBUTE_TARGET)) {
+            result = false;
+        } else {
+            result = true;
+        }
+        
+        return result;
     }
 
 }

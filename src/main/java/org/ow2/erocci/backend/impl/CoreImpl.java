@@ -25,18 +25,17 @@ import org.freedesktop.DBus;
 import org.freedesktop.dbus.UInt32;
 import org.freedesktop.dbus.Variant;
 import org.occiware.clouddesigner.occi.Entity;
+import org.occiware.clouddesigner.occi.Link;
 import org.ow2.erocci.backend.Pair;
-//import org.ow2.erocci.backend.Quad;
 import org.ow2.erocci.backend.Quintuple;
 import org.ow2.erocci.backend.Septuple;
 import org.ow2.erocci.backend.Sextuple;
 import org.ow2.erocci.backend.Struct1;
 import org.ow2.erocci.backend.Struct2;
 import org.ow2.erocci.backend.Struct3;
-//import org.ow2.erocci.backend.action;
 import org.ow2.erocci.backend.core;
-//import org.ow2.erocci.backend.mixin;
 import org.ow2.erocci.model.ConfigurationManager;
+import org.ow2.erocci.model.OcciConstants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -69,12 +68,7 @@ public class CoreImpl implements core, DBus.Properties {
 
     @Override
     public <A> A Get(String interfaceName, String property) {
-        
-//        if ("schema".equalsIgnoreCase(property)) {
-//            return (A) ConfigurationManager.getErocciSchema();
-//        } else {
-//            return null;
-//        }
+        LOGGER.info("Get interface invoked");
         return null;
     }
 
@@ -114,10 +108,12 @@ public class CoreImpl implements core, DBus.Properties {
     }
     
     /**
-     * Get the xml extensions file as String array.
+     * Get OCCI extensions supported by this backend
+     * @return List of extension xml for Erocci, List(Struct byte, String), byte = 0 => xml format. 
      */
     @Override
 	public List<Struct1> Models() {
+        LOGGER.info("Models method invoked");
 		List<String> exts = ConfigurationManager.getErocciSchemas();
     	List<Struct1> extDbus = new LinkedList<>();
     	byte format = 0; // xml format.
@@ -126,26 +122,102 @@ public class CoreImpl implements core, DBus.Properties {
     		// Build the struct.
     		Struct1 struct = new Struct1(format, ext);
     		extDbus.add(struct);
+            LOGGER.info("Erocci Schema loaded and ready to send to Erocci : \n" + ext);
     	}
-    	
     	return extDbus;
 	}
 
+
     /**
-     * 
+     * Creates an entity at given location.
+     * @param location (string): entity path relative part
+     * @param kind (string): kind id
+     * @param mixins (string array): mixins ids
+     * @param attributes (string/variant array): entity attributes
+     * @param owner (string): entity owner (empty=anonymous)
+     * @param group (string): entity group (empty=anonymous), for now this is ignored.
+     * @return a struct object Quintuple with (kind id, mixins ids, entity attributes, entity serial
      */
     @Override
 	public Quintuple<String, List<String>, Map<String, Variant>, List<String>, String> Create1(String location,
 			String kind, List<String> mixins, Map<String, Variant> attributes, String owner, String group) {
-		// TODO Auto-generated method stub
-		return null;
+		
+        LOGGER.info("Create entity with location set, input with location=" + location + ", kind=" + kind + ", mixins=" + mixins + ", attributes=" + Utils.convertVariantMap(attributes) + " , owner : " + owner + " group: " + group);
+        // Link or resource ?
+        boolean isResource;
+        if (location == null || location.isEmpty()) {
+            throw new RuntimeException("Location is not setted !");
+        }
+        String relativePath = location;
+        String identifierUUID;
+        Map<String, String> attr = Utils.convertVariantMap(attributes);
+        // Check if identifier UUID is provided (on occi.core.id or on id).
+        if (Utils.isEntityUUIDProvided(location, attr)) {
+            // the id may have relative path part so we need to get the UUID
+            // only.
+            identifierUUID = Utils.getUUIDFromId(location, attr);
+            relativePath = Utils.getRelativePathFromId(location, identifierUUID);
+        } else {
+            identifierUUID = Utils.createUUID();
+        }
+        relativePath = checkRelativePath(relativePath);
+
+        // Entity unique identifier.
+        String entityId = relativePath + identifierUUID; // as for ex :
+        // /compute/0872c4e0-001a-11e2-b82d-a4b197fffef3
+       
+        // Determine if this is a link or a resource.
+        // Check the attribute map if attr contains occi.core.source or occi.core.target, this is a link !
+        isResource = ConfigurationManager.checkIfEntityIsResourceOrTargetFromAttributes(attr);
+        if (ConfigurationManager.isEntityExist(owner, entityId)) {
+            LOGGER.info("Overwrite entity : " + entityId);
+        } else {
+            LOGGER.info("Create entity : " + entityId);
+            attr.put("occi.core.id", entityId);
+        }
+        List<String> links = new LinkedList<>();
+        if (isResource) {
+            ConfigurationManager.addResourceToConfiguration(entityId, kind, mixins, attr, owner);
+        } else {
+            String src = attr.get(OcciConstants.ATTRIBUTE_SOURCE);
+            String target = attr.get(OcciConstants.ATTRIBUTE_TARGET);
+            links.add(src);
+            links.add(target);
+            ConfigurationManager.addLinkToConfiguration(entityId, kind, mixins, src, target, attr, owner);
+        }
+        // Get the entity to be sure that it was inserted on configuration object.
+        Entity entity = ConfigurationManager.findEntity(owner, entityId);
+        if (entity != null) {
+            entity.occiCreate();
+            LOGGER.info("Create entity done returning relative path : " + entity.getId());
+        } else {
+            LOGGER.error("Error, entity was not created on object model, please check your query.");
+            throw new RuntimeException("Error, entity was not created on object model, please check your query.");
+        }
+        Quintuple<String, List<String>, Map<String, Variant>, List<String>, String> q = new Quintuple(kind, mixins, attributes, links, ConfigurationManager.getEtagNumber(owner, entityId).toString());
+		return q;
 	}
     
+    /**
+     * Creates an entity and expect backend to generate a location
+     * @param kind (string): kind id
+     * @param mixins (string array): mixins ids
+     * @param attributes (string/variant array): entity attributes
+     * @param owner (string): entity owner (empty=anonymous)
+     * @param group (string): entity group (empty=anonymous)
+     * @return 
+     */
     @Override
 	public Sextuple<String, String, List<String>, Map<String, Variant>, List<String>, String> Create2(String kind,
 			List<String> mixins, Map<String, Variant> attributes, String owner, String group) {
-		// TODO Auto-generated method stub
-		return null;
+        String location = Utils.createUUID();
+        // Get the lowercase of kind and add path to location.
+        location = kind.toLowerCase() + "/" + location;
+        Quintuple<String, List<String>, Map<String, Variant>, List<String>, String> q = Create1(location, kind, mixins, attributes, owner, group);
+        List<String> links = q.d;
+        String serial = q.e;
+        Sextuple<String, String, List<String>, Map<String, Variant>, List<String>, String> sexT = new Sextuple<>(location, kind, mixins, attributes, links, serial);
+		return sexT;
 	}
 
     
@@ -687,21 +759,21 @@ public class CoreImpl implements core, DBus.Properties {
 //        mixinImpl.DelMixin(id);
 //    }
 //
-//    /**
-//     *
-//     * @param relPath
-//     * @return a relative path like "/compute/vm1/" to replace from
-//     * "/compute/vm1".
-//     */
-//    private String checkRelativePath(final String relPath) {
-//        String path;
-//        if (relPath.endsWith("/")) {
-//            path = relPath;
-//        } else {
-//            path = relPath + "/";
-//        }
-//
-//        return path;
-//    }
+    /**
+     *
+     * @param relPath
+     * @return a relative path like "/compute/vm1/" to replace from
+     * "/compute/vm1".
+     */
+    private String checkRelativePath(final String relPath) {
+        String path;
+        if (relPath.endsWith("/")) {
+            path = relPath;
+        } else {
+            path = relPath + "/";
+        }
+
+        return path;
+    }
 
 }
