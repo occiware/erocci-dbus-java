@@ -450,7 +450,9 @@ public class CoreImpl implements core, DBus.Properties {
      */
     @Override
     public Pair<List<Struct2>, String> Collection(String id, List<Struct3> filter, UInt32 start, int number) {
-
+    	
+    	LOGGER.info("Collection method invoked  with id: " + id + " filters : " + filter.toString() + " start:" + start.toString() + " number: " + number);
+    	
         int collectionSerial = Utils.getUniqueInt();
         String serial = String.valueOf(collectionSerial);
 
@@ -566,7 +568,7 @@ public class CoreImpl implements core, DBus.Properties {
     public Quintuple<String, List<String>, Map<String, Variant>, List<String>, String> Action(String location,
             String action, Map<String, Variant> attributes) {
 
-        LOGGER.info("location " + location + " >-- action: " + action + " --< attributes=" + Utils.convertVariantMap(attributes));
+        LOGGER.info("Action method invoked : location " + location + " >-- action: " + action + " --< attributes=" + Utils.convertVariantMap(attributes));
 
         if (action == null) {
             // TODO : return fail or no state.
@@ -626,10 +628,10 @@ public class CoreImpl implements core, DBus.Properties {
         
         List<Entity> entities = ConfigurationManager.findAllEntitiesLikePartialId(ConfigurationManager.DEFAULT_OWNER, location);
         for (Entity entity : entities) {
-            entity.occiDelete();
+        	LOGGER.info("Deleting entity : " + entity.getId());
+        	entity.occiDelete();
         }
         ConfigurationManager.removeOrDissociate(location);
-        
     }
 
     /**
