@@ -15,15 +15,9 @@
  */
 package org.ow2.erocci.model;
 
-import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.Reader;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -50,6 +44,7 @@ import org.occiware.clouddesigner.occi.Resource;
 import org.occiware.clouddesigner.occi.util.OcciHelper;
 import org.occiware.mart.MART;
 import org.ow2.erocci.backend.BackendDBusService;
+import org.ow2.erocci.backend.impl.CollectionFilter;
 import org.ow2.erocci.backend.impl.Utils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -71,7 +66,7 @@ public class ConfigurationManager {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ConfigurationManager.class);
 
-    private static List<String> erocciSchemas = new LinkedList<String>();
+    private static List<String> erocciSchemas = new LinkedList<>();
 
     /**
      * Used for now when no owner defined (on dbus methods find for example or
@@ -145,17 +140,6 @@ public class ConfigurationManager {
      */
     public static void removeConfiguration(final String owner) {
         configurations.remove(owner);
-    }
-
-    /**
-     * Update referenced configuration map with a configuration object updated.
-     * this will overwrite previously ref configuration.
-     *
-     * @param owner
-     * @param configuration
-     */
-    public static void updateConfiguration(final String owner, final Configuration configuration) {
-        configurations.put(owner, configuration);
     }
 
     /**
@@ -617,34 +601,6 @@ public class ConfigurationManager {
     }
 
     /**
-     * Find a link for owner, entity id and source Resource Id.
-     *
-     * @param owner
-     * @param id
-     * @param srcResourceId
-     * @return an OCCI Link. May be null if configuration or link doesnt exist
-     * anymore.
-     */
-    public static Link findLink(final String owner, final String id, final String srcResourceId) {
-        Link linkFound = null;
-
-        Resource resourceSrc = findResource(owner, srcResourceId);
-        if (resourceSrc == null) {
-            return linkFound;
-        }
-        for (Link link : resourceSrc.getLinks()) {
-            if (link.getId().equals(id)) {
-                linkFound = link;
-                // link has been found.
-                break;
-            }
-        }
-
-        return linkFound;
-
-    }
-
-    /**
      * Find a link on all chains of resources.
      *
      * @param owner
@@ -702,15 +658,6 @@ public class ConfigurationManager {
             entity = resource;
         }
         return entity;
-    }
-
-    /**
-     * Get all declared owner.
-     *
-     * @return
-     */
-    public static Set<String> getAllOwner() {
-        return configurations.keySet();
     }
 
     /**
@@ -899,7 +846,36 @@ public class ConfigurationManager {
 
         }
         return entitiesMap;
-
+    }
+    
+    /**
+     * Find entities for a categoryId (kind or Mixin or actions). actions has no
+     * entity list and it's not used here.
+     *
+     * @param owner
+     * @param categoryId
+     * @param startIndex
+     * @param number (number max of entities to return).
+     * @param filters (List of entity attribute to filter).
+     * @return a list of entities (key: owner, value : List of entities).
+     */
+    public static List<Entity> findAllEntitiesForCategoryId(final String owner, final String categoryId, final int startIndex, final int number, final List<CollectionFilter> filters) {
+        List<Entity> entities = new LinkedList<>();
+        
+        if (configurations.isEmpty() || owner == null || owner.isEmpty()) {
+            return entities;
+        }
+        // Load all entities for the category..
+        entities.addAll(findAllEntitiesForKind(owner, categoryId));
+        entities.addAll(findAllEntitiesForMixin(owner, categoryId));
+        entities.addAll(findAllEntitiesForAction(owner, categoryId));
+        
+        // TODO : Order list by entityId, if entities not empty.
+        
+        
+        entities = filterEntities(startIndex, number, filters, entities);
+        
+        return entities;
     }
 
     /**
@@ -965,21 +941,19 @@ public class ConfigurationManager {
     /**
      * Find all user mixins kind that have this location.
      *
+     * @param owner
      * @param location (http://localhost:8080/mymixincollection/
-     * @return a map by owner and list of user mixins, map is empty if none
+     * @return a list of user mixins, empty if none
      * found.
      */
-    public static Map<String, List<String>> findAllUserMixinKindByLocation(final String location) {
+    public static List<String> findAllUserMixinKindByLocation(final String owner, final String location) {
 
         List<String> mixinKinds;
-        Map<String, List<String>> mixinKindsByOwner = new HashMap<>();
         // Recherche sur tous les users mixin kinds.
-        Set<String> owners = configurations.keySet();
         Configuration config;
         EList<Mixin> mixins;
         String mixinId;
         String locationTmp;
-        for (String owner : owners) {
             mixinKinds = new ArrayList<>();
             config = getConfigurationForOwner(owner);
             mixins = config.getMixins();
@@ -991,12 +965,7 @@ public class ConfigurationManager {
                     mixinKinds.add(mixinId);
                 }
             }
-            if (!mixinKinds.isEmpty()) {
-                mixinKindsByOwner.put(owner, mixinKinds);
-            }
-        }
-
-        return mixinKindsByOwner;
+        return mixinKinds;
     }
 
     /**
@@ -1050,6 +1019,24 @@ public class ConfigurationManager {
 
         return entities;
     }
+    /**
+     * Find all entities referenced for an owner.
+     *
+     * @param owner
+     * @param startIndex 
+     * @param number
+     * @param filters 
+     * @return a filtered list of entities.
+     */
+    public static List<Entity> findAllEntitiesOwner(final String owner, final int startIndex, final int number, List<CollectionFilter> filters) {
+        List<Entity> entities = new ArrayList<>();
+        List<String> usedKinds = getAllUsedKind();
+        for (String kind : usedKinds) {
+            entities.addAll(findAllEntitiesForCategoryId(owner, kind, startIndex, number, filters));
+        }
+        return entities;
+    }
+    
 
     /**
      * Search for an action with entityId and a full category scheme.
@@ -1240,16 +1227,24 @@ public class ConfigurationManager {
 
         return entities;
     }
-
+    
     /**
-     * Remove referenced configuration for an owner.
-     *
+     * Find all entities for a relative path and filters if any.
      * @param owner
+     * @param relativePath
+     * @param startIndex
+     * @param number
+     * @param filters
+     * @return 
      */
-    public static void resetForOwner(final String owner) {
-        removeConfiguration(owner);
-
+    public static List<Entity> findAllEntitiesOwnerForRelativePath(final String owner, final String relativePath, final int startIndex, final int number,final List<CollectionFilter> filters) {
+        List<Entity> entities;
+        entities = findAllEntitiesLikePartialId(owner, relativePath);
+        entities = filterEntities(startIndex, number, filters, entities);
+        
+        return entities;
     }
+    
 
     /**
      * Destroy all configurations for all owners.
@@ -1579,32 +1574,6 @@ public class ConfigurationManager {
     }
 
     /**
-     * Update attributes for all entities that have this path.
-     *
-     * @param entityId , relative path of the entity
-     * @param attributes , attributes to update
-     */
-    public static void updateAttributesForEntity(final String entityId, Map<String, String> attributes) {
-        String ownerFound = null;
-        Entity entity = findEntityOnAllOwner(ownerFound, entityId);
-
-        if (entity != null) {
-            // update the attributes.
-            updateAttributesToEntity(entity, attributes);
-            LOGGER.info("owner : " + ownerFound + " --< entity id : " + entityId);
-            updateVersion(ownerFound, entityId);
-            // printEntity(entity);
-
-        } else {
-            // TODO : Report an exception, impossible to update entity, it
-            // doesnt exist.
-            LOGGER.error("The entity " + entityId + " doesnt exist, can''t update ! ");
-        }
-
-        // return entity;
-    }
-
-    /**
      * Generate eTag number from version map.
      *
      * @param owner
@@ -1868,5 +1837,89 @@ public class ConfigurationManager {
 		
 		return mapResult;
 	}
+    
+    /**
+     * Apply filter where possible.
+     * @param startIndex
+     * @param number
+     * @param filters
+     * @param sources
+     * @return a filtered list of entities.
+     */
+    private static List<Entity> filterEntities(final int startIndex, final int number, final List<CollectionFilter> filters, List<Entity> sources) {
+        List<Entity> entities = sources;
+        // Filter the lists if filter is set.
+        if (!filters.isEmpty() && !entities.isEmpty()) {
+            Iterator<Entity> it = entities.iterator();
+            boolean control = false;
+            String constraintValue;
+            while (it.hasNext()) {
+                Entity entity = it.next();
+                // Check if attribute and attribute value is in filter, if not remove this entity from the list to return.
+                List<AttributeState> attrs = entity.getAttributes();
+                for (AttributeState attr : attrs) {
+                    for (CollectionFilter filter : filters) {
+                        if (filter.getAttributeFilter().equalsIgnoreCase(attr.getName())) {
+                            // Check the constraint value.
+                            if (filter.getValue() == null) {
+                                // Null: all value is ok for this attribute.
+                                control = true;
+                                break;
+                            } else {
+                                constraintValue = filter.getValue();
+                            }
+                            // Check the constraint attribute Value filter.
+                            if (filter.getOperator() == CollectionFilter.OPERATOR_EQUAL && constraintValue.equals(attr.getValue())) {
+                                control = true;
+                                break;
+                            }
+                            if (filter.getOperator() == CollectionFilter.OPERATOR_LIKE && attr.getValue().contains(constraintValue)) {
+                                control = true;
+                                break;
+                            }
+                        } // end if attribute found from filter on entity.
+                        
+                    } // for each filters.
+                    if (control) {
+                        // attribute found and filter respected.
+                        break;
+                    }
+                } // end for each entity attributes.
+                if (!control) {
+                    it.remove(); // remove this entity from collection, the entity doesnt respect constraints attrib and value.
+                }
+            }
+            
+            
+        } // has filters and has entities.
+        
+        // Position the start index if > 0.
+        if (startIndex > 0 && !entities.isEmpty()) {
+            int currentIndex = 0;
+            Iterator<Entity> it = entities.iterator();
+            while (it.hasNext()) {
+                if (currentIndex < startIndex) {
+                    it.remove();
+                } 
+                currentIndex++;
+            }
+        }
+        
+        // Max count, -1 infinite.
+        if (number >= 0) {
+            int count = 0;
+            Iterator<Entity> it = entities.iterator();
+            while (it.hasNext()) {
+                count++;
+                if (count <= number) {
+                    
+                } else {
+                    it.remove();
+                }
+            }
+        }
+        
+        return entities;
+    }
 
 }
