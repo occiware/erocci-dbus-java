@@ -279,7 +279,7 @@ public class CoreImpl implements core, DBus.Properties {
             Map<String, String> attrs = ConfigurationManager.getEntityAttributesMap(entity.getAttributes());
             String identifierUUID = Utils.getUUIDFromId(location, attrs);
             attrs.put("occi.core.id", identifierUUID);
-            Map<String, Variant> attributes = Utils.convertStringMapToVariant(attrs);
+            
             String src = null;
             String target = null;
             List<String> links = new ArrayList<>();
@@ -296,11 +296,15 @@ public class CoreImpl implements core, DBus.Properties {
 
                 if (src != null) {
                     links.add("/" + src);
+                    attrs.put("occi.core.source", "/" + src);
                 }
                 if (target != null) {
                     links.add("/" + target);
+                    attrs.put("occi.core.target", "/" + target);
                 }
             }
+            
+            Map<String, Variant> attributes = Utils.convertStringMapToVariant(attrs);
             String serial = ConfigurationManager.getEtagNumber(owner, entity.getId()).toString();
             String kind = entity.getKind().getScheme() + entity.getKind().getTerm();
 
@@ -330,10 +334,10 @@ public class CoreImpl implements core, DBus.Properties {
         String group = ConfigurationManager.DEFAULT_OWNER;
 
         // Load entry entity.
-        Entity entity = ConfigurationManager.findEntity(owner, location);
+        Entity linkedResource = ConfigurationManager.findEntity(owner, location);
 
         // Load link resource location.
-        Entity linkedResource = ConfigurationManager.findEntity(owner, link);
+        Entity entity = ConfigurationManager.findEntity(owner, link);
 
         if (entity != null && linkedResource != null && entity instanceof Link && linkedResource instanceof Resource) {
             Link linkEntity = (Link) entity;
@@ -347,8 +351,8 @@ public class CoreImpl implements core, DBus.Properties {
                 linkEntity.setTarget(res);
             }
         } else {
-            LOGGER.warn("Cant assign a link " + location + " to the resource: " + link);
-            throw new RuntimeException("Cant assign a link " + location + " to the resource: " + link);
+            LOGGER.warn("Cant assign a link " + link + " to the resource: " + location);
+            throw new RuntimeException("Cant assign a link " + link + " to the resource: " + location);
         }
 
     }

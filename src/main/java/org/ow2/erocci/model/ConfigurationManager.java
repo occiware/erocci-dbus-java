@@ -640,17 +640,23 @@ public class ConfigurationManager {
      */
     public static Entity findEntity(String owner, final String id) {
         Entity entity = null;
-
+        // Delete starting string slash (Erocci bug ?).
+        String entityId = id;
+        if (entityId.startsWith("/")) {
+        	entityId = entityId.substring(1);
+        }
+        
+        
         if (owner == null) {
-            entity = findEntityAndGetOwner(owner, id);
+            entity = findEntityAndGetOwner(owner, entityId);
             return entity;
         }
 
-        Resource resource = findResource(owner, id);
+        Resource resource = findResource(owner, entityId);
 
         Link link;
         if (resource == null) {
-            link = findLink(owner, id);
+            link = findLink(owner, entityId);
             if (link != null) {
                 entity = link;
             }
