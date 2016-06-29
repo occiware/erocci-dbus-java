@@ -183,10 +183,14 @@ public class ConfigurationManager {
             }
             // Create an OCCI resource with good resource type (via extension
             // model).
+            try {
             resource = (Resource) OcciHelper.createEntity(occiKind);
-
+            } catch (Throwable ex) {
+            	LOGGER.error("Exception thrown while creating an entity. " + id);
+            	ex.printStackTrace();
+            }
             resource.setId(id);
-
+            
             // Add a new kind to resource (title, scheme, term).
             // if occiKind is null, this will give a default kind parent.
             resource.setKind(occiKind);
