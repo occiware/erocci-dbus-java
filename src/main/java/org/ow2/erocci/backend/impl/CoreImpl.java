@@ -22,7 +22,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
-import org.eclipse.emf.common.util.EList;
 import org.freedesktop.DBus;
 import org.freedesktop.dbus.UInt32;
 import org.freedesktop.dbus.Variant;
@@ -279,12 +278,23 @@ public class CoreImpl implements core, DBus.Properties {
             Map<String, String> attrs = ConfigurationManager.getEntityAttributesMap(entity.getAttributes());
             String identifierUUID = Utils.getUUIDFromId(location, attrs);
             attrs.put("occi.core.id", identifierUUID);
-            
+
             String src = null;
             String target = null;
             List<String> links = new ArrayList<>();
+            if (entity instanceof Resource) {
 
-            if (entity instanceof Link) {
+                Resource resource = (Resource) entity;
+                List<Link> linksRes = resource.getLinks();
+                for (Link link : linksRes) {
+                    if (link.getId().startsWith("/")) {
+                        links.add(link.getId());
+                    } else {
+                        links.add("/" + link.getId());
+                    }
+
+                }
+            } else if (entity instanceof Link) {
 
                 Link link = (Link) entity;
                 if (link.getSource() != null) {
@@ -303,7 +313,7 @@ public class CoreImpl implements core, DBus.Properties {
                     attrs.put("occi.core.target", "/" + target);
                 }
             }
-            
+
             Map<String, Variant> attributes = Utils.convertStringMapToVariant(attrs);
             String serial = ConfigurationManager.getEtagNumber(owner, entity.getId()).toString();
             String kind = entity.getKind().getScheme() + entity.getKind().getTerm();
@@ -450,14 +460,23 @@ public class CoreImpl implements core, DBus.Properties {
      */
     @Override
     public Pair<List<Struct2>, String> Collection(String id, List<Struct3> filter, UInt32 start, int number) {
-    	
-    	LOGGER.info("Collection method invoked  with id: " + id + " filters : " + filter.toString() + " start:" + start.toString() + " number: " + number);
-    	
+        // Load filters.
+        List<CollectionFilter> filters = new ArrayList<>();
+        if (filter == null || filter.isEmpty()) {
+            LOGGER.info("No specific filters are set, default filters with all elements is used.");
+            LOGGER.info("Collection method invoked  with id: " + id + " filters : empty or null list, start:" + start.toString() + " number: " + number);
+            // filter = new Struct3(NODE_ENTITY, id, c)
+        } else {
+            for (Struct3 struct3 : filter) {
+                filters.add(new CollectionFilter(struct3));
+            }
+            LOGGER.info("Collection method invoked  with id: " + id + " filters : " + filter.toString() + " start:" + start.toString() + " number: " + number);
+        }
+
         int collectionSerial = Utils.getUniqueInt();
         String serial = String.valueOf(collectionSerial);
 
         List<Struct2> collectionList = new LinkedList<>();
-        List<CollectionFilter> filters = new ArrayList<>();
 
         List<Entity> entities = new LinkedList<>();
 
@@ -465,15 +484,6 @@ public class CoreImpl implements core, DBus.Properties {
 
         String owner = ConfigurationManager.DEFAULT_OWNER;
         String group = ConfigurationManager.DEFAULT_OWNER;
-
-        // Load filters.
-        if (filter == null || filter.isEmpty()) {
-            LOGGER.info("No specific filters are set, default filters with all elements is used.");
-        } else {
-            for (Struct3 struct3 : filter) {
-                filters.add(new CollectionFilter(struct3));
-            }
-        }
 
         // Check if categoryId or relative path part.
         if (id != null && id.startsWith("http")) {
@@ -490,7 +500,7 @@ public class CoreImpl implements core, DBus.Properties {
             // it's a relative path url part.
             entities.addAll(ConfigurationManager.findAllEntitiesOwnerForRelativePath(owner, id, startIndex, number, filters));
         }
-        
+
         // Build the collection output.
         Struct2 struct2;
         List<String> mixins;
@@ -509,7 +519,41 @@ public class CoreImpl implements core, DBus.Properties {
             String identifierUUID = Utils.getUUIDFromId(location, attrs);
             attrs.put("occi.core.id", identifierUUID);
             Map<String, Variant> attributes = Utils.convertStringMapToVariant(attrs);
-            struct2 = new Struct2(location, mixins, attributes, kind, owner, group);
+            List<String> links = new ArrayList<>();
+            String src = null;
+            String target = null;
+
+            if (entity instanceof Resource) {
+
+                Resource resource = (Resource) entity;
+                List<Link> linksRes = resource.getLinks();
+                for (Link link : linksRes) {
+                    if (link.getId().startsWith("/")) {
+                        links.add(link.getId());
+                    } else {
+                        links.add("/" + link.getId());
+                    }
+                }
+            } else if (entity instanceof Link) {
+
+                Link link = (Link) entity;
+                if (link.getSource() != null) {
+                    src = link.getSource().getId();
+                }
+                if (link.getTarget() != null) {
+                    target = link.getTarget().getId();
+                }
+
+                if (src != null) {
+                    links.add("/" + src);
+                    attrs.put("occi.core.source", "/" + src);
+                }
+                if (target != null) {
+                    links.add("/" + target);
+                    attrs.put("occi.core.target", "/" + target);
+                }
+            }
+            struct2 = new Struct2(location, kind, mixins, attributes, links, owner, group);
             collectionList.add(struct2);
         }
 
@@ -620,16 +664,16 @@ public class CoreImpl implements core, DBus.Properties {
     @Override
     public void Delete(String location) {
         LOGGER.info("Delete invoked with location : " + location);
-        
+
         if (location == null) {
             LOGGER.error("Location is not set, cant delete entity.");
             throw new RuntimeException("Location is not set, cant delete entity.");
         }
-        
+
         List<Entity> entities = ConfigurationManager.findAllEntitiesLikePartialId(ConfigurationManager.DEFAULT_OWNER, location);
         for (Entity entity : entities) {
-        	LOGGER.info("Deleting entity : " + entity.getId());
-        	entity.occiDelete();
+            LOGGER.info("Deleting entity : " + entity.getId());
+            entity.occiDelete();
         }
         ConfigurationManager.removeOrDissociate(location);
     }
