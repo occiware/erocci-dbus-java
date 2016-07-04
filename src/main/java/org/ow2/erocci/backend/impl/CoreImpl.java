@@ -234,8 +234,6 @@ public class CoreImpl implements core, DBus.Properties {
                 + mixins + ", attributes=" + Utils.convertVariantMap(attributes) + " , owner : " + owner + " group: "
                 + group);
         String location = Utils.createUUID();
-        // Get the lowercase of kind and add path to location.
-        location = kind.toLowerCase() + "/" + location;
         Quintuple<String, List<String>, Map<String, Variant>, List<String>, String> q = Create1(location, kind, mixins,
                 attributes, owner, group);
         List<String> links = q.d;
