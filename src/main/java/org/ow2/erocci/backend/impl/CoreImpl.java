@@ -38,7 +38,6 @@ import org.ow2.erocci.backend.Septuple;
 import org.ow2.erocci.backend.Sextuple;
 import org.ow2.erocci.backend.Struct1;
 import org.ow2.erocci.backend.Struct2;
-import org.ow2.erocci.backend.Struct3;
 import org.ow2.erocci.backend.core;
 import org.ow2.erocci.model.ConfigurationManager;
 import org.ow2.erocci.model.OcciConstants;
@@ -451,15 +450,11 @@ public class CoreImpl implements core, DBus.Properties {
      * @param start (unsigned integer): index of first record
      * @param number (integer): maximal number of entities to retrieve, -1 for
      * infinite
-     * @return A List of entities ('a(sasa{sv}sss)'): location (string): entity
-     * location kind (string): kind id mixins (string array): mixin ids
-     * attributes (string/variant array): entity attributes links (string
-     * array): resource links locations owner (string): entity owner group
-     * (string): entity group owner and a linked collection serial number:
-     * serial (string): collection serial (not the entity serial).
+     * @return A List of locations and a linked collection serial number: serial
+     * (string): collection serial (not the entity serial).
      */
     @Override
-    public Pair<List<Struct2>, String> Collection(String id, List<Struct3> filter, UInt32 start, int number) {
+    public Pair<List<String>, String> Collection(String id, List<Struct2> filter, UInt32 start, int number) {
         // Load filters.
         List<CollectionFilter> filters = new ArrayList<>();
         if (filter == null || filter.isEmpty()) {
@@ -467,8 +462,8 @@ public class CoreImpl implements core, DBus.Properties {
             LOGGER.info("Collection method invoked  with id: " + id + " filters : empty or null list, start:" + start.toString() + " number: " + number);
             // filter = new Struct3(NODE_ENTITY, id, c)
         } else {
-            for (Struct3 struct3 : filter) {
-                filters.add(new CollectionFilter(struct3));
+            for (Struct2 struct2 : filter) {
+                filters.add(new CollectionFilter(struct2));
             }
             LOGGER.info("Collection method invoked  with id: " + id + " filters : " + filter.toString() + " start:" + start.toString() + " number: " + number);
         }
@@ -476,7 +471,7 @@ public class CoreImpl implements core, DBus.Properties {
         int collectionSerial = Utils.getUniqueInt();
         String serial = String.valueOf(collectionSerial);
 
-        List<Struct2> collectionList = new LinkedList<>();
+        List<String> collectionList = new LinkedList<>();
 
         List<Entity> entities = new LinkedList<>();
 
@@ -501,64 +496,14 @@ public class CoreImpl implements core, DBus.Properties {
             entities.addAll(ConfigurationManager.findAllEntitiesOwnerForRelativePath(owner, id, startIndex, number, filters));
         }
 
-        // Build the collection output.
-        Struct2 struct2;
-        List<String> mixins;
-        String kind;
         String location;
         Map<String, String> attrs;
         for (Entity entity : entities) {
-            entity.occiRetrieve(); // Reload the entity values from real things.
             location = entity.getId();
-            kind = entity.getKind().getScheme() + entity.getKind().getTerm();
-            mixins = new ArrayList<>();
-            for (Mixin mixin : entity.getMixins()) {
-                mixins.add(mixin.getScheme() + mixin.getTerm());
-            }
-            attrs = ConfigurationManager.getEntityAttributesMap(entity.getAttributes());
-            String identifierUUID = Utils.getUUIDFromId(location, attrs);
-            attrs.put("occi.core.id", identifierUUID);
-            Map<String, Variant> attributes = Utils.convertStringMapToVariant(attrs);
-            List<String> links = new ArrayList<>();
-            String src = null;
-            String target = null;
-
-            if (entity instanceof Resource) {
-
-                Resource resource = (Resource) entity;
-                List<Link> linksRes = resource.getLinks();
-                for (Link link : linksRes) {
-                    if (link.getId().startsWith("/")) {
-                        links.add(link.getId());
-                    } else {
-                        links.add("/" + link.getId());
-                    }
-                }
-            } else if (entity instanceof Link) {
-
-                Link link = (Link) entity;
-                if (link.getSource() != null) {
-                    src = link.getSource().getId();
-                }
-                if (link.getTarget() != null) {
-                    target = link.getTarget().getId();
-                }
-
-                if (src != null) {
-                    links.add("/" + src);
-                    attrs.put("occi.core.source", "/" + src);
-                }
-                if (target != null) {
-                    links.add("/" + target);
-                    attrs.put("occi.core.target", "/" + target);
-                }
-            }
-            struct2 = new Struct2(location, kind, mixins, attributes, links, owner, group);
-            collectionList.add(struct2);
+            collectionList.add(location);
         }
 
-        Pair<List<Struct2>, String> collection = new Pair<>(collectionList, serial);
-
+        Pair<List<String>, String> collection = new Pair<>(collectionList, serial);
         return collection;
     }
 

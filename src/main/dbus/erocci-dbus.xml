@@ -121,7 +121,7 @@
             <arg name="start" type="u" direction="in" />
             <arg name="number" type="i" direction="in" />
             
-            <arg name="entities" type="a(ssasa{sv}asss)" direction="out" />
+            <arg name="entities" type="as" direction="out" />
             <arg name="serial" type="s" direction="out" />
         </method>
     </interface>

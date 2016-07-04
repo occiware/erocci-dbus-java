@@ -15,14 +15,15 @@
  */
 package org.ow2.erocci.backend.impl;
 
-import org.ow2.erocci.backend.Struct3;
+import org.ow2.erocci.backend.Struct2;
 
 /**
  * This object represents a filter for collections listings.
+ *
  * @author Christophe Gourdin - Inria
  */
 public class CollectionFilter {
-    
+
     public static final int OPERATOR_EQUAL = 0;
     public static final int OPERATOR_LIKE = 1;
     /**
@@ -31,36 +32,36 @@ public class CollectionFilter {
     private int operator = 0;
 
     /**
-     * Attribute on which apply the constraint (or empty string for any attributes).
+     * Attribute on which apply the constraint (or empty string for any
+     * attributes).
      */
     private String attributeFilter = "";
-    
+
     /**
      * Constraint value from attribute values.
      */
     private String value = null;
 
     /**
-     * Build a collectionFilter object with default values,
-     * operation : Equal
-     * attributeFilter : empty (all attributes).
-     * value : null => all values.
+     * Build a collectionFilter object with default values, operation : Equal
+     * attributeFilter : empty (all attributes). value : null => all values.
      */
     public CollectionFilter() {
-        
+
     }
-    
+
     /**
      * Build a collection filter object with struct3 dbus object.
-     * @param struct3 
+     *
+     * @param struct2
      */
-    public CollectionFilter(Struct3 struct3) {
-        if (struct3 != null) {
-            byte a = struct3.a;
+    public CollectionFilter(Struct2 struct2) {
+        if (struct2 != null) {
+            byte a = struct2.a;
             this.operator = a;
-            this.attributeFilter = struct3.b;
-            if (struct3.c != null) {
-                this.value = struct3.c.getValue().toString();
+            this.attributeFilter = struct2.b;
+            if (struct2.c != null) {
+                this.value = struct2.c.getValue().toString();
             } else {
                 this.value = null;
             }
@@ -90,16 +91,13 @@ public class CollectionFilter {
     public void setValue(String value) {
         this.value = value;
     }
-    
-    
+
     public Integer getValueInt() throws NumberFormatException {
-       return Integer.valueOf(value);
+        return Integer.valueOf(value);
     }
-    
+
     public Float getValueFloat() throws NumberFormatException {
         return Float.valueOf(value);
     }
-    
-    
-    
+
 }
