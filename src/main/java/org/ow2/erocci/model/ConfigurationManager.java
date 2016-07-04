@@ -1850,6 +1850,7 @@ public class ConfigurationManager {
     
     /**
      * Apply filter where possible.
+     * startIndex starts at 1
      * @param startIndex
      * @param number
      * @param filters
@@ -1904,11 +1905,13 @@ public class ConfigurationManager {
         } // has filters and has entities.
         
         // Position the start index if > 0.
-        if (startIndex > 0 && !entities.isEmpty()) {
+	// JP: start index starts with 1
+        if (startIndex > 1 && !entities.isEmpty()) {
             int currentIndex = 0;
             Iterator<Entity> it = entities.iterator();
             while (it.hasNext()) {
-                if (currentIndex < startIndex) {
+		LOGGER.info("currentIndex=" + currentIndex + ", startIndex=" + startIndex);
+                if (currentIndex < (startIndex-1)) {
                     it.remove();
                 } 
                 currentIndex++;
