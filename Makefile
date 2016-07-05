@@ -43,23 +43,17 @@ all: $(JAR)
 $(JAR):
 	$(MVN) $(MVN_FLAGS) install
 
-deps: deps_dbus_java
-	$(install_dbus_java)
-	./dbus-java-install-script.sh
-
-ifneq ($(shell which apt-get),)
-deps_dbus_java:
-	@if [ ! -e /usr/share/java/dbus-bin.jar ]; then \
-	  echo "INSTALL dbus-java-bin"; sudo apt-get install dbus-java-bin; \
-	fi
-else
-deps_dbus_java:
-	@echo "Don't know how to install dbus-java-bin on your system..."; \
-	false
-endif
+deps:
+	$(MVN) $(MVN_FLAGS) initialize
 
 run: all
 	$(MVN) exec:java $(MVN_FLAGS) -Dexec.mainClass="$(SERVICE)"
+
+build-debug: deps
+	$(MAKE) $(JAR)
+
+run-debug:
+	DBUS_JAVA_EXCEPTION_DEBUG=enable DEBUG=verbose java -Djava.library.path=/usr/lib/jni -Dlibmatthew.debug=true -cp ./target/erocci-dbus-java-1.0-SNAPSHOT-jar-with-dependencies.jar:$(PWD)/org.occiware.clouddesigner.occi.infrastructure-0.1.0-SNAPSHOT.jar:$(PWD)/org.occiware.clouddesigner.occi.infrastructure.connector.dummy-0.1.0-SNAPSHOT.jar org.ow2.erocci.backend.BackendDBusService
 
 clean:
 	$(MVN) clean
