@@ -9,7 +9,7 @@ jdk:
 sudo: false
 
 install:
-  - "./travis_install.sh"
+  - "mvn initialize"
 
 script:
   - jdk_switcher use oraclejdk8
