@@ -9,18 +9,20 @@
 
 * JDK
 * Maven
-* java D-Bus implementation. It can be installed on linux with:
-
-```sh
-$ make deps
-```
 
 See "troubleshooting" part below in case of error.
 
 ## Quickstart
 
+Some dependancies are not available from Maven repositories. They are installed from local jar with:
 ```sh
-$ make run
+mvn initialize
+```
+
+Then, build the backend with:
+
+```sh
+$ mvn install
 ```
 
 ## Project format
@@ -45,15 +47,14 @@ target/classes .
 ## Launch as standalone service (outside Eclipse/IDE)
 
 ```sh
-$ mvn exec:java -Dexec.mainClass="org.ow2.erocci.backend.BackendDBusService"
+$ mvn exec:java -Djava.library.path=/path/to/jni/dir -Dexec.mainClass="org.ow2.erocci.backend.BackendDBusService"
 ```
 
 You can execute with a cloud designer extension and connector with the following command (replace the dependencies path by your paths) :
 ```
 $ make
-$ java -cp ./target/erocci-dbus-java-1.0-SNAPSHOT-jar-with-dependencies.jar:/your/path/org.occiware.clouddesigner.occi.infrastructure-0.1.0-SNAPSHOT.jar:/your/path/org.occiware.clouddesigner.occi.infrastructure.connector.dummy-0.1.0-SNAPSHOT.jar org.ow2.erocci.backend.BackendDBusService
+$ java -Djava.library.path=/path/to/kni/dir -cp ./target/erocci-dbus-java-1.0-SNAPSHOT-jar-with-dependencies.jar:/your/path/org.occiware.clouddesigner.occi.infrastructure-0.1.0-SNAPSHOT.jar:/your/path/org.occiware.clouddesigner.occi.infrastructure.connector.dummy-0.1.0-SNAPSHOT.jar org.ow2.erocci.backend.BackendDBusService
 ```
-
 
 Please don't forget to add your jars dependencies on classpath and to generate Erocci xml files on your Cloud Designer extension project.
 
@@ -71,12 +72,6 @@ Launch erocci with this file used as configuration; for example, in the erocci d
 ```
 
 ## Troubleshooting
-
-
-* "no unix-java in java.library.path"
-Generally occurs when you do not use your system's default JDK. To fix it:
-Copy libunix-java.so in your JDK's jre/lib/<arch> directory, eg.
-sudo cp /usr/lib/jni/libunix-java.so /usr/lib/jvm/jdk1.8.0_45/jre/lib/amd64/
 
 * "Failed to connect to bus unknown address type kernel"
 
