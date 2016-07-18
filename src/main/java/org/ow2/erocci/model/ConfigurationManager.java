@@ -245,7 +245,7 @@ public class ConfigurationManager {
             // Assume if owner is not used to a default user uuid "anonymous".
             owner = DEFAULT_OWNER;
         }
-
+        
         boolean overwrite = false;
         Resource resourceSrc = findResource(owner, src);
         Resource resourceDest = findResource(owner, target);
@@ -644,23 +644,17 @@ public class ConfigurationManager {
      */
     public static Entity findEntity(String owner, final String id) {
         Entity entity = null;
-        // Delete starting string slash (Erocci bug ?).
-        String entityId = id;
-        if (entityId.startsWith("/")) {
-        	entityId = entityId.substring(1);
-        }
-        
         
         if (owner == null) {
-            entity = findEntityAndGetOwner(owner, entityId);
+            entity = findEntityAndGetOwner(owner, id);
             return entity;
         }
 
-        Resource resource = findResource(owner, entityId);
+        Resource resource = findResource(owner, id);
 
         Link link;
         if (resource == null) {
-            link = findLink(owner, entityId);
+            link = findLink(owner, id);
             if (link != null) {
                 entity = link;
             }

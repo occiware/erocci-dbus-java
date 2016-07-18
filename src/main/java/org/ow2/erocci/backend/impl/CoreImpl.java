@@ -174,8 +174,11 @@ public class CoreImpl implements core, DBus.Properties {
 
         // Entity unique identifier.
         String entityId = relativePath + identifierUUID; // as for ex :
-        // /compute/0872c4e0-001a-11e2-b82d-a4b197fffef3
-
+        // /compute/0872c4e0-001a-11e2-b82d-a4b197fffef3 or as : "/0872c4e0-001a-11e2-b82d-a4b197fffef3"
+        // if relative path part is "/" only. We reference the uuid only.
+        if (entityId.startsWith("/")) {
+            entityId = entityId.substring(1);
+        }
         // Determine if this is a link or a resource.
         // Check the attribute map if attr contains occi.core.source or
         // occi.core.target, this is a link !
@@ -261,6 +264,17 @@ public class CoreImpl implements core, DBus.Properties {
 
         String owner = ConfigurationManager.DEFAULT_OWNER;
         String group = ConfigurationManager.DEFAULT_OWNER;
+
+        if (location != null && !location.isEmpty()) {
+            // Check if location is set as root "/uuid".
+            if (location.startsWith("/")) {
+                location = location.substring(1);
+            }
+        } else {
+            LOGGER.warn("Entity location is not set !");
+            throw new RuntimeException("Entity location is not set !");
+        }
+
         Entity entity = ConfigurationManager.findEntity(owner, location);
 
         Septuple<String, List<String>, Map<String, Variant>, List<String>, String, String, String> sept = null;
@@ -340,6 +354,25 @@ public class CoreImpl implements core, DBus.Properties {
         String owner = ConfigurationManager.DEFAULT_OWNER;
         String group = ConfigurationManager.DEFAULT_OWNER;
 
+        if (location != null && !location.isEmpty()) {
+            // Check if location is set as root "/uuid".
+            if (location.startsWith("/")) {
+                location = location.substring(1);
+            }
+        } else {
+            LOGGER.warn("Entity location is not set !");
+            throw new RuntimeException("Entity location is not set !");
+        }
+        if (link != null && !link.isEmpty()) {
+            // Check if location is set as root "/uuid".
+            if (link.startsWith("/")) {
+                link = link.substring(1);
+            }
+        } else {
+            LOGGER.warn("Entity location is not set !");
+            throw new RuntimeException("Entity location is not set !");
+        }
+
         // Load entry entity.
         Entity linkedResource = ConfigurationManager.findEntity(owner, location);
 
@@ -381,6 +414,16 @@ public class CoreImpl implements core, DBus.Properties {
         String owner = ConfigurationManager.DEFAULT_OWNER;
         String group = ConfigurationManager.DEFAULT_OWNER;
 
+        if (location != null && !location.isEmpty()) {
+            // Check if location is set as root "/uuid".
+            if (location.startsWith("/")) {
+                location = location.substring(1);
+            }
+        } else {
+            LOGGER.warn("Entity location is not set !");
+            throw new RuntimeException("Entity location is not set !");
+        }
+
         // Load entry entity.
         Entity entity = ConfigurationManager.findEntity(owner, location);
 
@@ -415,6 +458,16 @@ public class CoreImpl implements core, DBus.Properties {
 
         String owner = ConfigurationManager.DEFAULT_OWNER;
         String group = ConfigurationManager.DEFAULT_OWNER;
+
+        if (location != null && !location.isEmpty()) {
+            // Check if location is set as root "/uuid".
+            if (location.startsWith("/")) {
+                location = location.substring(1);
+            }
+        } else {
+            LOGGER.warn("Entity location is not set !");
+            throw new RuntimeException("Entity location is not set !");
+        }
 
         // Load entry entity.
         Entity entity = ConfigurationManager.findEntity(owner, location);
@@ -484,18 +537,21 @@ public class CoreImpl implements core, DBus.Properties {
             // Search for kind, mixins, actions and get their entities.
             entities.addAll(ConfigurationManager.findAllEntitiesForCategoryId(owner, id, startIndex, number, filters));
 
-        } else if (id == null || id.isEmpty()) {
+        } else if (id == null || id.isEmpty() || id.equals("/")) {
 
             // We return all entities for all kinds.
             entities.addAll(ConfigurationManager.findAllEntitiesOwner(owner, startIndex, number, filters));
 
         } else {
             // it's a relative path url part.
+            if (id.startsWith("/")) {
+                id = id.substring(1);
+            }
             entities.addAll(ConfigurationManager.findAllEntitiesOwnerForRelativePath(owner, id, startIndex, number, filters));
         }
 
         String location;
-        Map<String, String> attrs;
+
         for (Entity entity : entities) {
             location = entity.getId();
             collectionList.add(location);
@@ -520,6 +576,16 @@ public class CoreImpl implements core, DBus.Properties {
 
         String owner = ConfigurationManager.DEFAULT_OWNER;
         String group = ConfigurationManager.DEFAULT_OWNER;
+
+        if (location != null && !location.isEmpty()) {
+            // Check if location is set as root "/uuid".
+            if (location.startsWith("/")) {
+                location = location.substring(1);
+            }
+        } else {
+            LOGGER.warn("Entity location is not set !");
+            throw new RuntimeException("Entity location is not set !");
+        }
 
         LOGGER.info("Update invoked");
         Map<String, String> attr = Utils.convertVariantMap(attributes);
@@ -562,7 +628,15 @@ public class CoreImpl implements core, DBus.Properties {
             LOGGER.error("You must provide an action kind to execute");
             throw new RuntimeException("You must provide an action kind to execute");
         }
-
+        if (location != null && !location.isEmpty()) {
+            // Check if location is set as root "/uuid".
+            if (location.startsWith("/")) {
+                location = location.substring(1);
+            }
+        } else {
+            LOGGER.warn("Entity location is not set !");
+            throw new RuntimeException("Entity location is not set !");
+        }
         String owner = ConfigurationManager.DEFAULT_OWNER;
 
         Map<String, String> actionAttributes = Utils.convertVariantMap(attributes);
@@ -608,11 +682,16 @@ public class CoreImpl implements core, DBus.Properties {
     public void Delete(String location) {
         LOGGER.info("Delete invoked with location : " + location);
 
-        if (location == null) {
-            LOGGER.error("Location is not set, cant delete entity.");
-            throw new RuntimeException("Location is not set, cant delete entity.");
+        
+        if (location != null && !location.isEmpty()) {
+            // Check if location is set as root "/uuid".
+            if (location.startsWith("/")) {
+                location = location.substring(1);
+            }
+        } else {
+            LOGGER.warn("Entity location is not set !");
+            throw new RuntimeException("Entity location is not set !");
         }
-
         List<Entity> entities = ConfigurationManager.findAllEntitiesLikePartialId(ConfigurationManager.DEFAULT_OWNER, location);
         for (Entity entity : entities) {
             LOGGER.info("Deleting entity : " + entity.getId());
