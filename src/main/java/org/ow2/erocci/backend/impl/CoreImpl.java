@@ -32,6 +32,8 @@ import org.occiware.clouddesigner.occi.Link;
 import org.occiware.clouddesigner.occi.Mixin;
 import org.occiware.clouddesigner.occi.Resource;
 import org.occiware.clouddesigner.occi.util.OcciHelper;
+import org.ow2.erocci.backend.Conflict;
+import org.ow2.erocci.backend.NotFound;
 import org.ow2.erocci.backend.Pair;
 import org.ow2.erocci.backend.Quintuple;
 import org.ow2.erocci.backend.Septuple;
@@ -171,7 +173,7 @@ public class CoreImpl implements core, DBus.Properties {
             identifierUUID = Utils.createUUID();
         }
         relativePath = checkRelativePath(relativePath);
-
+        
         // Entity unique identifier.
         String entityId = relativePath + identifierUUID; // as for ex :
         // /compute/0872c4e0-001a-11e2-b82d-a4b197fffef3 or as : "/0872c4e0-001a-11e2-b82d-a4b197fffef3"
@@ -184,6 +186,15 @@ public class CoreImpl implements core, DBus.Properties {
         // occi.core.target, this is a link !
         isResource = ConfigurationManager.checkIfEntityIsResourceOrLinkFromAttributes(attr);
         if (ConfigurationManager.isEntityExist(owner, entityId)) {
+            // Check if occi.core.id reference another id.
+            if (attr.containsKey(OcciConstants.ATTRIBUTE_ID)) {
+                // check if this is the same id, if not there is a conflict..
+                String coreId = attr.get(OcciConstants.ATTRIBUTE_ID);
+                if (coreId != null && !coreId.equals(identifierUUID)) {
+                    throw new Conflict("The attribute occi.core.id value is not the same as the uuid specified in url path.");
+                }
+            }
+            
             LOGGER.info("Overwrite entity : " + entityId);
         } else {
             LOGGER.info("Create entity : " + entityId);
@@ -333,8 +344,9 @@ public class CoreImpl implements core, DBus.Properties {
                     mixinsToReturn, attributes, links, owner, group, serial);
 
         } else {
+            
             LOGGER.warn("Entity " + location + " --< doesnt exist !");
-            throw new RuntimeException("Entity " + location + " --< doesnt exist !");
+            throw new NotFound("Entity " + location + " --< doesnt exist !");
         }
         return sept;
     }
