@@ -167,7 +167,7 @@ public class ConfigurationManager {
 
         // Assign a new resource to configuration, if configuration has resource
         // existed, inform by logger but overwrite existing one.
-        boolean resourceOverwrite = false;
+        boolean resourceOverwrite;
         Resource resource = findResource(owner, id);
         if (resource == null) {
             resourceOverwrite = false;
@@ -184,23 +184,23 @@ public class ConfigurationManager {
             // Create an OCCI resource with good resource type (via extension
             // model).
             try {
-            resource = (Resource) OcciHelper.createEntity(occiKind);
+                resource = (Resource) OcciHelper.createEntity(occiKind);
+                resource.setId(id);
+                // Add a new kind to resource (title, scheme, term).
+                // if occiKind is null, this will give a default kind parent.
+                resource.setKind(occiKind);
+                // occiKind.getEntities().add(resource);
+
+                // Add the attributes...
+                updateAttributesToEntity(resource, attributes);
+
+                addMixinsToEntity(resource, mixins, owner, false);
             } catch (Throwable ex) {
             	LOGGER.error("Exception thrown while creating an entity. " + id);
             	ex.printStackTrace();
+                return;
             }
-            resource.setId(id);
             
-            // Add a new kind to resource (title, scheme, term).
-            // if occiKind is null, this will give a default kind parent.
-            resource.setKind(occiKind);
-            // occiKind.getEntities().add(resource);
-
-            // Add the attributes...
-            updateAttributesToEntity(resource, attributes);
-
-            addMixinsToEntity(resource, mixins, owner, false);
-
         } else {
             LOGGER.info("resource already exist, overwriting...");
             resourceOverwrite = true;
@@ -219,9 +219,7 @@ public class ConfigurationManager {
 //        	
             configuration.getResources().add(resource);
             LOGGER.info("Added Resource " + resource.getId() + " to configuration object.");
-
         }
-
         updateVersion(owner, id);
 
     }

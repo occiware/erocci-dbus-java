@@ -563,10 +563,12 @@ public class CoreImpl implements core, DBus.Properties {
         }
 
         String location;
-
+        String entityUUID;
         for (Entity entity : entities) {
             location = entity.getId();
-            collectionList.add(location);
+            // entityUUID = Utils.getUUIDFromId(entity.getId());
+
+            collectionList.add("/" + location);
         }
 
         Pair<List<String>, String> collection = new Pair<>(collectionList, serial);
