@@ -29,6 +29,9 @@ import java.util.Map;
 import java.util.Set;
 
 import org.eclipse.emf.common.util.EList;
+import org.eclipse.emf.ecore.EAttribute;
+import org.eclipse.emf.ecore.EDataType;
+import org.eclipse.emf.ecore.EStructuralFeature;
 
 import org.freedesktop.dbus.UInt32;
 import org.occiware.clouddesigner.occi.Action;
@@ -43,6 +46,7 @@ import org.occiware.clouddesigner.occi.Mixin;
 import org.occiware.clouddesigner.occi.OCCIFactory;
 import org.occiware.clouddesigner.occi.OCCIRegistry;
 import org.occiware.clouddesigner.occi.Resource;
+import org.occiware.clouddesigner.occi.util.Occi2Ecore;
 import org.occiware.clouddesigner.occi.util.OcciHelper;
 import org.occiware.mart.MART;
 import org.ow2.erocci.backend.BackendDBusService;
@@ -365,18 +369,71 @@ public class ConfigurationManager {
         
         Collection<Attribute> occiAttrs = OcciHelper.getAllAttributes(entity);
         
+        for (Attribute attr : occiAttrs) {
+            LOGGER.info("Attributes on entity : " + attr.getName());
+        }
         
         for (Map.Entry<String, String> entry : attributes.entrySet()) {
             attrName = entry.getKey();
             attrValue = entry.getValue();
             if (!attrName.isEmpty()
                     && !attrName.equals("occi.core.id") && !attrName.equals("occi.core.target") && !attrName.equals("occi.core.source")) {
+                
                 OcciHelper.setAttribute(entity, attrName, attrValue);
+                
+                // setAttributeFromOcciHelper(entity, attrName, attrValue);
+               
             }
         }
         
         return entity;
     }
+    
+    /**
+	 * Set an attribute of an OCCI entity, patched from OcciHelper.
+	 * @param entity the given entity.
+	 * @param attributeName the attribute name.
+	 * @param attributeValue the attribute value.
+	 * @throws java.lang.IllegalArgumentException Thrown when the attribute name is unknown or the attribute value is invalid.
+	 */
+	private static void setAttributeFromOcciHelper(Entity entity, String attributeName, String attributeValue) {
+		// Check that attribute name exists from this entity.
+		OcciHelper.getAttribute(entity, attributeName);
+
+		// Search the Ecore structural feature associated to the OCCI attribute.
+		String eAttributeName = Occi2Ecore.convertOcciAttributeName2EcoreAttributeName(attributeName);
+		
+        final EStructuralFeature eStructuralFeature = entity.eClass().getEStructuralFeature(eAttributeName);
+
+        if (eStructuralFeature == null) {
+            // Create the attribute state and update it, if none, create it.
+            AttributeState attrState = getAttributeStateObject(entity, attributeName);
+            if (attrState == null) {
+                // Create the attribute.
+                attrState = createAttributeState(attributeName, attributeValue);
+                entity.getAttributes().add(attrState);
+            } else {
+                // Update the attribute
+                attrState.setValue(attributeName);
+            }
+            
+            return;
+			// throw new IllegalArgumentException("Ecore structural feature '" + eAttributeName + "' not found!");
+		}
+		if(!(eStructuralFeature instanceof EAttribute)) {
+			throw new IllegalArgumentException("Ecore structural feature '" + eAttributeName + "' is not an Ecore attribute!");
+		}
+
+		// Obtain the attribute type.
+		EDataType eAttributeType = ((EAttribute)eStructuralFeature).getEAttributeType();
+
+		// Convert the attribute value according to the attribute type.
+		Object eAttributeValue = eAttributeType.getEPackage().getEFactoryInstance().createFromString(eAttributeType, attributeValue);
+
+		// Set the Ecore attribute.
+		entity.eSet(eStructuralFeature, eAttributeValue);
+	}
+    
 
     /**
      * Remove an entity (resource or link) from the configuration on overall
@@ -1287,19 +1344,22 @@ public class ConfigurationManager {
                 Mixin mixin = findMixinOnExtension(owner, mixinStr);
 
                 if (mixin == null) {
+                    LOGGER.info("Mixin not found on extensions, searching on referenced entities: --> Term : " + mixinStr);
                     // Search the mixin on entities.
                     mixin = findMixinOnEntities(owner, mixinStr);
 
                     if (mixin == null) {
+                        LOGGER.info("Create the mixin : --> Term : " + mixinStr);
                         mixin = createMixin(mixinStr);
                     }
 
+                } else {
+                    LOGGER.info("Mixin found on used extensions : --> Term : " + mixin.getTerm() + " --< Scheme : " + mixin.getScheme());
                 }
-                entity.getMixins().add(mixin);
-                result = true;
-                // mixin.getEntities().add(entity);
+                
                 LOGGER.info("Mixin --> Term : " + mixin.getTerm() + " --< Scheme : " + mixin.getScheme());
                 LOGGER.info("Mixin attributes : ");
+                
                 Collection<Attribute> attrs = mixin.getAttributes();
                 if (attrs != null && !attrs.isEmpty()) {
                     LOGGER.info("Attributes found for mixin : " + "Mixin --> Term : " + mixin.getTerm() + " --< Scheme : " + mixin.getScheme());
@@ -1309,6 +1369,13 @@ public class ConfigurationManager {
                 } else {
                     LOGGER.warn("No attributes found for mixin : " + "Mixin --> Term : " + mixin.getTerm() + " --< Scheme : " + mixin.getScheme());
                 }
+                
+                
+                entity.getMixins().add(mixin);
+                result = true;
+                
+                // mixin.getEntities().add(entity);
+                
                 
             }
         }
@@ -1811,7 +1878,10 @@ public class ConfigurationManager {
                     Utils.closeQuietly(os);
                     extXml = null;
                 }
-            }       
+            }
+            Configuration config = getConfigurationForOwner(DEFAULT_OWNER);
+            LOGGER.info("Extension : " + extension.getName() + " added to user configuration.");
+            config.getUse().add(extension);
 
         }
         
@@ -1948,4 +2018,42 @@ public class ConfigurationManager {
         return entities;
     }
 
+    /**
+	 * Create an attribute without add this to the entity object.
+	 * 
+	 * @param name
+	 * @param value
+	 * @return AttributeState object.
+	 */
+	private static AttributeState createAttributeState(final String name, final String value) {
+		AttributeState attr = OCCIFactory.eINSTANCE.createAttributeState();
+		attr.setName(name);
+		attr.setValue(value);
+		return attr;
+	}
+
+	/**
+	 * Get an attribute state object for key parameter.
+	 * 
+	 * @param key
+	 *            ex: occi.core.title.
+	 * @return an AttributeState object, if attribute doesnt exist, null value
+	 *         is returned.
+	 */
+	private static AttributeState getAttributeStateObject(Entity entity, final String key) {
+		AttributeState attr = null;
+		if (key == null) {
+			return attr;
+		}
+		// Load the corresponding attribute state.
+		for (AttributeState attrState : entity.getAttributes()) {
+			if (attrState.getName().equals(key)) {
+				attr = attrState;
+				break;
+			}
+		}
+
+		return attr;
+	}
+    
 }
