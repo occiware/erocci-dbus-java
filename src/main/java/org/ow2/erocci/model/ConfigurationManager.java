@@ -363,6 +363,9 @@ public class ConfigurationManager {
         String attrName;
         String attrValue;
         
+        Collection<Attribute> occiAttrs = OcciHelper.getAllAttributes(entity);
+        
+        
         for (Map.Entry<String, String> entry : attributes.entrySet()) {
             attrName = entry.getKey();
             attrValue = entry.getValue();
@@ -1296,7 +1299,17 @@ public class ConfigurationManager {
                 result = true;
                 // mixin.getEntities().add(entity);
                 LOGGER.info("Mixin --> Term : " + mixin.getTerm() + " --< Scheme : " + mixin.getScheme());
-
+                LOGGER.info("Mixin attributes : ");
+                Collection<Attribute> attrs = mixin.getAttributes();
+                if (attrs != null && !attrs.isEmpty()) {
+                    LOGGER.info("Attributes found for mixin : " + "Mixin --> Term : " + mixin.getTerm() + " --< Scheme : " + mixin.getScheme());
+                    for (Attribute attr : attrs) {
+                        LOGGER.info("Attribute : " + attr.getName() + " --> " + attr.getDescription());
+                    }
+                } else {
+                    LOGGER.warn("No attributes found for mixin : " + "Mixin --> Term : " + mixin.getTerm() + " --< Scheme : " + mixin.getScheme());
+                }
+                
             }
         }
         return result;
