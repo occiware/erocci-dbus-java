@@ -219,8 +219,14 @@ public class CoreImpl implements core, DBus.Properties {
         // object.
         Entity entity = ConfigurationManager.findEntity(owner, entityId);
         if (entity != null) {
-            entity.occiCreate();
-            LOGGER.info("Create entity done returning relative path : " + entity.getId());
+            try {
+                entity.occiCreate();
+                LOGGER.info("Create entity done returning relative path : " + entity.getId());
+            } catch (Exception ex) {
+                LOGGER.error("Exception thrown : " + ex.getMessage());
+                ex.printStackTrace();
+            }
+            
         } else {
             LOGGER.error("Error, entity was not created on object model, please check your query.");
             throw new RuntimeException("Error, entity was not created on object model, please check your query.");

@@ -58,7 +58,8 @@ public class Utils {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(Utils.class);
     public static final String REGEX_CONTROL_UUID = "[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}";
-
+    
+    
     // Conventional name ASCII type-code Encoding
     // BYTE y (121) Unsigned 8-bit integer
     // BOOLEAN b (98) Boolean value: 0 is false, 1 is true, any other value
@@ -371,6 +372,7 @@ public class Utils {
      * @return an eTag number.
      */
     public static UInt32 createEtagNumber(Object obj) {
+        
         String eTag;
         try {
             eTag = getMd5Digest(serialize(obj));

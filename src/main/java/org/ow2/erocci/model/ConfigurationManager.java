@@ -190,11 +190,13 @@ public class ConfigurationManager {
                 // if occiKind is null, this will give a default kind parent.
                 resource.setKind(occiKind);
                 // occiKind.getEntities().add(resource);
-
+                
+                addMixinsToEntity(resource, mixins, owner, false);
+                
                 // Add the attributes...
                 updateAttributesToEntity(resource, attributes);
-
-                addMixinsToEntity(resource, mixins, owner, false);
+                
+                
             } catch (Throwable ex) {
             	LOGGER.error("Exception thrown while creating an entity. " + id);
             	ex.printStackTrace();
@@ -204,9 +206,11 @@ public class ConfigurationManager {
         } else {
             LOGGER.info("resource already exist, overwriting...");
             resourceOverwrite = true;
-            updateAttributesToEntity(resource, attributes);
             // Add the mixins if any.
             addMixinsToEntity(resource, mixins, owner, true);
+            
+            updateAttributesToEntity(resource, attributes);
+            
 
         }
 
@@ -290,14 +294,11 @@ public class ConfigurationManager {
             	}
             }
             
-//            
-//            if (attributes.get("occi.core.target.kind") != null
-//                    && attributes.get("occi.core.target.kind").equals("undefined")) {
-//                attributes.remove("occi.core.target.kind");
-//            }
+            addMixinsToEntity(link, mixins, owner, false);
+
             updateAttributesToEntity(link, attributes);
 
-            addMixinsToEntity(link, mixins, owner, false);
+            
 
         } else {
             // Link exist upon our configuration, we update it.
@@ -320,10 +321,12 @@ public class ConfigurationManager {
 //                    && attributes.get("occi.core.target.kind").equals("undefined")) {
 //                attributes.remove("occi.core.target.kind"); // It's an erocci workaround.
 //            }
+            addMixinsToEntity(link, mixins, owner, true);
+            
             updateAttributesToEntity(link, attributes);
             overwrite = true;
 
-            addMixinsToEntity(link, mixins, owner, true);
+            
         }
 
         link.setSource(resourceSrc);
@@ -1583,12 +1586,14 @@ public class ConfigurationManager {
      * @return
      */
     public static UInt32 getEtagNumber(final String owner, final String id) {
-        Integer version = versionObjectMap.get(owner + id);
-        if (version == null) {
-            version = 1;
-        }
-        // Generate eTag.
-        return Utils.createEtagNumber(id, owner, version);
+//        Integer version = versionObjectMap.get(owner + id);
+//        if (version == null) {
+//            version = 1;
+//        }
+        
+        UInt32 serial = new UInt32(Utils.getUniqueInt());
+        return serial;
+        //  return Utils.createEtagNumber(id, owner, version);
     }
 
     /**
