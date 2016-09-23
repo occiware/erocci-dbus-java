@@ -363,10 +363,6 @@ public class ConfigurationManager {
         String attrName;
         String attrValue;
         
-        // To Assume that the entity has all the attributes (including mixins attributes).
-        addAllAttributes(entity);
-        
-        
         for (Map.Entry<String, String> entry : attributes.entrySet()) {
             attrName = entry.getKey();
             attrValue = entry.getValue();
@@ -378,38 +374,6 @@ public class ConfigurationManager {
         
         return entity;
     }
-    
-    /**
-	 * Add all attributes not already present.
-	 */
-	public static void addAllAttributes(Entity entity) {
-        // TODO : Add to MART. 
-		// From class : package org.occiware.clouddesigner.occi.design.services.DesignServices
-        // Compute already present attribute names.
-		List<AttributeState> attributeStates = entity.getAttributes();
-		HashSet<String> attributeNames = new HashSet<String>();
-		// Iterate over all attribute state instances.
-		for(AttributeState attributeState : attributeStates) {
-			attributeNames.add(attributeState.getName());
-		}
-
-		// Iterate over all attributes.
-		for(Attribute attribute : OcciHelper.getAllAttributes(entity)) {
-			String attributeName = attribute.getName();
-			if(!attributeNames.contains(attributeName)) {
-				// If not already present create it.
-				AttributeState attributeState = OCCIFactory.eINSTANCE.createAttributeState();
-				attributeState.setName(attributeName);
-				String attributeDefault = attribute.getDefault();
-				if(attributeDefault != null) {
-					// if default set then set value.
-					attributeState.setValue(attributeDefault);
-				}
-				// Add it to attribute states of this entity.
-				attributeStates.add(attributeState);
-			}
-		}
-	}
 
     /**
      * Remove an entity (resource or link) from the configuration on overall
