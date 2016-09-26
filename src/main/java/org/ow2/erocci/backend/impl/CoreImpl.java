@@ -300,7 +300,7 @@ public class CoreImpl implements core, DBus.Properties {
             List<Mixin> mixins = entity.getMixins();
             List<String> mixinsToReturn = new ArrayList<>();
             for (Mixin mixin : mixins) {
-                mixinsToReturn.add(mixin.getTerm());
+                mixinsToReturn.add(mixin.getScheme() + mixin.getTerm());
             }
 
             Map<String, String> attrs = ConfigurationManager.getEntityAttributesMap(entity.getAttributes());
