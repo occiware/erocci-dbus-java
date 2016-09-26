@@ -173,7 +173,7 @@ public class CoreImpl implements core, DBus.Properties {
             identifierUUID = Utils.createUUID();
         }
         relativePath = checkRelativePath(relativePath);
-        
+
         // Entity unique identifier.
         String entityId = relativePath + identifierUUID; // as for ex :
         // /compute/0872c4e0-001a-11e2-b82d-a4b197fffef3 or as : "/0872c4e0-001a-11e2-b82d-a4b197fffef3"
@@ -194,7 +194,7 @@ public class CoreImpl implements core, DBus.Properties {
                     throw new Conflict("The attribute occi.core.id value is not the same as the uuid specified in url path.");
                 }
             }
-            
+
             LOGGER.info("Overwrite entity : " + entityId);
         } else {
             LOGGER.info("Create entity : " + entityId);
@@ -226,7 +226,7 @@ public class CoreImpl implements core, DBus.Properties {
                 LOGGER.error("Exception thrown : " + ex.getMessage());
                 ex.printStackTrace();
             }
-            
+
         } else {
             LOGGER.error("Error, entity was not created on object model, please check your query.");
             throw new RuntimeException("Error, entity was not created on object model, please check your query.");
@@ -350,7 +350,7 @@ public class CoreImpl implements core, DBus.Properties {
                     mixinsToReturn, attributes, links, owner, group, serial);
 
         } else {
-            
+
             LOGGER.warn("Entity " + location + " --< doesnt exist !");
             throw new NotFound("Entity " + location + " --< doesnt exist !");
         }
@@ -688,8 +688,61 @@ public class CoreImpl implements core, DBus.Properties {
             throw new RuntimeException("Entity doesnt exist : " + location);
         }
 
-        Septuple<String, List<String>, Map<String, Variant>, List<String>, String, String, String> sept = Get(location);
-        Quintuple<String, List<String>, Map<String, Variant>, List<String>, String> q = new Quintuple<>(sept.a, sept.b, sept.c, sept.d, sept.g);
+        // Septuple<String, List<String>, Map<String, Variant>, List<String>, String, String, String> sept = Get(location);
+        // Quintuple<String, List<String>, Map<String, Variant>, List<String>, String> q = new Quintuple<>(sept.a, sept.b, sept.c, sept.d, sept.g);
+        // sept = new Septuple<>(kind,
+        //            mixinsToReturn, attributes, links, owner, group, serial);
+        String kind = entity.getKind().getScheme() + entity.getKind().getTerm();
+        List<String> mixins = new ArrayList<>();
+
+        List<Mixin> mixinsEnt = entity.getMixins();
+        for (Mixin mixin : mixinsEnt) {
+            mixins.add(mixin.getScheme() + mixin.getTerm());
+        }
+        Map<String, String> attrs = ConfigurationManager.getEntityAttributesMap(entity.getAttributes());
+        String identifierUUID = Utils.getUUIDFromId(location, attrs);
+        attrs.put("occi.core.id", identifierUUID);
+
+        String src = null;
+        String target = null;
+        List<String> links = new ArrayList<>();
+        if (entity instanceof Resource) {
+
+            Resource resource = (Resource) entity;
+            List<Link> linksRes = resource.getLinks();
+            for (Link link : linksRes) {
+                if (link.getId().startsWith("/")) {
+                    links.add(link.getId());
+                } else {
+                    links.add("/" + link.getId());
+                }
+
+            }
+        } else if (entity instanceof Link) {
+
+            Link link = (Link) entity;
+            if (link.getSource() != null) {
+                src = link.getSource().getId();
+            }
+            if (link.getTarget() != null) {
+                target = link.getTarget().getId();
+            }
+
+            if (src != null) {
+                links.add("/" + src);
+                attrs.put("occi.core.source", "/" + src);
+            }
+            if (target != null) {
+                links.add("/" + target);
+                attrs.put("occi.core.target", "/" + target);
+            }
+        }
+
+        Map<String, Variant> attributesEnt = Utils.convertStringMapToVariant(attrs);
+
+        String serial = ConfigurationManager.getEtagNumber(owner, entity.getId()).toString();
+
+        Quintuple<String, List<String>, Map<String, Variant>, List<String>, String> q = new Quintuple<>(kind, mixins, attributesEnt, links, serial);
         return q;
     }
 
@@ -702,7 +755,6 @@ public class CoreImpl implements core, DBus.Properties {
     public void Delete(String location) {
         LOGGER.info("Delete invoked with location : " + location);
 
-        
         if (location != null && !location.isEmpty()) {
             // Check if location is set as root "/uuid".
             if (location.startsWith("/")) {
