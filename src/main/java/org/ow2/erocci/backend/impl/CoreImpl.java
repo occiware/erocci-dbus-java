@@ -21,11 +21,13 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import org.eclipse.emf.common.util.EList;
 
 import org.freedesktop.DBus;
 import org.freedesktop.dbus.UInt32;
 import org.freedesktop.dbus.Variant;
 import org.occiware.clouddesigner.occi.Action;
+import org.occiware.clouddesigner.occi.AttributeState;
 import org.occiware.clouddesigner.occi.Entity;
 import org.occiware.clouddesigner.occi.Extension;
 import org.occiware.clouddesigner.occi.Link;
@@ -222,6 +224,8 @@ public class CoreImpl implements core, DBus.Properties {
             try {
                 entity.occiCreate();
                 LOGGER.info("Create entity done returning relative path : " + entity.getId());
+                Utils.printEntity(entity);
+                
             } catch (Exception ex) {
                 LOGGER.error("Exception thrown : " + ex.getMessage());
                 ex.printStackTrace();
@@ -296,14 +300,20 @@ public class CoreImpl implements core, DBus.Properties {
 
         Septuple<String, List<String>, Map<String, Variant>, List<String>, String, String, String> sept = null;
         if (entity != null) {
+            LOGGER.info("Before retrieving...");
+            Utils.printEntity(entity);
+            
             entity.occiRetrieve(); // Try to retrieve values before getting vals on configuration.
+            LOGGER.info("After retrieving...");
+            Utils.printEntity(entity);
             List<Mixin> mixins = entity.getMixins();
             List<String> mixinsToReturn = new ArrayList<>();
             for (Mixin mixin : mixins) {
                 mixinsToReturn.add(mixin.getScheme() + mixin.getTerm());
             }
-
-            Map<String, String> attrs = ConfigurationManager.getEntityAttributesMap(entity.getAttributes());
+            EList<AttributeState> attrsState = entity.getAttributes();
+            
+            Map<String, String> attrs = ConfigurationManager.getEntityAttributesMap(attrsState);
             String identifierUUID = Utils.getUUIDFromId(location, attrs);
             attrs.put("occi.core.id", identifierUUID);
 

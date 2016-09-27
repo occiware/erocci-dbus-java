@@ -352,6 +352,36 @@ public class ConfigurationManager {
     }
 
     /**
+	 * Add all attributes not already present.
+	 */
+	public static void addAllAttributes(Entity entity) {
+		// Compute already present attribute names.
+		List<AttributeState> attributeStates = entity.getAttributes();
+		HashSet<String> attributeNames = new HashSet<String>();
+		// Iterate over all attribute state instances.
+		for(AttributeState attributeState : attributeStates) {
+			attributeNames.add(attributeState.getName());
+		}
+        Collection<Attribute> attribs = OcciHelper.getAllAttributes(entity);
+		// Iterate over all attributes.
+		for(Attribute attribute : attribs) {
+			String attributeName = attribute.getName();
+			if (!attributeNames.contains(attributeName)) {
+				// If not already present create it.
+				AttributeState attributeState = OCCIFactory.eINSTANCE.createAttributeState();
+				attributeState.setName(attributeName);
+				String attributeDefault = attribute.getDefault();
+				if(attributeDefault != null) {
+					// if default set then set value.
+					attributeState.setValue(attributeDefault);
+				}
+				// Add it to attribute states of this entity.
+				attributeStates.add(attributeState);
+			}
+		}
+	}
+    
+    /**
      * Update / add attributes to entity.
      *
      * @param entity
@@ -367,6 +397,9 @@ public class ConfigurationManager {
         String attrName;
         String attrValue;
         
+        // Ensure that all attributes are added to the entity.
+        addAllAttributes(entity);
+        
         Collection<Attribute> occiAttrs = OcciHelper.getAllAttributes(entity);
         
         for (Attribute attr : occiAttrs) {
@@ -378,7 +411,7 @@ public class ConfigurationManager {
             attrValue = entry.getValue();
             if (!attrName.isEmpty()
                     && !attrName.equals("occi.core.id") && !attrName.equals("occi.core.target") && !attrName.equals("occi.core.source")) {
-                
+                LOGGER.info("Attribute set value : " + attrValue);
                 OcciHelper.setAttribute(entity, attrName, attrValue);
                 
                 // setAttributeFromOcciHelper(entity, attrName, attrValue);
@@ -2055,5 +2088,7 @@ public class ConfigurationManager {
 
 		return attr;
 	}
+    
+    
     
 }

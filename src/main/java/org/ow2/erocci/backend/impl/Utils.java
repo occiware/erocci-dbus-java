@@ -229,7 +229,10 @@ public class Utils {
     public static Map<String, Variant> convertStringMapToVariant(Map<String, String> attrs) {
     	Map<String, Variant> mapResult = new HashMap<String, Variant>();
     	for (Map.Entry<String, String> entry : attrs.entrySet()) {
-    		mapResult.put(entry.getKey(), new Variant(entry.getValue()));
+            if (entry.getValue() != null) {
+                // To ensure that no null values will be placed here. dbus cant wrap any null value in a variant.
+                mapResult.put(entry.getKey(), new Variant(entry.getValue()));
+            }
     		
     	}
     	return mapResult;
