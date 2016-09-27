@@ -362,7 +362,7 @@ public class ConfigurationManager {
 		for(AttributeState attributeState : attributeStates) {
 			attributeNames.add(attributeState.getName());
 		}
-        Collection<Attribute> attribs = OcciHelper.getAllAttributes(entity);
+        Collection<Attribute> attribs = getAllAttributes(entity);
 		// Iterate over all attributes.
 		for(Attribute attribute : attribs) {
 			String attributeName = attribute.getName();
@@ -382,6 +382,72 @@ public class ConfigurationManager {
 	}
     
     /**
+	 * Get all the attributes of an Entity instance.
+	 * @param entity the given Entity instance.
+	 * @return all the attributes of the given instance.
+	 */
+	public static Collection<Attribute> getAllAttributes(final Entity entity)
+	{
+		List<Attribute> attributes = new ArrayList<>();
+		Kind entityKind = entity.getKind();
+		if(entityKind != null) {
+			addAllAttributes(attributes, entityKind);
+		}
+		for(Mixin mixin : entity.getMixins()) {
+			addAllAttributes(attributes, mixin);
+		}	
+		return attributes;
+	}
+    /**
+	 * Add all the attributes of a given Kind instance and all its parent kinds.
+	 *
+	 * @param attributes the collection where attributes will be added.
+	 * @param kind the given Kind instance.
+	 */
+	public static void addAllAttributes(final Collection<Attribute> attributes, final Kind kind)
+	{
+		Kind kindParent = kind.getParent();
+		if (kindParent != null) {
+			addAllAttributes(attributes, kindParent);
+		}
+		attributes.addAll(kind.getAttributes());
+	}
+
+	/**
+	 * Add all the attributes of a given Mixin instance and all its depend mixins.
+	 *
+	 * @param attributes the collection where attributes will be added.
+	 * @param mixin the given Mixin instance.
+	 */
+	public static void addAllAttributes(final Collection<Attribute> attributes, final Mixin mixin) {
+        boolean found;
+		for(Mixin md : mixin.getDepends()) {
+			addAllAttributes(attributes, md);
+		}
+        // Compare with attributes on entity.
+        List<Attribute> mixinAttrs = mixin.getAttributes();
+        if (!attributes.isEmpty()) {
+            
+            for (Attribute attrMixin : mixinAttrs) {
+                found = false;
+                // Check if we can add it. avoid doublon. cf CRTP : mixin medium :> resource_tpl. for example.
+                for (Attribute attrKind : attributes) {
+                    if (attrKind.getName().equals(attrMixin.getName())) {
+                        found = true;
+                        break;
+                    }
+                }
+                if (!found) {
+                    // Add the mixin attribute.
+                    attributes.add(attrMixin);
+                }
+            } 
+        } else {
+            attributes.addAll(mixin.getAttributes());
+        }
+        
+	}
+    /**
      * Update / add attributes to entity.
      *
      * @param entity
@@ -400,7 +466,7 @@ public class ConfigurationManager {
         // Ensure that all attributes are added to the entity.
         addAllAttributes(entity);
         
-        Collection<Attribute> occiAttrs = OcciHelper.getAllAttributes(entity);
+        Collection<Attribute> occiAttrs = getAllAttributes(entity);
         
         for (Attribute attr : occiAttrs) {
             LOGGER.info("Attributes on entity : " + attr.getName());
@@ -412,12 +478,26 @@ public class ConfigurationManager {
             if (!attrName.isEmpty()
                     && !attrName.equals("occi.core.id") && !attrName.equals("occi.core.target") && !attrName.equals("occi.core.source")) {
                 LOGGER.info("Attribute set value : " + attrValue);
-                OcciHelper.setAttribute(entity, attrName, attrValue);
+                
+                AttributeState attrState = getAttributeStateObject(entity, attrName);
+                if (attrState == null) {
+                    attrState = createAttributeState(attrName, attrValue);
+                    entity.getAttributes().add(attrState);
+                } else {
+                    // Update the entity.
+                    attrState.setValue(attrValue);
+                }
+                
+                // OcciHelper.setAttribute(entity, attrName, attrValue);
                 
                 // setAttributeFromOcciHelper(entity, attrName, attrValue);
-               
+                
             }
         }
+        
+        // Check attributes.
+        LOGGER.info("Entity :--> ");
+        Utils.printEntity(entity);
         
         return entity;
     }
