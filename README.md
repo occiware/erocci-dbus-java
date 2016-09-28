@@ -57,6 +57,7 @@ $ java -Djava.library.path=/path/to/kni/dir -cp ./target/erocci-dbus-java-1.0-SN
 ```
 
 Please don't forget to add your jars dependencies on classpath and to generate Erocci xml files on your Cloud Designer extension project.
+To ease up adding your jar dependencies, consider writing a Maven POM file [such as here](https://github.com/occiware/erocci-dbus-java/issues/37).
 
 The dbus service is called "org.ow2.erocci.backend".
 
