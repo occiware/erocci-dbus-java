@@ -350,36 +350,6 @@ public class ConfigurationManager {
         }
 
     }
-
-    /**
-	 * Add all attributes not already present.
-	 */
-	public static void addAllAttributes(Entity entity) {
-		// Compute already present attribute names.
-		List<AttributeState> attributeStates = entity.getAttributes();
-		HashSet<String> attributeNames = new HashSet<String>();
-		// Iterate over all attribute state instances.
-		for(AttributeState attributeState : attributeStates) {
-			attributeNames.add(attributeState.getName());
-		}
-        Collection<Attribute> attribs = getAllAttributes(entity);
-		// Iterate over all attributes.
-		for(Attribute attribute : attribs) {
-			String attributeName = attribute.getName();
-			if (!attributeNames.contains(attributeName)) {
-				// If not already present create it.
-				AttributeState attributeState = OCCIFactory.eINSTANCE.createAttributeState();
-				attributeState.setName(attributeName);
-				String attributeDefault = attribute.getDefault();
-				if(attributeDefault != null) {
-					// if default set then set value.
-					attributeState.setValue(attributeDefault);
-				}
-				// Add it to attribute states of this entity.
-				attributeStates.add(attributeState);
-			}
-		}
-	}
     
     /**
 	 * Get all the attributes of an Entity instance.
@@ -391,7 +361,7 @@ public class ConfigurationManager {
 		List<Attribute> attributes = new ArrayList<>();
 		Kind entityKind = entity.getKind();
 		if(entityKind != null) {
-			addAllAttributes(attributes, entityKind);
+            addAllAttributes(attributes, entityKind);
 		}
 		for(Mixin mixin : entity.getMixins()) {
 			addAllAttributes(attributes, mixin);
@@ -463,14 +433,10 @@ public class ConfigurationManager {
         String attrName;
         String attrValue;
         
-        // Ensure that all attributes are added to the entity.
+        // Ensure that all attributes are in the entity AttributeState list object.
         addAllAttributes(entity);
         
-        Collection<Attribute> occiAttrs = getAllAttributes(entity);
-        
-        for (Attribute attr : occiAttrs) {
-            LOGGER.info("Attributes on entity : " + attr.getName());
-        }
+        // Collection<Attribute> occiAttrs = getAllAttributes(entity);
         
         for (Map.Entry<String, String> entry : attributes.entrySet()) {
             attrName = entry.getKey();
@@ -479,19 +445,14 @@ public class ConfigurationManager {
                     && !attrName.equals("occi.core.id") && !attrName.equals("occi.core.target") && !attrName.equals("occi.core.source")) {
                 LOGGER.info("Attribute set value : " + attrValue);
                 
+                
+                OcciHelper.setAttribute(entity, attrName, attrValue);
+                
+                // check if attrState exist (for debug only).
                 AttributeState attrState = getAttributeStateObject(entity, attrName);
-                if (attrState == null) {
-                    attrState = createAttributeState(attrName, attrValue);
-                    entity.getAttributes().add(attrState);
-                } else {
-                    // Update the entity.
-                    attrState.setValue(attrValue);
+                if (attrState != null) {
+                    LOGGER.info("Attribute : "+ attrState.getName() + " --> " + attrState.getValue() + " ==> OK");
                 }
-                
-                // OcciHelper.setAttribute(entity, attrName, attrValue);
-                
-                // setAttributeFromOcciHelper(entity, attrName, attrValue);
-                
             }
         }
         
@@ -501,7 +462,36 @@ public class ConfigurationManager {
         
         return entity;
     }
-    
+    /**
+	 * Add all attributes not already present.
+     * @param entity
+	 */
+	public static void addAllAttributes(Entity entity) {
+		// Compute already present attribute names.
+		List<AttributeState> attributeStates = entity.getAttributes();
+		HashSet<String> attributeNames = new HashSet<>();
+		// Iterate over all attribute state instances.
+		for(AttributeState attributeState : attributeStates) {
+			attributeNames.add(attributeState.getName());
+		}
+        Collection<Attribute> attribs = getAllAttributes(entity);
+		// Iterate over all attributes.
+		for(Attribute attribute : attribs) {
+			String attributeName = attribute.getName();
+			if (!attributeNames.contains(attributeName)) {
+				// If not already present create it.
+				AttributeState attributeState = OCCIFactory.eINSTANCE.createAttributeState();
+				attributeState.setName(attributeName);
+				String attributeDefault = attribute.getDefault();
+				if(attributeDefault != null) {
+					// if default set then set value.
+					attributeState.setValue(attributeDefault);
+				}
+				// Add it to attribute states of this entity.
+				attributeStates.add(attributeState);
+			}
+		}
+	}
     /**
 	 * Set an attribute of an OCCI entity, patched from OcciHelper.
 	 * @param entity the given entity.
@@ -525,9 +515,6 @@ public class ConfigurationManager {
                 // Create the attribute.
                 attrState = createAttributeState(attributeName, attributeValue);
                 entity.getAttributes().add(attrState);
-            } else {
-                // Update the attribute
-                attrState.setValue(attributeName);
             }
             
             return;
