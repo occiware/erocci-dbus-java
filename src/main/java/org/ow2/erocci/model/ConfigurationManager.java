@@ -448,9 +448,17 @@ public class ConfigurationManager {
                 
                 OcciHelper.setAttribute(entity, attrName, attrValue);
                 
-                // check if attrState exist (for debug only).
                 AttributeState attrState = getAttributeStateObject(entity, attrName);
                 if (attrState != null) {
+                    String attrStateValue = attrState.getValue();
+                    if (attrStateValue != null && !attrStateValue.equals(attrValue)) {
+                        // update the attribute value.
+                        attrState.setValue(attrValue);
+                        
+                    } else if (attrValue != null) {
+                        attrState.setValue(attrValue);
+                    }
+                    
                     LOGGER.info("Attribute : "+ attrState.getName() + " --> " + attrState.getValue() + " ==> OK");
                 }
             }
