@@ -2101,6 +2101,7 @@ public class ConfigurationManager {
             int currentIndex = 0;
             Iterator<Entity> it = entities.iterator();
             while (it.hasNext()) {
+                Entity entity = it.next();
 		LOGGER.info("currentIndex=" + currentIndex + ", startIndex=" + startIndex);
                 if (currentIndex < (startIndex-1)) {
                     it.remove();
@@ -2114,6 +2115,7 @@ public class ConfigurationManager {
             int count = 0;
             Iterator<Entity> it = entities.iterator();
             while (it.hasNext()) {
+                Entity entity = it.next();
                 count++;
                 if (count <= number) {
                     
