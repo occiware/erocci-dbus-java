@@ -195,8 +195,6 @@ public class ConfigurationManager {
                 // Add a new kind to resource (title, scheme, term).
                 // if occiKind is null, this will give a default kind parent.
                 resource.setKind(occiKind);
-                // occiKind.getEntities().add(resource);
-                
                 addMixinsToEntity(resource, mixins, owner, false);
                 
                 // Add the attributes...
@@ -639,17 +637,6 @@ public class ConfigurationManager {
         }
         resource.getLinks().clear(); // Remove all links on that resource.
 
-        Kind kind = resource.getKind();
-        if (kind.getEntities().contains(resource)) {
-            kind.getEntities().remove(resource);
-        }
-
-        if (resource.getMixins() != null) {
-            for (Mixin mixin : resource.getMixins()) {
-                mixin.getEntities().remove(resource);
-            }
-        }
-
         config.getResources().remove(resource);
 
     }
@@ -665,16 +652,6 @@ public class ConfigurationManager {
         Resource resourceTarget = link.getTarget();
         resourceSrc.getLinks().remove(link);
         resourceTarget.getLinks().remove(link);
-        Kind linkKind = link.getKind();
-        if (linkKind.getEntities().contains(link)) {
-            linkKind.getEntities().remove(link);
-        }
-        if (link.getMixins() != null) {
-            for (Mixin mixin : link.getMixins()) {
-                mixin.getEntities().remove(link);
-            }
-        }
-
     }
 
     /**
@@ -698,7 +675,6 @@ public class ConfigurationManager {
             }
         }
         entities.clear();
-        // kind.getEntities().clear();
     }
 
     /**
@@ -717,8 +693,6 @@ public class ConfigurationManager {
             updateVersion(owner, entity.getId());
         }
         entities.clear();
-        // mixin.getEntities().clear();
-
     }
     
     /**
@@ -1477,13 +1451,8 @@ public class ConfigurationManager {
                 } else {
                     LOGGER.warn("No attributes found for mixin : " + "Mixin --> Term : " + mixin.getTerm() + " --< Scheme : " + mixin.getScheme());
                 }
-                
-                
                 entity.getMixins().add(mixin);
                 result = true;
-                
-                // mixin.getEntities().add(entity);
-                
                 
             }
         }
@@ -1622,22 +1591,25 @@ public class ConfigurationManager {
             }
         }
         LOGGER.info("Mixin --> Term : " + mixin.getTerm() + " --< Scheme : " + mixin.getScheme());
-
+        List<Entity> entities = new ArrayList<>();
+        
         for (String entityId : entityIds) {
             Entity entity = findEntity(owner, entityId);
 
-            if (entity != null && !mixin.getEntities().contains(entity)) {
-                // mixin.getEntities().add(entity);
+            if (entity != null && !entity.getMixins().contains(mixin)) {
                 entity.getMixins().add(mixin);
 
                 updateVersion(owner, entityId);
+            }
+            if (entity != null) {
+                entities.add(entity);
             }
         }
 
         if (!updateMode) {
             boolean found;
             // Remove entities those are not in the list.
-            Iterator<Entity> it = mixin.getEntities().iterator();
+            Iterator<Entity> it = entities.iterator();
             while (it.hasNext()) {
                 found = false;
                 Entity entityMixin = it.next();
