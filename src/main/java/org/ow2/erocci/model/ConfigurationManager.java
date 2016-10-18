@@ -628,15 +628,22 @@ public class ConfigurationManager {
      */
     public static void removeResource(final String owner, final Resource resource) {
         Configuration config = getConfigurationForOwner(owner);
-        EList<Link> resLink = resource.getLinks();
-        if (resLink != null) {
 
-            for (Link link : resLink) {
-                removeLink(owner, link);
+        Iterator<Link> it = resource.getLinks().iterator();
+        while (it.hasNext()) {
+            Link link = it.next();
+            Resource src = link.getSource();
+            if (!src.equals(resource)) {
+                src.getLinks().remove(link);
+            }
+            Resource target = link.getTarget();
+            if (!target.equals(resource)) {
+                target.getLinks().remove(link);
             }
         }
-        resource.getLinks().clear(); // Remove all links on that resource.
 
+        resource.getLinks().clear(); // Remove all links on that resource.
+        // Remove resource from configuration object.
         config.getResources().remove(resource);
 
     }
